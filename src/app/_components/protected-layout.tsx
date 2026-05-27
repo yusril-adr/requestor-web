@@ -14,10 +14,5 @@ export default function ProtectedLayout() {
     }
   }, [authQuery?.isLoading, auth, from, navigate]);
 
-  // handle SSR
-  if (!auth) {
-    return null;
-  }
-
   return <Outlet />;
 }

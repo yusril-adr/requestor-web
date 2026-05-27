@@ -1,5 +1,4 @@
 import { ThemeToggler } from "@/app/_components/theme-toggler";
-import { Container } from "@/app/_components/container";
 import { LoginForm } from "./_components/login-form";
 
 export function meta() {
@@ -12,8 +11,8 @@ export function meta() {
 
 export default function Login() {
   return (
-    <Container>
-      <div className="flex w-full max-w-7xl px-8 relative">
+    <div className="w-full h-screen flex justify-center items-center">
+      <main className="flex w-full max-w-7xl px-8 relative">
         <div className="absolute right-0 top-0 pt-4">
           <ThemeToggler />
         </div>
@@ -26,7 +25,7 @@ export default function Login() {
         </div>
 
         <LoginForm />
-      </div>
-    </Container>
+      </main>
+    </div>
   );
 }

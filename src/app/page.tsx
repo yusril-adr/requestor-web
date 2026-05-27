@@ -14,14 +14,16 @@ export default function IndexPage() {
   const { logout } = useAuth();
 
   return (
-    <div className="flex">
-      <span>Index Page</span>
+    <div className="w-full h-screen flex">
+      <div className="flex w-full max-w-7xl px-8">
+        <span>Index Page</span>
 
-      <Button>
-        <Link to="/login">Login</Link>
-      </Button>
+        <Button>
+          <Link to="/login">Login</Link>
+        </Button>
 
-      <Button onClick={logout}>Logout</Button>
+        <Button onClick={logout}>Logout</Button>
+      </div>
     </div>
   );
 }

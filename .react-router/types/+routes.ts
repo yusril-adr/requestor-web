@@ -33,6 +33,10 @@ type RouteFiles = {
     id: "app/_components/protected-layout";
     page: "/";
   };
+  "./app/_components/app-sidebar-layout.tsx": {
+    id: "app/_components/app-sidebar-layout";
+    page: "/";
+  };
   "./app/page.tsx": {
     id: "app/page";
     page: "/";
@@ -54,6 +58,7 @@ type RouteFiles = {
 type RouteModules = {
   "root": typeof import("./src/root.tsx");
   "app/_components/protected-layout": typeof import("./src/./app/_components/protected-layout.tsx");
+  "app/_components/app-sidebar-layout": typeof import("./src/./app/_components/app-sidebar-layout.tsx");
   "app/page": typeof import("./src/./app/page.tsx");
   "app/_components/non-login-layout": typeof import("./src/./app/_components/non-login-layout.tsx");
   "app/login/page": typeof import("./src/./app/login/page.tsx");

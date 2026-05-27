@@ -6,6 +6,7 @@ import { authMe } from "@/api/requestor/auth/me";
 import AccessToken from "@/libs/local-storage/access-token";
 import CONFIG from "@/common/constants/config";
 import { toast } from "sonner";
+import axios from "axios";
 
 export const AuthProviderContext = createContext<TAuthProviderState>({
   auth: null,
@@ -33,6 +34,13 @@ export function AuthProvider({ children, ...props }: TAuthProviderProps) {
       queryKey: CONFIG.QUERY_KEY.REQUESTOR_API.AUTH.ALL(),
     });
   }, [queryClient]);
+
+  if (authQuery?.isError && axios.isAxiosError(authQuery.error)) {
+    const statusCode = authQuery.error.response?.status;
+    if (statusCode === 401) {
+      logout();
+    }
+  }
 
   if (authQuery?.isError) {
     toast.error(authQuery.error.message);
