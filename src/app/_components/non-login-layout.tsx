@@ -2,20 +2,19 @@ import { Outlet, useNavigate, useLocation } from "react-router";
 import { useAuth } from "../_hooks/use-auth";
 import { useEffect } from "react";
 
-export default function ProtectedLayout() {
+export default function NonLoginLayout() {
   const { auth, authQuery } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = encodeURIComponent(location.pathname);
 
   useEffect(() => {
-    if (!authQuery?.isLoading && !auth) {
-      navigate(`/login?from=${from}`, { replace: true });
+    if (!authQuery?.isLoading && auth) {
+      navigate("/", { replace: true });
     }
-  }, [authQuery?.isLoading, auth, from, navigate]);
+  }, [authQuery?.isLoading, auth, location.pathname, navigate]);
 
   // handle SSR
-  if (!auth) {
+  if (auth) {
     return null;
   }
 

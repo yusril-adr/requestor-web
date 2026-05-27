@@ -1,43 +1,48 @@
-import { createContext, useState } from "react";
+import { createContext, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { TAuthProviderState } from "../_types/auth-provider-state";
 import type { TAuthProviderProps } from "../_types/auth-provider-props";
-import type { TUser } from "@/api/requestor/_types/user";
-import { useMutation } from "@tanstack/react-query";
 import authMe from "@/api/requestor/auth/me/function";
+import AccessToken from "@/libs/local-storage/access-token";
 import CONFIG from "@/common/constants/config";
+import { toast } from "sonner";
 
 export const AuthProviderContext = createContext<TAuthProviderState>({
   auth: null,
-  setAuth: () => null,
-  authMutation: null,
-  clearAuth: () => null,
+  authQuery: null,
+  logout: () => {},
 });
 
 export function AuthProvider({ children, ...props }: TAuthProviderProps) {
-  const [auth, setAuth] = useState<TUser | null>(null);
-  const authMutation = useMutation({
-    mutationKey: CONFIG.QUERY_KEY.REQUESTOR_API.AUTH.ME(),
-    mutationFn: authMe,
-    onSuccess: (response) => {
-      const responseData = response.data.data;
+  const queryClient = useQueryClient();
 
-      setAuth(responseData);
-    },
+  const authQuery = useQuery({
+    queryKey: CONFIG.QUERY_KEY.REQUESTOR_API.AUTH.ME(),
+    queryFn: authMe,
+    enabled: !!AccessToken.get(),
+    refetchOnWindowFocus: false,
+    retry: false,
   });
 
-  const clearAuth = () => {
-    setAuth(null);
-  };
+  const auth = authQuery?.data?.data.data ?? null;
 
-  const value = {
-    auth,
-    setAuth,
-    authMutation,
-    clearAuth,
-  };
+  const logout = useCallback(() => {
+    AccessToken.remove();
+    queryClient.setQueryData(CONFIG.QUERY_KEY.REQUESTOR_API.AUTH.ME(), null);
+    queryClient.removeQueries({
+      queryKey: CONFIG.QUERY_KEY.REQUESTOR_API.AUTH.ALL(),
+    });
+  }, [queryClient]);
+
+  if (authQuery?.isError) {
+    toast.error(authQuery.error.message);
+  }
 
   return (
-    <AuthProviderContext.Provider {...props} value={value}>
+    <AuthProviderContext.Provider
+      {...props}
+      value={{ auth, authQuery, logout }}
+    >
       {children}
     </AuthProviderContext.Provider>
   );

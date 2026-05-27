@@ -1,5 +1,6 @@
 import { Button } from "@/app/_components/ui/button";
 import { Link } from "react-router";
+import { useAuth } from "./_hooks/use-auth";
 
 export function meta() {
   return [
@@ -10,6 +11,8 @@ export function meta() {
 }
 
 export default function IndexPage() {
+  const { logout } = useAuth();
+
   return (
     <div className="flex">
       <span>Index Page</span>
@@ -17,6 +20,8 @@ export default function IndexPage() {
       <Button>
         <Link to="/login">Login</Link>
       </Button>
+
+      <Button onClick={logout}>Logout</Button>
     </div>
   );
 }

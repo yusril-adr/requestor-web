@@ -8,6 +8,8 @@ import {
 export default [
   layout("./app/_components/protected-layout.tsx", [index("./app/page.tsx")]),
 
-  route("/login", "./app/login/page.tsx"),
+  layout("./app/_components/non-login-layout.tsx", [
+    route("/login", "./app/login/page.tsx"),
+  ]),
   route("*", "./app/errors/not-found/page.tsx"),
 ] satisfies RouteConfig;
