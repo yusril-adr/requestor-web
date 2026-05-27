@@ -1,7 +1,7 @@
 import { type AxiosResponse } from "axios";
 import type { TMeResponse } from "./_types/response";
 import REQUESTOR_API_PATH from "../../_const/path";
-import type { TRequestorApiResponse } from "../../_types/response";
+import type { TRequestorApiResponse } from "../../types/response";
 import { requestorAxios } from "../../_libs/axios";
 
 const authMe = async () => {

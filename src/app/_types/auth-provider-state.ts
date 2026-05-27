@@ -1,12 +1,12 @@
-import type { TRequestorApiResponse } from "@/api/requestor/_types/response";
-import type { TUser } from "@/api/requestor/_types/user";
 import type { UseQueryResult } from "@tanstack/react-query";
 import type { AxiosResponse } from "axios";
+import type { TUserMeResponse } from "@/api/requestor/auth/me/types/response";
+import type { TRequestorApiResponse } from "@/api/requestor/types/response";
 
 export type TAuthProviderState = {
-  auth: TUser | null;
+  auth: TUserMeResponse | null;
   authQuery: UseQueryResult<
-    NoInfer<AxiosResponse<TRequestorApiResponse<TUser>, any, {}>>,
+    NoInfer<AxiosResponse<TRequestorApiResponse<TUserMeResponse>, any, {}>>,
     Error
   > | null;
   logout: () => void;

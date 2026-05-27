@@ -1,4 +1,4 @@
-export type TUser = {
+export type TUserMeResponse = {
   id: string;
   name: string;
   email: string;

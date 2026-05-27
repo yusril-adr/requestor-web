@@ -29,8 +29,8 @@ import login from "@/api/requestor/auth/login/function";
 import type {
   TRequestorApiResponse,
   TRequestorApiErrorResponse,
-} from "@/api/requestor/_types/response";
-import type { TLoginPayload } from "@/api/requestor/auth/login/_types/payload";
+} from "@/api/requestor/types/response";
+import type { TLoginPayload } from "@/api/requestor/auth/login/types/payload";
 import { LoginSchema, type TLoginSchema } from "@/app/login/_schema/login";
 import AccessToken from "@/libs/local-storage/access-token";
 import CONFIG from "@/common/constants/config";
