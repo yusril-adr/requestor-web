@@ -1,6 +1,6 @@
-import { Theme } from "@/common/enums/theme";
+import { ThemeEnum } from "@/common/enums/theme";
 
 export type TThemeProviderState = {
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
+  theme: ThemeEnum;
+  setTheme: (theme: ThemeEnum) => void;
 };

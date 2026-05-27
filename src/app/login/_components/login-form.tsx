@@ -25,12 +25,12 @@ import {
 import { Field, FieldError, FieldLabel } from "@/app/_components/ui/field";
 import { Spinner } from "@/app/_components/ui/spinner";
 
-import login from "@/api/requestor/auth/login/function";
+import { login } from "@/api/requestor/auth/login";
 import type {
   TRequestorApiResponse,
   TRequestorApiErrorResponse,
 } from "@/api/requestor/types/response";
-import type { TLoginPayload } from "@/api/requestor/auth/login/types/payload";
+import type { TLoginPayload } from "@/api/requestor/auth/login/types/login-payload";
 import { LoginSchema, type TLoginSchema } from "@/app/login/_schema/login";
 import AccessToken from "@/libs/local-storage/access-token";
 import CONFIG from "@/common/constants/config";

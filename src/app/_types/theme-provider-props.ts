@@ -1,7 +1,7 @@
-import type { Theme } from "@/common/enums/theme";
+import type { ThemeEnum } from "@/common/enums/theme";
 
 export type TThemeProviderProps = {
   children: React.ReactNode;
-  defaultTheme?: Theme;
+  defaultTheme?: ThemeEnum;
   storageKey?: string;
 };

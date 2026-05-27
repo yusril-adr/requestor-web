@@ -8,11 +8,11 @@ import {
   DropdownMenuTrigger,
 } from "@/app/_components/ui/dropdown-menu";
 import { useTheme } from "@/app/_hooks/use-theme";
-import { Theme } from "@/common/enums/theme";
+import { ThemeEnum } from "@/common/enums/theme";
 
 export function ThemeToggler() {
   const { theme, setTheme } = useTheme();
-  const isUsingSystemTheme = theme === Theme.System;
+  const isUsingSystemTheme = theme === ThemeEnum.System;
 
   return (
     <DropdownMenu>
@@ -31,13 +31,13 @@ export function ThemeToggler() {
         </div>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme(Theme.Light)}>
+        <DropdownMenuItem onClick={() => setTheme(ThemeEnum.Light)}>
           Light
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme(Theme.Dark)}>
+        <DropdownMenuItem onClick={() => setTheme(ThemeEnum.Dark)}>
           Dark
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme(Theme.System)}>
+        <DropdownMenuItem onClick={() => setTheme(ThemeEnum.System)}>
           System
         </DropdownMenuItem>
       </DropdownMenuContent>

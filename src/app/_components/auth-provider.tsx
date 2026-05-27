@@ -2,7 +2,7 @@ import { createContext, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { TAuthProviderState } from "../_types/auth-provider-state";
 import type { TAuthProviderProps } from "../_types/auth-provider-props";
-import authMe from "@/api/requestor/auth/me/function";
+import { authMe } from "@/api/requestor/auth/me";
 import AccessToken from "@/libs/local-storage/access-token";
 import CONFIG from "@/common/constants/config";
 import { toast } from "sonner";
