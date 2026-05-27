@@ -1,0 +1,13 @@
+import {
+  type RouteConfig,
+  index,
+  route,
+  layout,
+} from "@react-router/dev/routes";
+
+export default [
+  layout("./app/_components/protected-layout.tsx", [index("./app/page.tsx")]),
+
+  route("/login", "./app/login/page.tsx"),
+  route("*", "./app/errors/not-found/page.tsx"),
+] satisfies RouteConfig;
