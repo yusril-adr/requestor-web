@@ -13,8 +13,8 @@ type Matches = [{
   id: "root";
   module: typeof import("../../../root.js");
 }, {
-  id: "app/_components/non-login-layout";
-  module: typeof import("../../_components/non-login-layout.js");
+  id: "app/_components/layout/non-login-layout";
+  module: typeof import("../../_components/layout/non-login-layout.js");
 }, {
   id: "app/login/page";
   module: typeof import("../page.js");

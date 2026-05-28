@@ -2,39 +2,19 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from "@/app/_components/ui/sidebar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
-import {
-  BrainCircuit,
-  EllipsisVertical,
-  FileClock,
-  LogOut,
-  Shredder,
-  Users,
-} from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { ThemeToggler } from "./theme-toggler";
-import type { TNavSidebar } from "../_types/nav-sidebar";
-import NavSidebar from "./nav-sidebar";
+import { BrainCircuit } from "lucide-react";
+import { ThemeToggler } from "../theme-toggler";
+import type { TNavSidebar } from "../../_types/nav-sidebar";
+import { NavSidebar } from "./nav-sidebar";
 import NAV_ROUTES from "@/common/constants/navigation-routes";
-import { useAuth } from "../_hooks/use-auth";
-import AvatarSidebar from "./avatar-sidebar";
+import { useAuth } from "../../_hooks/use-auth";
+import { AvatarSidebar } from "./avatar-sidebar";
 
 export function AppSidebar() {
-  const { isMobile } = useSidebar();
   const { auth } = useAuth();
 
   const navItems: TNavSidebar[] = NAV_ROUTES.filter((nav) => {
@@ -46,7 +26,7 @@ export function AppSidebar() {
   });
 
   return (
-    <Sidebar variant="inset">
+    <Sidebar>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>

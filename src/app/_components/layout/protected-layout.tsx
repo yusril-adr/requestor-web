@@ -1,6 +1,7 @@
 import { Outlet, useNavigate, useLocation } from "react-router";
-import { useAuth } from "../_hooks/use-auth";
+import { useAuth } from "../../_hooks/use-auth";
 import { useEffect } from "react";
+import GlobalLoader from "../global-loader";
 
 export default function ProtectedLayout() {
   const { auth, authQuery } = useAuth();
@@ -14,5 +15,10 @@ export default function ProtectedLayout() {
     }
   }, [authQuery?.isLoading, auth, from, navigate]);
 
-  return <Outlet />;
+  return (
+    <>
+      {authQuery?.isLoading && <GlobalLoader />}
+      <Outlet />
+    </>
+  );
 }

@@ -1,6 +1,7 @@
 import { Outlet, useNavigate, useLocation } from "react-router";
-import { useAuth } from "../_hooks/use-auth";
+import { useAuth } from "../../_hooks/use-auth";
 import { useEffect } from "react";
+import GlobalLoader from "../global-loader";
 
 export default function NonLoginLayout() {
   const { auth, authQuery } = useAuth();
@@ -13,10 +14,10 @@ export default function NonLoginLayout() {
     }
   }, [authQuery?.isLoading, auth, location.pathname, navigate]);
 
-  // handle SSR
-  if (auth) {
-    return null;
-  }
-
-  return <Outlet />;
+  return (
+    <>
+      {authQuery?.isLoading && <GlobalLoader />}
+      <Outlet />
+    </>
+  );
 }

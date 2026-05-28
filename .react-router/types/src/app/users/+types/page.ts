@@ -13,11 +13,11 @@ type Matches = [{
   id: "root";
   module: typeof import("../../../root.js");
 }, {
-  id: "app/_components/protected-layout";
-  module: typeof import("../../_components/protected-layout.js");
+  id: "app/_components/layout/protected-layout";
+  module: typeof import("../../_components/layout/protected-layout.js");
 }, {
-  id: "app/_components/app-sidebar-layout";
-  module: typeof import("../../_components/app-sidebar-layout.js");
+  id: "app/_components/layout/app-sidebar-layout";
+  module: typeof import("../../_components/layout/app-sidebar-layout.js");
 }, {
   id: "app/users/page";
   module: typeof import("../page.js");

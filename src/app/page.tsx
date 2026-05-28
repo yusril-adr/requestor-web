@@ -14,8 +14,8 @@ export default function IndexPage() {
   const { logout } = useAuth();
 
   return (
-    <div className="w-full h-screen flex">
-      <div className="flex w-full max-w-7xl px-8">
+    <div className="w-full h-screen flex justify-center">
+      <div className="flex w-full max-w-7xl px-10">
         <span>Index Page</span>
 
         <Button>

@@ -32,12 +32,12 @@ type RouteFiles = {
     id: "root";
     page: "/" | "/users" | "/login" | "/*";
   };
-  "./app/_components/protected-layout.tsx": {
-    id: "app/_components/protected-layout";
+  "./app/_components/layout/protected-layout.tsx": {
+    id: "app/_components/layout/protected-layout";
     page: "/" | "/users";
   };
-  "./app/_components/app-sidebar-layout.tsx": {
-    id: "app/_components/app-sidebar-layout";
+  "./app/_components/layout/app-sidebar-layout.tsx": {
+    id: "app/_components/layout/app-sidebar-layout";
     page: "/" | "/users";
   };
   "./app/page.tsx": {
@@ -48,8 +48,8 @@ type RouteFiles = {
     id: "app/users/page";
     page: "/users";
   };
-  "./app/_components/non-login-layout.tsx": {
-    id: "app/_components/non-login-layout";
+  "./app/_components/layout/non-login-layout.tsx": {
+    id: "app/_components/layout/non-login-layout";
     page: "/login";
   };
   "./app/login/page.tsx": {
@@ -64,11 +64,11 @@ type RouteFiles = {
 
 type RouteModules = {
   "root": typeof import("./src/root.tsx");
-  "app/_components/protected-layout": typeof import("./src/./app/_components/protected-layout.tsx");
-  "app/_components/app-sidebar-layout": typeof import("./src/./app/_components/app-sidebar-layout.tsx");
+  "app/_components/layout/protected-layout": typeof import("./src/./app/_components/layout/protected-layout.tsx");
+  "app/_components/layout/app-sidebar-layout": typeof import("./src/./app/_components/layout/app-sidebar-layout.tsx");
   "app/page": typeof import("./src/./app/page.tsx");
   "app/users/page": typeof import("./src/./app/users/page.tsx");
-  "app/_components/non-login-layout": typeof import("./src/./app/_components/non-login-layout.tsx");
+  "app/_components/layout/non-login-layout": typeof import("./src/./app/_components/layout/non-login-layout.tsx");
   "app/login/page": typeof import("./src/./app/login/page.tsx");
   "app/errors/not-found/page": typeof import("./src/./app/errors/not-found/page.tsx");
 };

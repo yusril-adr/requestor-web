@@ -5,7 +5,7 @@ import { requestorAxios } from "@/api/requestor/_libs/axios";
 import type { TUserResponse } from "./types/user-response";
 import type { TUserPaginationPayload } from "./types/user-pagination-payload";
 
-export const authMe = async (payload: TUserPaginationPayload) => {
+export const getUserPagination = async (payload: TUserPaginationPayload) => {
   const response: AxiosResponse<TRequestorApiResponse<TUserResponse>> =
     await requestorAxios.get(REQUESTOR_API_PATH.USER.DEFAULT, {
       params: payload,

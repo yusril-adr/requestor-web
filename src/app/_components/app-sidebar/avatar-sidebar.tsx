@@ -10,13 +10,13 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
+} from "../ui/dropdown-menu";
 import { EllipsisVertical, LogOut } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { useAuth } from "../_hooks/use-auth";
-import { Skeleton } from "./ui/skeleton";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { useAuth } from "../../_hooks/use-auth";
+import { Skeleton } from "../ui/skeleton";
 
-export default function AvatarSidebar() {
+export function AvatarSidebar() {
   const { auth, authQuery, logout } = useAuth();
   const { isMobile } = useSidebar();
 

@@ -5,9 +5,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/app/_components/ui/sidebar";
-import type { TNavSidebar } from "../_types/nav-sidebar";
+import type { TNavSidebar } from "../../_types/nav-sidebar";
 
-export default function NavSidebar({ data }: { data: TNavSidebar[] }) {
+export function NavSidebar({ data }: { data: TNavSidebar[] }) {
   const location = useLocation();
   const currentPath = location.pathname;
 
