@@ -19,11 +19,11 @@ export function NavSidebar({ data }: { data: TNavSidebar[] }) {
             <SidebarMenuButton
               tooltip={item.title}
               isActive={currentPath === item.path}
+              className="w-full"
+              render={<Link to={item.path} />}
             >
-              <Link to={item.path} className="flex items-center gap-4">
-                <item.icon />
-                <span>{item.title}</span>
-              </Link>
+              <item.icon />
+              <span>{item.title}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

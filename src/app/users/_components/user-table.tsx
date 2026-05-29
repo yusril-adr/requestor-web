@@ -1,10 +1,8 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   ArrowDown01,
   ArrowDown10,
   ArrowUpDown,
-  ChevronLeft,
-  ChevronRight,
   EllipsisVertical,
   Eye,
   Funnel,
@@ -15,14 +13,9 @@ import {
 import { Link, useSearchParams } from "react-router";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnFiltersState, SortingState } from "@tanstack/react-table";
-import {
-  useReactTable,
-  getCoreRowModel,
-  flexRender,
-  createColumnHelper,
-} from "@tanstack/react-table";
+import { createColumnHelper } from "@tanstack/react-table";
 
 import { Button } from "@/app/_components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/app/_components/ui/field";
@@ -47,30 +40,22 @@ import {
   InputGroupInput,
 } from "@/app/_components/ui/input-group";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/app/_components/ui/table";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/app/_components/ui/dropdown-menu";
-import { ButtonGroup } from "@/app/_components/ui/button-group";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectGroup,
-  SelectTrigger,
-  SelectValue,
-} from "@/app/_components/ui/select";
-import { Skeleton } from "@/app/_components/ui/skeleton";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/app/_components/ui/alert-dialog";
 
 import { OrderKeyEnum } from "@/common/enums/order-key";
 import CONFIG from "@/common/constants/config";
@@ -78,7 +63,6 @@ import type { TUserPaginationPayload } from "@/api/requestor/users/types/user-pa
 import { getUserPagination } from "@/api/requestor/users";
 import type { TUserSortBy } from "@/api/requestor/users/consts/user-sort-by";
 import type { TUserTableCol } from "@/app/users/_types/user-table-col";
-import { generatePages } from "@/utils/table-helper";
 import {
   UserTableFilterSchema,
   type TUserTableFilterSchema,
@@ -87,12 +71,18 @@ import { toast } from "sonner";
 import axios from "axios";
 import type { TRequestorApiResponse } from "@/api/requestor/types/response";
 import { useAuth } from "@/app/_hooks/use-auth";
+import { DataTable } from "@/app/_components/data-table";
+import { deleteUserById } from "@/api/requestor/users/[id]";
 
 let debounceSearchTimeoutId: number | null = null;
 
 export default function UserTable() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { logout } = useAuth();
+  const queryClient = useQueryClient();
+  const [confirmatedDeletedId, setConfirmatedDeletedId] = useState<
+    string | null
+  >(null);
 
   const queryTable = useMemo(
     () => ({
@@ -110,10 +100,52 @@ export default function UserTable() {
   const { control, handleSubmit, reset } = useForm<TUserTableFilterSchema>({
     resolver: zodResolver(UserTableFilterSchema),
     defaultValues: {
-      status: queryTable?.status as UserStatusEnum | undefined,
-      role: queryTable?.role as RoleKeyEnum | undefined,
+      status: (queryTable?.status as UserStatusEnum) || null,
+      role: (queryTable?.role as RoleKeyEnum) || null,
     },
   });
+
+  const { mutate: deleteUser } = useMutation({
+    mutationFn: deleteUserById,
+    onMutate: () => {
+      toast.loading("Deleting user...");
+    },
+    onSuccess: () => {
+      toast.dismiss();
+      toast.success("User deleted");
+      queryClient.invalidateQueries({
+        queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.USER.ALL()],
+      });
+    },
+    onError: (error) => {
+      toast.dismiss();
+      if (axios.isAxiosError(error)) {
+        const statusCode = error.response?.status;
+
+        const defaultErrorResponse = error.response
+          ?.data as TRequestorApiResponse<null>;
+
+        switch (statusCode) {
+          case 401:
+            console.log("401");
+            toast.error(defaultErrorResponse.message as string);
+            logout();
+            break;
+          default:
+            toast.error(defaultErrorResponse.message as string);
+            break;
+        }
+      }
+    },
+  });
+
+  const onDeleteUser = useCallback(() => {
+    if (confirmatedDeletedId) {
+      deleteUser(confirmatedDeletedId);
+    }
+
+    setConfirmatedDeletedId(null);
+  }, [confirmatedDeletedId, deleteUser]);
 
   const onSearchChange = (value: string) => {
     if (value && value !== "" && value.length < 3) {
@@ -145,12 +177,12 @@ export default function UserTable() {
     });
   };
 
-  const onFilterReset = () => {
+  const onFilterReset = useCallback(() => {
     reset({
       status: null,
       role: null,
     });
-  };
+  }, [reset]);
 
   const mappedQueryTablePayload: TUserPaginationPayload = useMemo(
     () => ({
@@ -172,7 +204,7 @@ export default function UserTable() {
     error,
   } = useQuery({
     queryKey: [
-      CONFIG.QUERY_KEY.REQUESTOR_API.USER.ALL,
+      CONFIG.QUERY_KEY.REQUESTOR_API.USER.ALL(),
       mappedQueryTablePayload,
     ],
     queryFn: () => getUserPagination(mappedQueryTablePayload),
@@ -237,30 +269,17 @@ export default function UserTable() {
     [searchParams],
   );
 
-  const jumpPage = useCallback(
+  const handlePageChange = useCallback(
     (page: number) => {
       setSearchParams((searchParams) => {
         searchParams.set("page", page.toString());
         return searchParams;
       });
     },
-    [searchParams],
+    [setSearchParams],
   );
 
-  const isFirstPage = useMemo(() => queryTable?.page === 1, [queryTable?.page]);
-  const prevPage = useCallback(() => {
-    jumpPage((queryTable?.page || 1) - 1);
-  }, [queryTable?.page, jumpPage]);
-
-  const isLastPage = useMemo(
-    () => queryTable?.page === responseData?.data?.data?.meta?.total_page,
-    [queryTable?.page, responseData?.data?.data?.meta?.total_page],
-  );
-  const nextPage = useCallback(() => {
-    jumpPage((queryTable?.page || 1) + 1);
-  }, [queryTable?.page, jumpPage]);
-
-  const setPageSize = useCallback(
+  const handlePageSizeChange = useCallback(
     (pageSize: number) => {
       setSearchParams((searchParams) => {
         searchParams.set("page_size", pageSize.toString());
@@ -268,7 +287,7 @@ export default function UserTable() {
         return searchParams;
       });
     },
-    [searchParams],
+    [setSearchParams],
   );
 
   const columnHelper = createColumnHelper<TUserTableCol>();
@@ -389,9 +408,12 @@ export default function UserTable() {
                   <Pencil />
                   Edit
                 </DropdownMenuItem>
-                <DropdownMenuItem variant="destructive">
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => setConfirmatedDeletedId(user.id)}
+                >
                   <Trash />
-                  Delete
+                  Delete{" "}
                 </DropdownMenuItem>
               </DropdownMenuGroup>
             </DropdownMenuContent>
@@ -433,288 +455,158 @@ export default function UserTable() {
     return sort;
   }, [queryTable?.sortBy, queryTable?.order]);
 
-  const tableOptions = useMemo(
-    () => ({
-      data: responseData?.data?.data?.items ?? [],
-      columns,
-      pageCount: responseData?.data?.data?.meta?.total_page || 1,
-      rowCount: responseData?.data?.data?.meta?.total_all_data || 0,
-      state: {
-        pagination: {
-          pageIndex:
-            ((responseData?.data?.data?.meta?.current_page || 1) - 1) *
-              (responseData?.data?.data?.meta?.total_view || 1) || 0,
-          pageSize: responseData?.data?.data?.meta?.max_view || 10,
-        },
-        columnFilters,
-        sorting,
-      },
-      getCoreRowModel: getCoreRowModel(),
-      debugTable: true,
-    }),
-    [responseData],
+  const pageIndex = useMemo(
+    () =>
+      ((responseData?.data?.data?.meta?.current_page || 1) - 1) *
+        (responseData?.data?.data?.meta?.max_view || 1) || 0,
+    [
+      responseData?.data?.data?.meta?.current_page,
+      responseData?.data?.data?.meta?.max_view,
+    ],
   );
-
-  const table = useReactTable(tableOptions);
-
-  const { pageIndex, pageSize } = table.getState().pagination;
-
-  const longestColumnCount = Math.max(
-    ...table.getHeaderGroups().map((group) => group.headers.length),
-  );
-  const isLoadingColElement = Array.from({
-    length: pageSize || 10,
-  }).map((_, idx) => (
-    <TableRow key={idx}>
-      {Array.from({ length: longestColumnCount }).map((_, cellIdx) => (
-        <TableCell key={cellIdx}>
-          <Skeleton className="h-7" />
-        </TableCell>
-      ))}
-    </TableRow>
-  ));
-
-  const indexStart = pageIndex + 1;
-
-  const indexEnd = Math.min((pageIndex + 1) * pageSize, table.getRowCount());
-
-  const pages = generatePages({
-    currentPage: pageIndex / pageSize + 1,
-    totalPages: responseData?.data?.data?.meta?.total_page || 1,
-  });
-
-  const pageSizeOptions = [
-    {
-      label: "5 / page",
-      value: "5",
-    },
-    {
-      label: "10 / page",
-      value: "10",
-    },
-    {
-      label: "20 / page",
-      value: "20",
-    },
-    {
-      label: "50 / page",
-      value: "50",
-    },
-    {
-      label: "100 / page",
-      value: "100",
-    },
-  ];
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-2">
-        <Popover>
-          <PopoverTrigger render={<Button variant="outline" />}>
-            <Funnel />
-            Filter
-          </PopoverTrigger>
-          <PopoverContent align="start">
-            <form
-              className="flex flex-col gap-4 md:gap-2"
-              onSubmit={handleSubmit(onFilterSubmit)}
-            >
-              <FieldGroup className="flex flex-col md:flex-row gap-4 md:gap-2">
-                <Controller
-                  name="role"
-                  control={control}
-                  render={({ field, fieldState }) => (
-                    <Field
-                      className="grid gap-2"
-                      data-invalid={fieldState.invalid}
-                    >
-                      <FieldLabel htmlFor="role">Role</FieldLabel>
-                      <Combobox
-                        id="role"
-                        items={Object.values(RoleKeyEnum)}
-                        onValueChange={field.onChange}
-                        {...field}
+    <>
+      <DataTable
+        columns={columns}
+        data={responseData?.data?.data?.items ?? []}
+        isLoading={isLoading}
+        pageCount={responseData?.data?.data?.meta?.total_page || 1}
+        rowCount={responseData?.data?.data?.meta?.total_all_data || 0}
+        pageIndex={pageIndex}
+        pageSize={queryTable?.pageSize || 10}
+        sorting={sorting}
+        columnFilters={columnFilters}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <Popover>
+            <PopoverTrigger render={<Button variant="outline" />}>
+              <Funnel />
+              Filter
+            </PopoverTrigger>
+            <PopoverContent align="start">
+              <form
+                className="flex flex-col gap-4 md:gap-2"
+                onSubmit={handleSubmit(onFilterSubmit)}
+              >
+                <FieldGroup className="flex flex-col md:flex-row gap-4 md:gap-2">
+                  <Controller
+                    name="role"
+                    control={control}
+                    render={({ field, fieldState }) => (
+                      <Field
+                        className="grid gap-2"
+                        data-invalid={fieldState.invalid}
                       >
-                        <ComboboxInput placeholder="Select role" showClear />
-                        <ComboboxContent>
-                          <ComboboxEmpty>No items found.</ComboboxEmpty>
-                          <ComboboxList>
-                            {(item) => (
-                              <ComboboxItem key={item} value={item}>
-                                {item}
-                              </ComboboxItem>
-                            )}
-                          </ComboboxList>
-                        </ComboboxContent>
-                      </Combobox>
-                    </Field>
-                  )}
-                />
-
-                <Controller
-                  name="status"
-                  control={control}
-                  render={({ field, fieldState }) => (
-                    <Field
-                      className="grid gap-2"
-                      data-invalid={fieldState.invalid}
-                    >
-                      <FieldLabel htmlFor="status">Status</FieldLabel>
-                      <Combobox
-                        id="status"
-                        items={Object.values(UserStatusEnum)}
-                        onValueChange={(value) => {
-                          field.onChange(value === "" ? undefined : value);
-                        }}
-                        {...field}
-                      >
-                        <ComboboxInput placeholder="Select role" showClear />
-                        <ComboboxContent>
-                          <ComboboxEmpty>No items found.</ComboboxEmpty>
-                          <ComboboxList>
-                            {(item) => (
-                              <ComboboxItem key={item} value={item}>
-                                {item}
-                              </ComboboxItem>
-                            )}
-                          </ComboboxList>
-                        </ComboboxContent>
-                      </Combobox>
-                    </Field>
-                  )}
-                />
-              </FieldGroup>
-
-              <FieldGroup className="mt-2">
-                <Field orientation="horizontal">
-                  <Button
-                    className="ms-auto"
-                    variant="outline"
-                    type="reset"
-                    onClick={onFilterReset}
-                  >
-                    Clear
-                  </Button>
-
-                  <Button type="submit">Apply</Button>
-                </Field>
-              </FieldGroup>
-            </form>
-          </PopoverContent>
-        </Popover>
-
-        <InputGroup>
-          <InputGroupInput
-            placeholder="Search..."
-            onChange={(val) => onSearchChange(val.target.value)}
-          />
-          <InputGroupAddon>
-            <Search />
-          </InputGroupAddon>
-        </InputGroup>
-      </div>
-
-      <div className="flex flex-col">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext(),
+                        <FieldLabel htmlFor="role">Role</FieldLabel>
+                        <Combobox
+                          id="role"
+                          items={Object.values(RoleKeyEnum)}
+                          onValueChange={field.onChange}
+                          {...field}
+                        >
+                          <ComboboxInput placeholder="Select role" showClear />
+                          <ComboboxContent>
+                            <ComboboxEmpty>No items found.</ComboboxEmpty>
+                            <ComboboxList>
+                              {(item) => (
+                                <ComboboxItem key={item} value={item}>
+                                  {item}
+                                </ComboboxItem>
+                              )}
+                            </ComboboxList>
+                          </ComboboxContent>
+                        </Combobox>
+                      </Field>
                     )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
+                  />
 
-          <TableBody>
-            {!isLoading &&
-              table.getRowModel().rows.map((row) => {
-                return (
-                  <TableRow key={row.id}>
-                    {row.getVisibleCells().map((cell) => {
-                      return (
-                        <TableCell key={cell.id}>
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
-                        </TableCell>
-                      );
-                    })}
-                  </TableRow>
-                );
-              })}
+                  <Controller
+                    name="status"
+                    control={control}
+                    render={({ field, fieldState }) => (
+                      <Field
+                        className="grid gap-2"
+                        data-invalid={fieldState.invalid}
+                      >
+                        <FieldLabel htmlFor="status">Status</FieldLabel>
+                        <Combobox
+                          id="status"
+                          items={Object.values(UserStatusEnum)}
+                          onValueChange={(value) => {
+                            field.onChange(value === "" ? undefined : value);
+                          }}
+                          {...field}
+                        >
+                          <ComboboxInput placeholder="Select role" showClear />
+                          <ComboboxContent>
+                            <ComboboxEmpty>No items found.</ComboboxEmpty>
+                            <ComboboxList>
+                              {(item) => (
+                                <ComboboxItem key={item} value={item}>
+                                  {item}
+                                </ComboboxItem>
+                              )}
+                            </ComboboxList>
+                          </ComboboxContent>
+                        </Combobox>
+                      </Field>
+                    )}
+                  />
+                </FieldGroup>
 
-            {isLoading && isLoadingColElement}
-          </TableBody>
-        </Table>
+                <FieldGroup className="mt-2">
+                  <Field orientation="horizontal">
+                    <Button
+                      className="ms-auto"
+                      variant="outline"
+                      type="reset"
+                      onClick={onFilterReset}
+                    >
+                      Clear
+                    </Button>
 
-        {!isLoading && (
-          <div className="flex flex-col md:flex-row justify-end items-center gap-2">
-            <span>
-              {indexStart} - {indexEnd} of {indexEnd} items
-            </span>
+                    <Button type="submit">Apply</Button>
+                  </Field>
+                </FieldGroup>
+              </form>
+            </PopoverContent>
+          </Popover>
 
-            <ButtonGroup>
-              <Button
-                variant="ghost"
-                size="icon"
-                disabled={isFirstPage}
-                onClick={prevPage}
-              >
-                <ChevronLeft />
-              </Button>
+          <InputGroup>
+            <InputGroupInput
+              placeholder="Search..."
+              onChange={(val) => onSearchChange(val.target.value)}
+            />
+            <InputGroupAddon>
+              <Search />
+            </InputGroupAddon>
+          </InputGroup>
+        </div>
+      </DataTable>
 
-              {pages.map((page) => (
-                <Button
-                  key={page}
-                  variant="ghost"
-                  size="icon"
-                  disabled={page === pageIndex / pageSize + 1}
-                  onClick={() => jumpPage(page)}
-                >
-                  {page}
-                </Button>
-              ))}
-
-              <Button
-                variant="ghost"
-                size="icon"
-                disabled={isLastPage}
-                onClick={nextPage}
-              >
-                <ChevronRight />
-              </Button>
-            </ButtonGroup>
-
-            <Select
-              items={pageSizeOptions}
-              value={pageSize.toString()}
-              onValueChange={(val) =>
-                setPageSize(parseInt(val || pageSize.toString()))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  {pageSizeOptions.map((item) => (
-                    <SelectItem key={item.value} value={item.value}>
-                      {item.label}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-      </div>
-    </div>
+      <AlertDialog
+        open={!!confirmatedDeletedId}
+        onOpenChange={() => setConfirmatedDeletedId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              data from the server.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={onDeleteUser}>
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

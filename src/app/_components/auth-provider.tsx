@@ -18,7 +18,7 @@ export function AuthProvider({ children, ...props }: TAuthProviderProps) {
   const queryClient = useQueryClient();
 
   const authQuery = useQuery({
-    queryKey: CONFIG.QUERY_KEY.REQUESTOR_API.AUTH.ME(),
+    queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.AUTH.ME()],
     queryFn: authMe,
     enabled: !!AccessToken.get(),
     refetchOnWindowFocus: false,
@@ -29,9 +29,9 @@ export function AuthProvider({ children, ...props }: TAuthProviderProps) {
 
   const logout = useCallback(() => {
     AccessToken.remove();
-    queryClient.setQueryData(CONFIG.QUERY_KEY.REQUESTOR_API.AUTH.ME(), null);
+    queryClient.setQueryData([CONFIG.QUERY_KEY.REQUESTOR_API.AUTH.ME()], null);
     queryClient.removeQueries({
-      queryKey: CONFIG.QUERY_KEY.REQUESTOR_API.AUTH.ALL(),
+      queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.AUTH.ALL()],
     });
   }, [queryClient]);
 

@@ -1,5 +1,8 @@
 import AppBreadcrumb from "@/app/_components/app-breadcrumb";
 import UserTable from "@/app/users/_components/user-table";
+import { Button } from "../_components/ui/button";
+import { Plus } from "lucide-react";
+import { Link } from "react-router";
 
 export function meta() {
   return [
@@ -21,7 +24,13 @@ export default function UserPage() {
       <div className="w-full max-w-7xl flex flex-col px-10">
         <AppBreadcrumb items={breadcrumbItems} />
 
-        <h1 className="mt-4 mb-6 font-heading text-2xl">Users</h1>
+        <div className="flex justify-between items-center">
+          <h1 className="mt-4 mb-6 font-heading text-2xl">Users</h1>
+
+          <Button render={<Link to="/users/create" />} nativeButton={false}>
+            <Plus /> Add User
+          </Button>
+        </div>
 
         <UserTable />
       </div>
