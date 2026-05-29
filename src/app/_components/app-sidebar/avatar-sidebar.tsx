@@ -30,6 +30,7 @@ export function AvatarSidebar() {
             <SidebarMenuButton
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              render={<div />}
             >
               {isLoading && <Skeleton className="h-8 w-8 rounded-full" />}
 

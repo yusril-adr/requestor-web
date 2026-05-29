@@ -1,4 +1,4 @@
-import type { RoleKeyEnum } from "@/api/requestor/users/enums/role-key";
+import type { RoleKeyEnum } from "@/common/enums/role-key";
 import type { LucideIcon } from "lucide-react";
 
 export type TNavSidebar = {

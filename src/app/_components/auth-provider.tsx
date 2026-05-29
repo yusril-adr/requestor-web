@@ -25,7 +25,7 @@ export function AuthProvider({ children, ...props }: TAuthProviderProps) {
     retry: false,
   });
 
-  const auth = authQuery?.data?.data.data ?? null;
+  const auth = authQuery?.data?.data?.data ?? null;
 
   const logout = useCallback(() => {
     AccessToken.remove();

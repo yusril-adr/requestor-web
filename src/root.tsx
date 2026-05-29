@@ -41,7 +41,7 @@ export default function Root() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ThemeProvider>
-          <SidebarProvider>
+          <SidebarProvider defaultOpen>
             <Outlet />
           </SidebarProvider>
         </ThemeProvider>
@@ -51,16 +51,16 @@ export default function Root() {
 }
 
 // global error boundary
-// export function ErrorBoundary({ error }: { error: unknown }) {
-//   return (
-//     <html>
-//       <head>
-//         <title>Error</title>
-//       </head>
-//       <body>
-//         <h1>Something went wrong</h1>
-//         <pre>{error instanceof Error ? error.message : "Unknown error"}</pre>
-//       </body>
-//     </html>
-//   );
-// }
+export function ErrorBoundary({ error }: { error: unknown }) {
+  return (
+    <html>
+      <head>
+        <title>Error</title>
+      </head>
+      <body>
+        <h1>Something went wrong</h1>
+        <pre>{error instanceof Error ? error.message : "Unknown error"}</pre>
+      </body>
+    </html>
+  );
+}

@@ -43,6 +43,10 @@ export function LoginForm() {
 
   const { control, handleSubmit, setError } = useForm<TLoginSchema>({
     resolver: zodResolver(LoginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
   });
 
   const mutation = useMutation({
