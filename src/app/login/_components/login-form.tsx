@@ -31,7 +31,10 @@ import type {
   TRequestorApiErrorResponse,
 } from "@/api/requestor/types/response";
 import type { TLoginPayload } from "@/api/requestor/auth/login/types/login-payload";
-import { LoginSchema, type TLoginSchema } from "@/app/login/_schema/login";
+import {
+  LoginFormSchema,
+  type TLoginFormSchema,
+} from "@/app/login/_schema/login-form";
 import AccessToken from "@/libs/local-storage/access-token";
 import CONFIG from "@/common/constants/config";
 
@@ -41,15 +44,11 @@ export function LoginForm() {
 
   const queryClient = useQueryClient();
 
-  const { control, handleSubmit, setError } = useForm<TLoginSchema>({
-    resolver: zodResolver(LoginSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
+  const { control, handleSubmit, setError } = useForm<TLoginFormSchema>({
+    resolver: zodResolver(LoginFormSchema),
   });
 
-  const mutation = useMutation({
+  const loginMutation = useMutation({
     mutationFn: login,
     onMutate: () => {
       toast.loading("Logging in...");
@@ -107,17 +106,17 @@ export function LoginForm() {
     },
   });
 
-  const onSubmit: SubmitHandler<TLoginSchema> = (data) => {
+  const onSubmit: SubmitHandler<TLoginFormSchema> = (data) => {
     const payload: TLoginPayload = {
       email: data.email,
       password: data.password,
     };
-    mutation.mutate(payload);
+    loginMutation.mutate(payload);
   };
 
   const isFormDisabled = useMemo(
-    () => mutation.isPending || mutation.isPaused,
-    [mutation],
+    () => loginMutation.isPending || loginMutation.isPaused,
+    [loginMutation],
   );
 
   return (
@@ -163,7 +162,7 @@ export function LoginForm() {
                   <FieldLabel htmlFor="password">Password</FieldLabel>
                   <InputGroup>
                     <InputGroupInput
-                      id="inline-end-input"
+                      id="password"
                       type={isShowPassword ? "text" : "password"}
                       placeholder="Enter password"
                       autoComplete="off"

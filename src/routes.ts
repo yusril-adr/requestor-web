@@ -9,7 +9,9 @@ export default [
   layout("./app/_components/layout/protected-layout.tsx", [
     layout("./app/_components/layout/app-sidebar-layout.tsx", [
       index("./app/page.tsx"),
+
       route("/users", "./app/users/page.tsx"),
+      route("/users/create", "./app/users/create/page.tsx"),
     ]),
   ]),
 

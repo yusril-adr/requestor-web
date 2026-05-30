@@ -5,6 +5,7 @@ import {
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
+  BreadcrumbSeparator,
 } from "./ui/breadcrumb";
 
 type BreadcrumbPageProps = {
@@ -19,15 +20,19 @@ export default function AppBreadcrumb({ items }: BreadcrumbPageProps) {
     <Breadcrumb>
       <BreadcrumbList>
         {items.map((item, index) => (
-          <BreadcrumbItem key={index}>
-            {item.link ? (
-              <BreadcrumbLink
-                render={<Link to={item.link}>{item.name}</Link>}
-              />
-            ) : (
-              <BreadcrumbPage>{item.name}</BreadcrumbPage>
-            )}
-          </BreadcrumbItem>
+          <>
+            <BreadcrumbItem key={index}>
+              {item.link ? (
+                <BreadcrumbLink
+                  render={<Link to={item.link}>{item.name}</Link>}
+                />
+              ) : (
+                <BreadcrumbPage>{item.name}</BreadcrumbPage>
+              )}
+            </BreadcrumbItem>
+
+            {index !== items.length - 1 && <BreadcrumbSeparator />}
+          </>
         ))}
       </BreadcrumbList>
     </Breadcrumb>
