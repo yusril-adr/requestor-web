@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowDown01,
   ArrowDown10,
@@ -210,26 +210,28 @@ export default function UserTable() {
     queryFn: () => getUserPagination(mappedQueryTablePayload),
   });
 
-  if (isError && error) {
-    toast.dismiss();
-    if (axios.isAxiosError(error)) {
-      const statusCode = error.response?.status;
+  useEffect(() => {
+    if (isError && error) {
+      toast.dismiss();
+      if (axios.isAxiosError(error)) {
+        const statusCode = error.response?.status;
 
-      const defaultErrorResponse = error.response
-        ?.data as TRequestorApiResponse<null>;
+        const defaultErrorResponse = error.response
+          ?.data as TRequestorApiResponse<null>;
 
-      switch (statusCode) {
-        case 401:
-          console.log("401");
-          toast.error(defaultErrorResponse.message as string);
-          logout();
-          break;
-        default:
-          toast.error(defaultErrorResponse.message as string);
-          break;
+        switch (statusCode) {
+          case 401:
+            console.log("401");
+            toast.error(defaultErrorResponse.message as string);
+            logout();
+            break;
+          default:
+            toast.error(defaultErrorResponse.message as string);
+            break;
+        }
       }
     }
-  }
+  }, [isError, error, logout]);
 
   const ascIcon = <ArrowDown01 />;
   const descIcon = <ArrowDown10 />;
@@ -297,7 +299,7 @@ export default function UserTable() {
       header: "No.",
       cell: ({ row, table }) => {
         const pageIndex = table.getState().pagination.pageIndex;
-        return pageIndex + row.index + 1;
+        return `${pageIndex + row.index + 1}.`;
       },
     }),
 
@@ -318,7 +320,14 @@ export default function UserTable() {
           {queryTable?.sortBy !== "name" && <ArrowUpDown />}
         </Button>
       ),
-      cell: (info) => info.getValue(),
+      cell: ({ row }) => {
+        const user = row.original;
+        return (
+          <Button variant="link" render={<Link to={`/users/${user.id}`} />}>
+            {user.name}
+          </Button>
+        );
+      },
     }),
 
     columnHelper.accessor("email", {

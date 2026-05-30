@@ -1,8 +1,13 @@
 import type { TNavSidebar } from "@/app/_types/nav-sidebar";
-import { FileClock, Shredder, Users } from "lucide-react";
+import { FileClock, Gauge, Shredder, Users } from "lucide-react";
 import { RoleKeyEnum } from "../enums/role-key";
 
 const NAV_ROUTES: TNavSidebar[] = [
+  {
+    title: "Dashboard",
+    icon: Gauge,
+    path: "/",
+  },
   {
     title: "Users",
     icon: Users,

@@ -43,10 +43,12 @@ import type {
   TRequestorApiResponse,
 } from "@/api/requestor/types/response";
 import type { TUserCreatePayload } from "@/api/requestor/users/types/user-create-payload";
+import { useAuth } from "@/app/_hooks/use-auth";
 
 export default function UserCreateForm() {
   const navigate = useNavigate();
   const [isShowPassword, setIsShowPassword] = useState(false);
+  const { logout } = useAuth();
 
   const { control, handleSubmit, setError } = useForm<TUserCreateFormSchema>({
     resolver: zodResolver(UserCreateFormSchema),
@@ -95,6 +97,12 @@ export default function UserCreateForm() {
               toast.error(defaultErrorResponse.message as string);
             }
             break;
+
+          case 401:
+            toast.error(defaultErrorResponse.message as string);
+            logout();
+            break;
+
           default:
             toast.error(defaultErrorResponse.message as string);
             break;
@@ -127,7 +135,7 @@ export default function UserCreateForm() {
     <form onSubmit={handleSubmit(onSubmit)}>
       <Card>
         <CardContent>
-          <FieldGroup className="grid grid-cols-2">
+          <FieldGroup className="grid md:grid-cols-2">
             <Controller
               name="name"
               control={control}

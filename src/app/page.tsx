@@ -15,14 +15,8 @@ export default function IndexPage() {
 
   return (
     <div className="w-full h-[calc(100vh - 32px)] flex justify-center">
-      <div className="flex w-full max-w-7xl px-10">
+      <div className="w-full max-w-7xl flex flex-col  px-10">
         <span>Index Page</span>
-
-        <Button>
-          <Link to="/login">Login</Link>
-        </Button>
-
-        <Button onClick={logout}>Logout</Button>
       </div>
     </div>
   );

@@ -20,6 +20,11 @@ type Pages = {
   "/users/create": {
     params: {};
   };
+  "/users/:id": {
+    params: {
+      "id": string;
+    };
+  };
   "/login": {
     params: {};
   };
@@ -33,15 +38,15 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/users" | "/users/create" | "/login" | "/*";
+    page: "/" | "/users" | "/users/create" | "/users/:id" | "/login" | "/*";
   };
   "./app/_components/layout/protected-layout.tsx": {
     id: "app/_components/layout/protected-layout";
-    page: "/" | "/users" | "/users/create";
+    page: "/" | "/users" | "/users/create" | "/users/:id";
   };
   "./app/_components/layout/app-sidebar-layout.tsx": {
     id: "app/_components/layout/app-sidebar-layout";
-    page: "/" | "/users" | "/users/create";
+    page: "/" | "/users" | "/users/create" | "/users/:id";
   };
   "./app/page.tsx": {
     id: "app/page";
@@ -54,6 +59,10 @@ type RouteFiles = {
   "./app/users/create/page.tsx": {
     id: "app/users/create/page";
     page: "/users/create";
+  };
+  "./app/users/[id]/page.tsx": {
+    id: "app/users/[id]/page";
+    page: "/users/:id";
   };
   "./app/_components/layout/non-login-layout.tsx": {
     id: "app/_components/layout/non-login-layout";
@@ -76,6 +85,7 @@ type RouteModules = {
   "app/page": typeof import("./src/./app/page.tsx");
   "app/users/page": typeof import("./src/./app/users/page.tsx");
   "app/users/create/page": typeof import("./src/./app/users/create/page.tsx");
+  "app/users/[id]/page": typeof import("./src/./app/users/[id]/page.tsx");
   "app/_components/layout/non-login-layout": typeof import("./src/./app/_components/layout/non-login-layout.tsx");
   "app/login/page": typeof import("./src/./app/login/page.tsx");
   "app/errors/not-found/page": typeof import("./src/./app/errors/not-found/page.tsx");

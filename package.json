@@ -25,6 +25,7 @@
     "axios": "^1.16.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "dayjs": "^1.11.21",
     "isbot": "^5",
     "lucide-react": "^1.16.0",
     "next-themes": "^0.4.6",
