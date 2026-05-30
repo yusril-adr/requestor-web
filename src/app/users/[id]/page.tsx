@@ -80,7 +80,7 @@ export default function UserDetailPage() {
   );
 
   return (
-    <div className="w-full h-[calc(100vh - 32px)] flex justify-center">
+    <div className="w-full flex justify-center">
       <div className="w-full max-w-7xl flex flex-col px-10">
         <AppBreadcrumb items={breadcrumbItems} />
 

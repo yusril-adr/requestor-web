@@ -13,6 +13,7 @@ export default [
       route("/users", "./app/users/page.tsx"),
       route("/users/create", "./app/users/create/page.tsx"),
       route("/users/:id", "./app/users/[id]/page.tsx"),
+      route("/users/:id/edit", "./app/users/[id]/edit/page.tsx"),
     ]),
   ]),
 

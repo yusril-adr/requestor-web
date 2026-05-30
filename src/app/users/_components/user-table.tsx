@@ -299,7 +299,9 @@ export default function UserTable() {
       header: "No.",
       cell: ({ row, table }) => {
         const pageIndex = table.getState().pagination.pageIndex;
-        return `${pageIndex + row.index + 1}.`;
+        const pageSize = table.getState().pagination.pageSize;
+        const startIndex = (pageIndex - 1) * pageSize;
+        return `${startIndex + row.index + 1}.`;
       },
     }),
 
@@ -323,7 +325,11 @@ export default function UserTable() {
       cell: ({ row }) => {
         const user = row.original;
         return (
-          <Button variant="link" render={<Link to={`/users/${user.id}`} />}>
+          <Button
+            variant="link"
+            render={<Link to={`/users/${user.id}`} />}
+            nativeButton={false}
+          >
             {user.name}
           </Button>
         );
@@ -464,16 +470,6 @@ export default function UserTable() {
     return sort;
   }, [queryTable?.sortBy, queryTable?.order]);
 
-  const pageIndex = useMemo(
-    () =>
-      ((responseData?.data?.data?.meta?.current_page || 1) - 1) *
-        (responseData?.data?.data?.meta?.max_view || 1) || 0,
-    [
-      responseData?.data?.data?.meta?.current_page,
-      responseData?.data?.data?.meta?.max_view,
-    ],
-  );
-
   return (
     <>
       <DataTable
@@ -482,7 +478,7 @@ export default function UserTable() {
         isLoading={isLoading}
         pageCount={responseData?.data?.data?.meta?.total_page || 1}
         rowCount={responseData?.data?.data?.meta?.total_all_data || 0}
-        pageIndex={pageIndex}
+        pageIndex={responseData?.data?.data?.meta?.current_page || 1}
         pageSize={queryTable?.pageSize || 10}
         sorting={sorting}
         columnFilters={columnFilters}

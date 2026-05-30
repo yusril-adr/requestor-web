@@ -85,6 +85,11 @@ export function DataTable<TData>({
   const { state: tableOptionsState, ...restTableOptions } = tableOptions ?? {};
   const totalRowInCurrentPage = data.length;
 
+  const dataStartIndex = useMemo(
+    () => (pageIndex - 1) * pageSize || 0,
+    [pageIndex, pageSize],
+  );
+
   const tableState = useMemo(
     () => ({
       pagination: { pageIndex, pageSize },
@@ -104,13 +109,15 @@ export function DataTable<TData>({
     ...restTableOptions,
   });
 
-  const currentPage = Math.ceil(pageIndex / pageSize) + 1;
-  const pages = generatePages({ currentPage, totalPages: pageCount });
+  const pages = generatePages({
+    currentPage: pageIndex,
+    totalPages: pageCount,
+  });
 
-  const indexStart = rowCount === 0 ? 0 : pageIndex + 1;
-  const indexEnd = Math.min(pageIndex + totalRowInCurrentPage, rowCount);
-  const isFirstPage = currentPage === 1;
-  const isLastPage = currentPage === pageCount;
+  const indexStart = rowCount === 0 ? 0 : dataStartIndex + 1;
+  const indexEnd = Math.min(dataStartIndex + totalRowInCurrentPage, rowCount);
+  const isFirstPage = pageIndex === 1;
+  const isLastPage = pageIndex === pageCount;
 
   const columnCount =
     table.getHeaderGroups().at(0)?.headers.length ?? columns.length;
@@ -175,7 +182,7 @@ export function DataTable<TData>({
                 variant="ghost"
                 size="icon"
                 disabled={isFirstPage}
-                onClick={() => onPageChange?.(currentPage - 1)}
+                onClick={() => onPageChange?.(pageIndex - 1)}
               >
                 <ChevronLeft />
               </Button>
@@ -185,7 +192,7 @@ export function DataTable<TData>({
                   key={page}
                   variant="ghost"
                   size="icon"
-                  disabled={page === currentPage}
+                  disabled={page === pageIndex}
                   onClick={() => onPageChange?.(page)}
                 >
                   {page}
@@ -196,7 +203,7 @@ export function DataTable<TData>({
                 variant="ghost"
                 size="icon"
                 disabled={isLastPage}
-                onClick={() => onPageChange?.(currentPage + 1)}
+                onClick={() => onPageChange?.(pageIndex + 1)}
               >
                 <ChevronRight />
               </Button>

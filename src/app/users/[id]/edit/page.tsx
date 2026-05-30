@@ -2,24 +2,24 @@ import { Link } from "react-router";
 import { ArrowLeft } from "lucide-react";
 
 import AppBreadcrumb from "@/app/_components/app-breadcrumb";
-import UserCreateForm from "@/app/users/create/_components/user-create-form";
+import UserEditForm from "@/app/users/[id]/edit/_components/user-edit-form";
 
 export function meta() {
   return [
     {
-      title: "Requestor - Create User",
+      title: "Requestor - Update User",
     },
   ];
 }
 
-export default function UserCreatePage() {
+export default function UserEditPage() {
   const breadcrumbItems = [
     {
       name: "Users",
       link: "/users",
     },
     {
-      name: "Create",
+      name: "Edit",
     },
   ];
 
@@ -32,10 +32,10 @@ export default function UserCreatePage() {
           <Link to={"/users"}>
             <ArrowLeft />
           </Link>
-          <h1 className="font-heading text-2xl">Create User</h1>
+          <h1 className="font-heading text-2xl">Edit User</h1>
         </div>
 
-        <UserCreateForm />
+        <UserEditForm />
       </div>
     </div>
   );

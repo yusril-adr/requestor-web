@@ -11,8 +11,8 @@ export function meta() {
 
 export default function Login() {
   return (
-    <div className="w-full h-[calc(100vh - 32px)] flex justify-center items-center">
-      <main className="flex w-full max-w-7xl px-10 relative">
+    <div className="w-full flex justify-center items-center">
+      <main className="flex w-full h-[calc(100vh-32px)] max-w-7xl px-10 relative">
         <div className="absolute right-0 top-0 pt-4">
           <ThemeToggler />
         </div>

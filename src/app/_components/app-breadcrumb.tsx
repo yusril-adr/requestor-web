@@ -8,11 +8,37 @@ import {
   BreadcrumbSeparator,
 } from "./ui/breadcrumb";
 
+type BreadcrumbPageItemProp = {
+  name: string;
+  link?: string;
+};
+
 type BreadcrumbPageProps = {
-  items: {
-    name: string;
-    link?: string;
-  }[];
+  items: BreadcrumbPageItemProp[];
+};
+
+const BreadCrumbItemWithSeperator = ({
+  item,
+  index,
+  items,
+}: {
+  item: BreadcrumbPageItemProp;
+  index: number;
+  items: BreadcrumbPageItemProp[];
+}) => {
+  return (
+    <>
+      <BreadcrumbItem>
+        {item.link ? (
+          <BreadcrumbLink render={<Link to={item.link}>{item.name}</Link>} />
+        ) : (
+          <BreadcrumbPage>{item.name}</BreadcrumbPage>
+        )}
+      </BreadcrumbItem>
+
+      {index !== items.length - 1 && <BreadcrumbSeparator />}
+    </>
+  );
 };
 
 export default function AppBreadcrumb({ items }: BreadcrumbPageProps) {
@@ -20,19 +46,12 @@ export default function AppBreadcrumb({ items }: BreadcrumbPageProps) {
     <Breadcrumb>
       <BreadcrumbList>
         {items.map((item, index) => (
-          <>
-            <BreadcrumbItem key={index}>
-              {item.link ? (
-                <BreadcrumbLink
-                  render={<Link to={item.link}>{item.name}</Link>}
-                />
-              ) : (
-                <BreadcrumbPage>{item.name}</BreadcrumbPage>
-              )}
-            </BreadcrumbItem>
-
-            {index !== items.length - 1 && <BreadcrumbSeparator />}
-          </>
+          <BreadCrumbItemWithSeperator
+            key={index}
+            item={item}
+            index={index}
+            items={items}
+          />
         ))}
       </BreadcrumbList>
     </Breadcrumb>

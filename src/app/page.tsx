@@ -1,6 +1,4 @@
-import { Button } from "@/app/_components/ui/button";
-import { Link } from "react-router";
-import { useAuth } from "./_hooks/use-auth";
+import UserTable from "./users/_components/user-table";
 
 export function meta() {
   return [
@@ -11,13 +9,13 @@ export function meta() {
 }
 
 export default function IndexPage() {
-  const { logout } = useAuth();
-
   return (
-    <div className="w-full h-[calc(100vh - 32px)] flex justify-center">
-      <div className="w-full max-w-7xl flex flex-col  px-10">
+    <div className="w-full flex flex-col">
+      <div className="w-full max-w-7xl flex flex-col px-10">
         <span>Index Page</span>
       </div>
+
+      <UserTable />
     </div>
   );
 }

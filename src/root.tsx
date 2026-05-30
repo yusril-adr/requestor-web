@@ -41,7 +41,7 @@ export default function Root() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ThemeProvider>
-          <SidebarProvider defaultOpen>
+          <SidebarProvider>
             <Outlet />
           </SidebarProvider>
         </ThemeProvider>

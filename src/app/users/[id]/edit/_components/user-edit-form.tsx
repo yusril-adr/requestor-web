@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import axios from "axios";
@@ -31,41 +31,87 @@ import { Button } from "@/app/_components/ui/button";
 import { Spinner } from "@/app/_components/ui/spinner";
 
 import {
-  UserCreateFormSchema,
-  type TUserCreateFormSchema,
-} from "@/app/users/create/_schema/user-create-form";
+  UserEditFormSchema,
+  type TUserEditFormSchema,
+} from "@/app/users/[id]/edit/_schema/user-edit-form";
 import { RoleKeyEnum } from "@/common/enums/role-key";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createUser } from "@/api/requestor/users";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getUserById, updateUserById } from "@/api/requestor/users/[id]";
 import CONFIG from "@/common/constants/config";
 import type {
   TRequestorApiErrorResponse,
   TRequestorApiResponse,
 } from "@/api/requestor/types/response";
-import type { TUserCreatePayload } from "@/api/requestor/users/types/user-create-payload";
+import type { TUserUpdatePayload } from "@/api/requestor/users/[id]/types/user-update-payload";
 import { useAuth } from "@/app/_hooks/use-auth";
+import { UserStatusEnum } from "@/api/requestor/users/enums/user-status";
 
-export default function UserCreateForm() {
+export default function UserEditForm() {
+  const params = useParams();
   const navigate = useNavigate();
   const [isShowPassword, setIsShowPassword] = useState(false);
   const { logout } = useAuth();
 
-  const { control, handleSubmit, setError } = useForm<TUserCreateFormSchema>({
-    resolver: zodResolver(UserCreateFormSchema),
-    defaultValues: {
-      role: RoleKeyEnum.VIEWER,
-    },
+  const getUserDataQuery = useQuery({
+    queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.USER.ALL(), params.id],
+    queryFn: () => getUserById(params.id as string),
+    enabled: !!params.id,
+  });
+
+  useEffect(() => {
+    if (
+      getUserDataQuery.isError &&
+      axios.isAxiosError(getUserDataQuery.error)
+    ) {
+      const statusCode = getUserDataQuery.error.response?.status;
+
+      const defaultErrorResponse = getUserDataQuery.error.response
+        ?.data as TRequestorApiResponse<null>;
+
+      switch (statusCode) {
+        case 401:
+          toast.error(defaultErrorResponse.message as string);
+          logout();
+          break;
+        case 404:
+          toast.error("User not found");
+          navigate("/users");
+          break;
+        default:
+          toast.error(defaultErrorResponse.message as string);
+          break;
+      }
+    }
+  }, [getUserDataQuery]);
+
+  const defaultValues = useMemo(() => {
+    return {
+      name: getUserDataQuery.data?.data?.data?.name || "",
+      email: getUserDataQuery.data?.data?.data?.email || "",
+      role:
+        (getUserDataQuery.data?.data?.data?.role as RoleKeyEnum | undefined) ||
+        RoleKeyEnum.VIEWER,
+      status:
+        (getUserDataQuery.data?.data?.data?.status as
+          | UserStatusEnum
+          | undefined) || UserStatusEnum.SUSPENDED,
+    };
+  }, [getUserDataQuery]);
+
+  const { control, handleSubmit, setError } = useForm<TUserEditFormSchema>({
+    resolver: zodResolver(UserEditFormSchema),
+    values: defaultValues,
   });
 
   const queryClient = useQueryClient();
-  const createUserMutation = useMutation({
-    mutationFn: createUser,
+  const updateUserMutation = useMutation({
+    mutationFn: updateUserById,
     onMutate: () => {
-      toast.loading("Creating user...");
+      toast.loading("Updating user...");
     },
     onSuccess: () => {
       toast.dismiss();
-      toast.success("User created");
+      toast.success("User updated.");
       queryClient.invalidateQueries({
         queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.USER.ALL()],
       });
@@ -84,7 +130,7 @@ export default function UserCreateForm() {
             const validationErrorResponse = error.response
               ?.data as TRequestorApiResponse<
               null,
-              TRequestorApiErrorResponse<TUserCreatePayload>
+              TRequestorApiErrorResponse<TUserUpdatePayload>
             >;
 
             if (Array.isArray(validationErrorResponse.message)) {
@@ -115,20 +161,25 @@ export default function UserCreateForm() {
     },
   });
 
-  const onSubmit: SubmitHandler<TUserCreateFormSchema> = (data) => {
-    const payload: TUserCreatePayload = {
+  const onSubmit: SubmitHandler<TUserEditFormSchema> = (data) => {
+    const payload: TUserUpdatePayload = {
       name: data.name,
       email: data.email,
       password: data.password,
       role: data.role,
+      status: data.status,
     };
 
-    createUserMutation.mutate(payload);
+    updateUserMutation.mutate({ id: params.id as string, payload });
   };
 
   const isFormDisabled = useMemo(
-    () => createUserMutation.isPending || createUserMutation.isPaused,
-    [createUserMutation],
+    () =>
+      updateUserMutation.isPending ||
+      updateUserMutation.isPaused ||
+      getUserDataQuery.isLoading ||
+      getUserDataQuery.isPaused,
+    [updateUserMutation, getUserDataQuery],
   );
 
   return (
@@ -216,6 +267,38 @@ export default function UserCreateForm() {
                     {...field}
                   >
                     <ComboboxInput placeholder="Select role" showClear />
+                    <ComboboxContent>
+                      <ComboboxEmpty>No items found.</ComboboxEmpty>
+                      <ComboboxList>
+                        {(item) => (
+                          <ComboboxItem key={item} value={item}>
+                            {item}
+                          </ComboboxItem>
+                        )}
+                      </ComboboxList>
+                    </ComboboxContent>
+                  </Combobox>
+
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+
+            <Controller
+              name="status"
+              control={control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="status">Status</FieldLabel>
+                  <Combobox
+                    id="status"
+                    items={Object.values(UserStatusEnum)}
+                    onValueChange={field.onChange}
+                    {...field}
+                  >
+                    <ComboboxInput placeholder="Select status" showClear />
                     <ComboboxContent>
                       <ComboboxEmpty>No items found.</ComboboxEmpty>
                       <ComboboxList>
