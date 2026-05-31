@@ -3,7 +3,7 @@ export type TAuditLogResponse = {
   actor_name: string;
   action: string;
   target_type: string;
-  terget_id: string;
+  target_id: string;
   created_at: string;
   updated_at: string;
 };

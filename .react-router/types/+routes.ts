@@ -46,6 +46,9 @@ type Pages = {
       "id": string;
     };
   };
+  "/audit-logs": {
+    params: {};
+  };
   "/login": {
     params: {};
   };
@@ -59,15 +62,15 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/users" | "/users/create" | "/users/:id" | "/users/:id/edit" | "/requests" | "/requests/create" | "/requests/:id" | "/requests/:id/edit" | "/login" | "/*";
+    page: "/" | "/users" | "/users/create" | "/users/:id" | "/users/:id/edit" | "/requests" | "/requests/create" | "/requests/:id" | "/requests/:id/edit" | "/audit-logs" | "/login" | "/*";
   };
   "./app/_components/layout/protected-layout.tsx": {
     id: "app/_components/layout/protected-layout";
-    page: "/" | "/users" | "/users/create" | "/users/:id" | "/users/:id/edit" | "/requests" | "/requests/create" | "/requests/:id" | "/requests/:id/edit";
+    page: "/" | "/users" | "/users/create" | "/users/:id" | "/users/:id/edit" | "/requests" | "/requests/create" | "/requests/:id" | "/requests/:id/edit" | "/audit-logs";
   };
   "./app/_components/layout/app-sidebar-layout.tsx": {
     id: "app/_components/layout/app-sidebar-layout";
-    page: "/" | "/users" | "/users/create" | "/users/:id" | "/users/:id/edit" | "/requests" | "/requests/create" | "/requests/:id" | "/requests/:id/edit";
+    page: "/" | "/users" | "/users/create" | "/users/:id" | "/users/:id/edit" | "/requests" | "/requests/create" | "/requests/:id" | "/requests/:id/edit" | "/audit-logs";
   };
   "./app/page.tsx": {
     id: "app/page";
@@ -105,6 +108,10 @@ type RouteFiles = {
     id: "app/requests/[id]/edit/page";
     page: "/requests/:id/edit";
   };
+  "./app/audit-logs/page.tsx": {
+    id: "app/audit-logs/page";
+    page: "/audit-logs";
+  };
   "./app/_components/layout/non-login-layout.tsx": {
     id: "app/_components/layout/non-login-layout";
     page: "/login";
@@ -132,6 +139,7 @@ type RouteModules = {
   "app/requests/create/page": typeof import("./src/./app/requests/create/page.tsx");
   "app/requests/[id]/page": typeof import("./src/./app/requests/[id]/page.tsx");
   "app/requests/[id]/edit/page": typeof import("./src/./app/requests/[id]/edit/page.tsx");
+  "app/audit-logs/page": typeof import("./src/./app/audit-logs/page.tsx");
   "app/_components/layout/non-login-layout": typeof import("./src/./app/_components/layout/non-login-layout.tsx");
   "app/login/page": typeof import("./src/./app/login/page.tsx");
   "app/errors/not-found/page": typeof import("./src/./app/errors/not-found/page.tsx");

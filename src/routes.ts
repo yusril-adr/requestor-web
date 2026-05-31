@@ -19,6 +19,8 @@ export default [
       route("/requests/create", "./app/requests/create/page.tsx"),
       route("/requests/:id", "./app/requests/[id]/page.tsx"),
       route("/requests/:id/edit", "./app/requests/[id]/edit/page.tsx"),
+
+      route("/audit-logs", "./app/audit-logs/page.tsx"),
     ]),
   ]),
 
