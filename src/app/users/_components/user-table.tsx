@@ -3,11 +3,13 @@ import {
   ArrowDown01,
   ArrowDown10,
   ArrowUpDown,
+  Ban,
   EllipsisVertical,
   Eye,
   Funnel,
   Pencil,
   Search,
+  ShieldCheck,
   Trash,
 } from "lucide-react";
 import { Link, useSearchParams } from "react-router";
@@ -72,17 +74,21 @@ import axios from "axios";
 import type { TRequestorApiResponse } from "@/api/requestor/types/response";
 import { useAuth } from "@/app/_hooks/use-auth";
 import { DataTable } from "@/app/_components/data-table";
-import { deleteUserById } from "@/api/requestor/users/[id]";
+import { deleteUserById, updateUserById } from "@/api/requestor/users/[id]";
+
+type TConfirmedAction = {
+  id: string;
+  action: "delete" | "suspend" | "reactivate";
+};
 
 let debounceSearchTimeoutId: number | null = null;
 
 export default function UserTable() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { logout } = useAuth();
+  const { auth, logout } = useAuth();
   const queryClient = useQueryClient();
-  const [confirmatedDeletedId, setConfirmatedDeletedId] = useState<
-    string | null
-  >(null);
+  const [confirmatedAction, setConfirmatedAction] =
+    useState<TConfirmedAction | null>(null);
 
   const queryTable = useMemo(
     () => ({
@@ -139,13 +145,73 @@ export default function UserTable() {
     },
   });
 
-  const onDeleteUser = useCallback(() => {
-    if (confirmatedDeletedId) {
-      deleteUser(confirmatedDeletedId);
+  const { mutate: updateUser } = useMutation({
+    mutationFn: updateUserById,
+    onMutate: () => {
+      toast.loading("Updating user...");
+    },
+    onSuccess: () => {
+      toast.dismiss();
+      toast.success("User updated");
+      queryClient.invalidateQueries({
+        queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.USER.ALL()],
+      });
+    },
+    onError: (error) => {
+      toast.dismiss();
+      if (axios.isAxiosError(error)) {
+        const statusCode = error.response?.status;
+
+        const defaultErrorResponse = error.response
+          ?.data as TRequestorApiResponse<null>;
+
+        switch (statusCode) {
+          case 401:
+            toast.error(defaultErrorResponse.message as string);
+            logout();
+            break;
+
+          default:
+            toast.error(defaultErrorResponse.message as string);
+            break;
+        }
+
+        return;
+      }
+
+      toast.error(error.message as string);
+    },
+  });
+
+  const onActionHandler = useCallback(() => {
+    if (confirmatedAction?.id) {
+      switch (confirmatedAction.action) {
+        case "delete":
+          deleteUser(confirmatedAction.id);
+          break;
+        case "suspend":
+          updateUser({
+            id: confirmatedAction.id,
+            payload: {
+              status: UserStatusEnum.SUSPENDED,
+            },
+          });
+          break;
+        case "reactivate":
+          updateUser({
+            id: confirmatedAction.id,
+            payload: {
+              status: UserStatusEnum.SUSPENDED,
+            },
+          });
+          break;
+        default:
+          break;
+      }
     }
 
-    setConfirmatedDeletedId(null);
-  }, [confirmatedDeletedId, deleteUser]);
+    setConfirmatedAction(null);
+  }, [confirmatedAction, deleteUser]);
 
   const onSearchChange = (value: string) => {
     if (value && value !== "" && value.length < 3) {
@@ -292,6 +358,7 @@ export default function UserTable() {
     [setSearchParams],
   );
 
+  const allowedActionRoles = [RoleKeyEnum.ADMIN, RoleKeyEnum.OPERATOR];
   const columnHelper = createColumnHelper<TUserTableCol>();
   const columns = [
     columnHelper.display({
@@ -400,6 +467,7 @@ export default function UserTable() {
       id: "actions",
       header: "Action",
       cell: ({ row }) => {
+        const currentRole = auth?.role || RoleKeyEnum.VIEWER;
         const user = row.original;
 
         return (
@@ -417,19 +485,57 @@ export default function UserTable() {
                   <Eye />
                   View
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  render={<Link to={`/users/${user.id}/edit`} />}
-                >
-                  <Pencil />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  variant="destructive"
-                  onClick={() => setConfirmatedDeletedId(user.id)}
-                >
-                  <Trash />
-                  Delete{" "}
-                </DropdownMenuItem>
+
+                {allowedActionRoles.includes(currentRole) && (
+                  <DropdownMenuItem
+                    render={<Link to={`/users/${user.id}/edit`} />}
+                  >
+                    <Pencil />
+                    Edit
+                  </DropdownMenuItem>
+                )}
+
+                {allowedActionRoles.includes(currentRole) &&
+                  user.status !== UserStatusEnum.SUSPENDED && (
+                    <DropdownMenuItem
+                      onClick={() =>
+                        setConfirmatedAction({
+                          id: user.id,
+                          action: "suspend",
+                        })
+                      }
+                    >
+                      <Ban />
+                      Suspend
+                    </DropdownMenuItem>
+                  )}
+
+                {allowedActionRoles.includes(currentRole) &&
+                  user.status === UserStatusEnum.SUSPENDED && (
+                    <DropdownMenuItem
+                      onClick={() =>
+                        setConfirmatedAction({
+                          id: user.id,
+                          action: "reactivate",
+                        })
+                      }
+                    >
+                      <ShieldCheck />
+                      Reactivate
+                    </DropdownMenuItem>
+                  )}
+
+                {allowedActionRoles.includes(currentRole) && (
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() =>
+                      setConfirmatedAction({ id: user.id, action: "delete" })
+                    }
+                  >
+                    <Trash />
+                    Delete{" "}
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -597,8 +703,8 @@ export default function UserTable() {
       </DataTable>
 
       <AlertDialog
-        open={!!confirmatedDeletedId}
-        onOpenChange={() => setConfirmatedDeletedId(null)}
+        open={!!confirmatedAction}
+        onOpenChange={() => setConfirmatedAction(null)}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -610,7 +716,7 @@ export default function UserTable() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={onDeleteUser}>
+            <AlertDialogAction onClick={onActionHandler}>
               Continue
             </AlertDialogAction>
           </AlertDialogFooter>

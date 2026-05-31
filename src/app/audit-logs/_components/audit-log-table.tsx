@@ -6,7 +6,7 @@ import {
   Funnel,
   Search,
 } from "lucide-react";
-import { Link, useSearchParams } from "react-router";
+import { useSearchParams } from "react-router";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
@@ -51,6 +51,7 @@ import { useAuth } from "@/app/_hooks/use-auth";
 import { DataTable } from "@/app/_components/data-table";
 import { AuditLogActionEnum } from "@/api/requestor/audit-logs/enums/audit-log-action";
 import { AuditLogEntityEnum } from "@/api/requestor/audit-logs/enums/audit-log-entity";
+import dayjs from "@/libs/dayjs";
 
 let debounceSearchTimeoutId: number | null = null;
 
@@ -315,6 +316,26 @@ export default function AuditLogTable() {
         </Button>
       ),
       cell: (info) => info.getValue(),
+    }),
+
+    columnHelper.accessor("created_at", {
+      header: () => (
+        <Button
+          variant="ghost"
+          className="flex w-full justify-between p-0"
+          onClick={() => applySorting("created_at")}
+        >
+          Created At
+          {queryTable?.sortBy === "created_at" &&
+            queryTable?.order === OrderKeyEnum.ASC &&
+            ascIcon}
+          {queryTable?.sortBy === "created_at" &&
+            queryTable?.order === OrderKeyEnum.DESC &&
+            descIcon}
+          {queryTable?.sortBy !== "created_at" && <ArrowUpDown />}
+        </Button>
+      ),
+      cell: (info) => dayjs(info.getValue()).format("YYYY-MM-DD HH:mm:ss"),
     }),
   ];
 

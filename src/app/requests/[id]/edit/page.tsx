@@ -1,8 +1,11 @@
-import { Link } from "react-router";
+import { Link, useParams } from "react-router";
 import { ArrowLeft } from "lucide-react";
 
 import AppBreadcrumb from "@/app/_components/app-breadcrumb";
 import RequestEditForm from "@/app/requests/[id]/edit/_components/request-edit-form";
+import CONFIG from "@/common/constants/config";
+import { useQuery } from "@tanstack/react-query";
+import { getRequestById } from "@/api/requestor/requests/[id]";
 
 export function meta() {
   return [
@@ -13,11 +16,26 @@ export function meta() {
 }
 
 export default function RequestEditPage() {
+  const params = useParams();
+  const getDataQuery = useQuery({
+    queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.REQUEST.ALL(), params.id],
+    queryFn: () => getRequestById(params.id as string),
+    enabled: !!params.id,
+  });
+
   const breadcrumbItems = [
     {
       name: "Requests",
       link: "/requests",
     },
+    ...(!getDataQuery.isLoading
+      ? [
+          {
+            name: getDataQuery.data?.data?.data?.title ?? "Detail",
+            link: `/requests/${params.id}`,
+          },
+        ]
+      : []),
     {
       name: "Edit",
     },

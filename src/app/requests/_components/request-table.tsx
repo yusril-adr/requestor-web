@@ -74,12 +74,13 @@ import { useAuth } from "@/app/_hooks/use-auth";
 import { DataTable } from "@/app/_components/data-table";
 import { deleteRequestById } from "@/api/requestor/requests/[id]";
 import { RequestPriorityEnum } from "@/api/requestor/requests/enums/request-priority";
+import { RoleKeyEnum } from "@/common/enums/role-key";
 
 let debounceSearchTimeoutId: number | null = null;
 
 export default function RequestTable() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { logout } = useAuth();
+  const { auth, logout } = useAuth();
   const queryClient = useQueryClient();
   const [confirmatedDeletedId, setConfirmatedDeletedId] = useState<
     string | null
@@ -293,6 +294,8 @@ export default function RequestTable() {
     [setSearchParams],
   );
 
+  const allowedActionRoles = [RoleKeyEnum.ADMIN, RoleKeyEnum.OPERATOR];
+
   const columnHelper = createColumnHelper<TRequestTableCol>();
   const columns = [
     columnHelper.display({
@@ -421,6 +424,7 @@ export default function RequestTable() {
       id: "actions",
       header: "Action",
       cell: ({ row }) => {
+        const currentRole = auth?.role || RoleKeyEnum.VIEWER;
         const rowOriginal = row.original;
 
         return (
@@ -440,19 +444,23 @@ export default function RequestTable() {
                   <Eye />
                   View
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  render={<Link to={`/requests/${rowOriginal.id}/edit`} />}
-                >
-                  <Pencil />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  variant="destructive"
-                  onClick={() => setConfirmatedDeletedId(rowOriginal.id)}
-                >
-                  <Trash />
-                  Delete{" "}
-                </DropdownMenuItem>
+                {allowedActionRoles.includes(currentRole) && (
+                  <DropdownMenuItem
+                    render={<Link to={`/requests/${rowOriginal.id}/edit`} />}
+                  >
+                    <Pencil />
+                    Edit
+                  </DropdownMenuItem>
+                )}
+                {allowedActionRoles.includes(currentRole) && (
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() => setConfirmatedDeletedId(rowOriginal.id)}
+                  >
+                    <Trash />
+                    Delete{" "}
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>
