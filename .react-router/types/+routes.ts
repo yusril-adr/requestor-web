@@ -14,6 +14,9 @@ type Pages = {
   "/": {
     params: {};
   };
+  "/dashboard": {
+    params: {};
+  };
   "/users": {
     params: {};
   };
@@ -62,19 +65,23 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/users" | "/users/create" | "/users/:id" | "/users/:id/edit" | "/requests" | "/requests/create" | "/requests/:id" | "/requests/:id/edit" | "/audit-logs" | "/login" | "/*";
-  };
-  "./app/_components/layout/protected-layout.tsx": {
-    id: "app/_components/layout/protected-layout";
-    page: "/" | "/users" | "/users/create" | "/users/:id" | "/users/:id/edit" | "/requests" | "/requests/create" | "/requests/:id" | "/requests/:id/edit" | "/audit-logs";
-  };
-  "./app/_components/layout/app-sidebar-layout.tsx": {
-    id: "app/_components/layout/app-sidebar-layout";
-    page: "/" | "/users" | "/users/create" | "/users/:id" | "/users/:id/edit" | "/requests" | "/requests/create" | "/requests/:id" | "/requests/:id/edit" | "/audit-logs";
+    page: "/" | "/dashboard" | "/users" | "/users/create" | "/users/:id" | "/users/:id/edit" | "/requests" | "/requests/create" | "/requests/:id" | "/requests/:id/edit" | "/audit-logs" | "/login" | "/*";
   };
   "./app/page.tsx": {
     id: "app/page";
     page: "/";
+  };
+  "./app/_components/layout/protected-layout.tsx": {
+    id: "app/_components/layout/protected-layout";
+    page: "/dashboard" | "/users" | "/users/create" | "/users/:id" | "/users/:id/edit" | "/requests" | "/requests/create" | "/requests/:id" | "/requests/:id/edit" | "/audit-logs";
+  };
+  "./app/_components/layout/app-sidebar-layout.tsx": {
+    id: "app/_components/layout/app-sidebar-layout";
+    page: "/dashboard" | "/users" | "/users/create" | "/users/:id" | "/users/:id/edit" | "/requests" | "/requests/create" | "/requests/:id" | "/requests/:id/edit" | "/audit-logs";
+  };
+  "./app/dashboard/page.tsx": {
+    id: "app/dashboard/page";
+    page: "/dashboard";
   };
   "./app/users/page.tsx": {
     id: "app/users/page";
@@ -128,9 +135,10 @@ type RouteFiles = {
 
 type RouteModules = {
   "root": typeof import("./src/root.tsx");
+  "app/page": typeof import("./src/./app/page.tsx");
   "app/_components/layout/protected-layout": typeof import("./src/./app/_components/layout/protected-layout.tsx");
   "app/_components/layout/app-sidebar-layout": typeof import("./src/./app/_components/layout/app-sidebar-layout.tsx");
-  "app/page": typeof import("./src/./app/page.tsx");
+  "app/dashboard/page": typeof import("./src/./app/dashboard/page.tsx");
   "app/users/page": typeof import("./src/./app/users/page.tsx");
   "app/users/create/page": typeof import("./src/./app/users/create/page.tsx");
   "app/users/[id]/page": typeof import("./src/./app/users/[id]/page.tsx");

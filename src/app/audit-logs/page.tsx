@@ -18,7 +18,7 @@ export default function AuditLogPage() {
 
   return (
     <div className="w-full flex justify-center min-w-0">
-      <div className="w-full max-w-7xl flex flex-col px-10">
+      <div className="w-full max-w-7xl flex flex-col px-10 pb-10">
         <div className="flex flex-col">
           <AppBreadcrumb items={breadcrumbItems} />
 

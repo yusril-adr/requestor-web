@@ -6,7 +6,7 @@ const NAV_ROUTES: TNavSidebar[] = [
   {
     title: "Dashboard",
     icon: Gauge,
-    path: "/",
+    path: "/dashboard",
   },
   {
     title: "Users",

@@ -65,7 +65,7 @@ export function LoginForm() {
         queryKey: CONFIG.QUERY_KEY.REQUESTOR_API.AUTH.ALL(),
       });
 
-      navigate("/");
+      navigate("/dashboard");
     },
     onError: (error) => {
       toast.dismiss();

@@ -10,7 +10,7 @@ export default function NonLoginLayout() {
 
   useEffect(() => {
     if (!authQuery?.isLoading && auth) {
-      navigate("/", { replace: true });
+      navigate("/dashboard", { replace: true });
     }
   }, [authQuery?.isLoading, auth, location.pathname, navigate]);
 
