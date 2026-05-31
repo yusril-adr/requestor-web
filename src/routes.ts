@@ -14,6 +14,11 @@ export default [
       route("/users/create", "./app/users/create/page.tsx"),
       route("/users/:id", "./app/users/[id]/page.tsx"),
       route("/users/:id/edit", "./app/users/[id]/edit/page.tsx"),
+
+      route("/requests", "./app/requests/page.tsx"),
+      route("/requests/create", "./app/requests/create/page.tsx"),
+      route("/requests/:id", "./app/requests/[id]/page.tsx"),
+      route("/requests/:id/edit", "./app/requests/[id]/edit/page.tsx"),
     ]),
   ]),
 

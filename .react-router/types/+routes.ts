@@ -30,6 +30,22 @@ type Pages = {
       "id": string;
     };
   };
+  "/requests": {
+    params: {};
+  };
+  "/requests/create": {
+    params: {};
+  };
+  "/requests/:id": {
+    params: {
+      "id": string;
+    };
+  };
+  "/requests/:id/edit": {
+    params: {
+      "id": string;
+    };
+  };
   "/login": {
     params: {};
   };
@@ -43,15 +59,15 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/users" | "/users/create" | "/users/:id" | "/users/:id/edit" | "/login" | "/*";
+    page: "/" | "/users" | "/users/create" | "/users/:id" | "/users/:id/edit" | "/requests" | "/requests/create" | "/requests/:id" | "/requests/:id/edit" | "/login" | "/*";
   };
   "./app/_components/layout/protected-layout.tsx": {
     id: "app/_components/layout/protected-layout";
-    page: "/" | "/users" | "/users/create" | "/users/:id" | "/users/:id/edit";
+    page: "/" | "/users" | "/users/create" | "/users/:id" | "/users/:id/edit" | "/requests" | "/requests/create" | "/requests/:id" | "/requests/:id/edit";
   };
   "./app/_components/layout/app-sidebar-layout.tsx": {
     id: "app/_components/layout/app-sidebar-layout";
-    page: "/" | "/users" | "/users/create" | "/users/:id" | "/users/:id/edit";
+    page: "/" | "/users" | "/users/create" | "/users/:id" | "/users/:id/edit" | "/requests" | "/requests/create" | "/requests/:id" | "/requests/:id/edit";
   };
   "./app/page.tsx": {
     id: "app/page";
@@ -72,6 +88,22 @@ type RouteFiles = {
   "./app/users/[id]/edit/page.tsx": {
     id: "app/users/[id]/edit/page";
     page: "/users/:id/edit";
+  };
+  "./app/requests/page.tsx": {
+    id: "app/requests/page";
+    page: "/requests";
+  };
+  "./app/requests/create/page.tsx": {
+    id: "app/requests/create/page";
+    page: "/requests/create";
+  };
+  "./app/requests/[id]/page.tsx": {
+    id: "app/requests/[id]/page";
+    page: "/requests/:id";
+  };
+  "./app/requests/[id]/edit/page.tsx": {
+    id: "app/requests/[id]/edit/page";
+    page: "/requests/:id/edit";
   };
   "./app/_components/layout/non-login-layout.tsx": {
     id: "app/_components/layout/non-login-layout";
@@ -96,6 +128,10 @@ type RouteModules = {
   "app/users/create/page": typeof import("./src/./app/users/create/page.tsx");
   "app/users/[id]/page": typeof import("./src/./app/users/[id]/page.tsx");
   "app/users/[id]/edit/page": typeof import("./src/./app/users/[id]/edit/page.tsx");
+  "app/requests/page": typeof import("./src/./app/requests/page.tsx");
+  "app/requests/create/page": typeof import("./src/./app/requests/create/page.tsx");
+  "app/requests/[id]/page": typeof import("./src/./app/requests/[id]/page.tsx");
+  "app/requests/[id]/edit/page": typeof import("./src/./app/requests/[id]/edit/page.tsx");
   "app/_components/layout/non-login-layout": typeof import("./src/./app/_components/layout/non-login-layout.tsx");
   "app/login/page": typeof import("./src/./app/login/page.tsx");
   "app/errors/not-found/page": typeof import("./src/./app/errors/not-found/page.tsx");

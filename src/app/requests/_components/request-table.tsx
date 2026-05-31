@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import axios from "axios";
 import {
   ArrowDown01,
   ArrowDown10,
@@ -32,8 +34,6 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@/app/_components/ui/combobox";
-import { RoleKeyEnum } from "@/common/enums/role-key";
-import { UserStatusEnum } from "@/api/requestor/users/enums/user-status";
 import {
   InputGroup,
   InputGroupAddon,
@@ -58,25 +58,26 @@ import {
 } from "@/app/_components/ui/alert-dialog";
 
 import { OrderKeyEnum } from "@/common/enums/order-key";
+import { RequestStatusEnum } from "@/api/requestor/requests/enums/request-status";
 import CONFIG from "@/common/constants/config";
-import type { TUserPaginationPayload } from "@/api/requestor/users/types/user-pagination-payload";
-import { getUserPagination } from "@/api/requestor/users";
-import type { TUserSortBy } from "@/api/requestor/users/consts/user-sort-by";
-import type { TUserTableCol } from "@/app/users/_types/user-table-col";
+import type { TRequestPaginationPayload } from "@/api/requestor/requests/types/request-pagination-payload";
+import { getRequestPagination } from "@/api/requestor/requests";
+import type { TRequestSortBy } from "@/api/requestor/requests/consts/request-sort-by";
+import type { TRequestTableCol } from "@/app/requests/_types/request-table-col";
 import {
-  UserTableFilterSchema,
-  type TUserTableFilterSchema,
-} from "@/app/users/_schema/user-table-filter";
-import { toast } from "sonner";
-import axios from "axios";
+  RequestTableFilterSchema,
+  type TRequestTableFilterSchema,
+} from "@/app/requests/_schema/request-table-filter";
+
 import type { TRequestorApiResponse } from "@/api/requestor/types/response";
 import { useAuth } from "@/app/_hooks/use-auth";
 import { DataTable } from "@/app/_components/data-table";
-import { deleteUserById } from "@/api/requestor/users/[id]";
+import { deleteRequestById } from "@/api/requestor/requests/[id]";
+import { RequestPriorityEnum } from "@/api/requestor/requests/enums/request-priority";
 
 let debounceSearchTimeoutId: number | null = null;
 
-export default function UserTable() {
+export default function RequestTable() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { logout } = useAuth();
   const queryClient = useQueryClient();
@@ -92,29 +93,29 @@ export default function UserTable() {
       sortBy: searchParams.get("sort_by") || undefined,
       order: searchParams.get("order") || undefined,
       status: searchParams.get("status") || undefined,
-      role: searchParams.get("role") || undefined,
+      priority: searchParams.get("priority") || undefined,
     }),
     [searchParams],
   );
 
-  const { control, handleSubmit, reset } = useForm<TUserTableFilterSchema>({
-    resolver: zodResolver(UserTableFilterSchema),
+  const { control, handleSubmit, reset } = useForm<TRequestTableFilterSchema>({
+    resolver: zodResolver(RequestTableFilterSchema),
     defaultValues: {
-      status: (queryTable?.status as UserStatusEnum) || null,
-      role: (queryTable?.role as RoleKeyEnum) || null,
+      status: (queryTable?.status as RequestStatusEnum) || null,
+      priority: (queryTable?.priority as RequestPriorityEnum) || null,
     },
   });
 
-  const { mutate: deleteUser } = useMutation({
-    mutationFn: deleteUserById,
+  const { mutate: deleteRequest } = useMutation({
+    mutationFn: deleteRequestById,
     onMutate: () => {
-      toast.loading("Deleting user...");
+      toast.loading("Deleting request...");
     },
     onSuccess: () => {
       toast.dismiss();
-      toast.success("User deleted");
+      toast.success("Request deleted");
       queryClient.invalidateQueries({
-        queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.USER.ALL()],
+        queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.REQUEST.ALL()],
       });
     },
     onError: (error) => {
@@ -139,13 +140,13 @@ export default function UserTable() {
     },
   });
 
-  const onDeleteUser = useCallback(() => {
+  const onDeleteHandler = useCallback(() => {
     if (confirmatedDeletedId) {
-      deleteUser(confirmatedDeletedId);
+      deleteRequest(confirmatedDeletedId);
     }
 
     setConfirmatedDeletedId(null);
-  }, [confirmatedDeletedId, deleteUser]);
+  }, [confirmatedDeletedId, deleteRequest]);
 
   const onSearchChange = (value: string) => {
     if (value && value !== "" && value.length < 3) {
@@ -165,11 +166,11 @@ export default function UserTable() {
     }, 300);
   };
 
-  const onFilterSubmit: SubmitHandler<TUserTableFilterSchema> = (data) => {
+  const onFilterSubmit: SubmitHandler<TRequestTableFilterSchema> = (data) => {
     setSearchParams((searchParams) => {
       searchParams.set("status", data.status || "");
 
-      searchParams.set("role", data.role || "");
+      searchParams.set("priority", data.priority || "");
 
       searchParams.set("page", "1");
 
@@ -180,19 +181,19 @@ export default function UserTable() {
   const onFilterReset = useCallback(() => {
     reset({
       status: null,
-      role: null,
+      priority: null,
     });
   }, [reset]);
 
-  const mappedQueryTablePayload: TUserPaginationPayload = useMemo(
+  const mappedQueryTablePayload: TRequestPaginationPayload = useMemo(
     () => ({
       page: queryTable.page,
       per_page: queryTable.pageSize,
       search: queryTable.search,
-      sort_by: queryTable.sortBy as TUserSortBy,
+      sort_by: queryTable.sortBy as TRequestSortBy,
       order: queryTable.order as OrderKeyEnum,
-      status: queryTable.status as UserStatusEnum,
-      role: queryTable.role as RoleKeyEnum,
+      status: queryTable.status as RequestStatusEnum,
+      priority: queryTable.priority as RequestPriorityEnum,
     }),
     [queryTable],
   );
@@ -204,10 +205,10 @@ export default function UserTable() {
     error,
   } = useQuery({
     queryKey: [
-      CONFIG.QUERY_KEY.REQUESTOR_API.USER.ALL(),
+      CONFIG.QUERY_KEY.REQUESTOR_API.REQUEST.ALL(),
       mappedQueryTablePayload,
     ],
-    queryFn: () => getUserPagination(mappedQueryTablePayload),
+    queryFn: () => getRequestPagination(mappedQueryTablePayload),
   });
 
   useEffect(() => {
@@ -292,7 +293,7 @@ export default function UserTable() {
     [setSearchParams],
   );
 
-  const columnHelper = createColumnHelper<TUserTableCol>();
+  const columnHelper = createColumnHelper<TRequestTableCol>();
   const columns = [
     columnHelper.display({
       id: "no",
@@ -305,72 +306,52 @@ export default function UserTable() {
       },
     }),
 
-    columnHelper.accessor("name", {
+    columnHelper.accessor("title", {
       header: () => (
         <Button
           variant="ghost"
           className="flex w-full justify-between p-0"
-          onClick={() => applySorting("name")}
+          onClick={() => applySorting("title")}
         >
           Name
-          {queryTable?.sortBy === "name" &&
+          {queryTable?.sortBy === "title" &&
             queryTable?.order === OrderKeyEnum.ASC &&
             ascIcon}
-          {queryTable?.sortBy === "name" &&
+          {queryTable?.sortBy === "title" &&
             queryTable?.order === OrderKeyEnum.DESC &&
             descIcon}
-          {queryTable?.sortBy !== "name" && <ArrowUpDown />}
+          {queryTable?.sortBy !== "title" && <ArrowUpDown />}
         </Button>
       ),
       cell: ({ row }) => {
-        const user = row.original;
+        const rowOriginal = row.original;
         return (
           <Button
             variant="link"
-            render={<Link to={`/users/${user.id}`} />}
+            render={<Link to={`/requests/${rowOriginal.id}`} />}
             nativeButton={false}
           >
-            {user.name}
+            {rowOriginal.title}
           </Button>
         );
       },
     }),
 
-    columnHelper.accessor("email", {
+    columnHelper.accessor("requestor_name", {
       header: () => (
         <Button
           variant="ghost"
           className="flex w-full justify-between p-0"
-          onClick={() => applySorting("email")}
+          onClick={() => applySorting("requestor_name")}
         >
-          Email
-          {queryTable?.sortBy === "email" &&
+          Requestor Name
+          {queryTable?.sortBy === "requestor_name" &&
             queryTable?.order === OrderKeyEnum.ASC &&
             ascIcon}
-          {queryTable?.sortBy === "email" &&
+          {queryTable?.sortBy === "requestor_name" &&
             queryTable?.order === OrderKeyEnum.DESC &&
             descIcon}
-          {queryTable?.sortBy !== "email" && <ArrowUpDown />}
-        </Button>
-      ),
-      cell: (info) => info.getValue(),
-    }),
-
-    columnHelper.accessor("role", {
-      header: () => (
-        <Button
-          variant="ghost"
-          className="flex w-full justify-between p-0"
-          onClick={() => applySorting("role")}
-        >
-          Role
-          {queryTable?.sortBy === "role" &&
-            queryTable?.order === OrderKeyEnum.ASC &&
-            ascIcon}
-          {queryTable?.sortBy === "role" &&
-            queryTable?.order === OrderKeyEnum.DESC &&
-            descIcon}
-          {queryTable?.sortBy !== "role" && <ArrowUpDown />}
+          {queryTable?.sortBy !== "requestor_name" && <ArrowUpDown />}
         </Button>
       ),
       cell: (info) => info.getValue(),
@@ -396,11 +377,51 @@ export default function UserTable() {
       cell: (info) => info.getValue(),
     }),
 
+    columnHelper.accessor("priority", {
+      header: () => (
+        <Button
+          variant="ghost"
+          className="flex w-full justify-between p-0"
+          onClick={() => applySorting("priority")}
+        >
+          Priority
+          {queryTable?.sortBy === "priority" &&
+            queryTable?.order === OrderKeyEnum.ASC &&
+            ascIcon}
+          {queryTable?.sortBy === "priority" &&
+            queryTable?.order === OrderKeyEnum.DESC &&
+            descIcon}
+          {queryTable?.sortBy !== "priority" && <ArrowUpDown />}
+        </Button>
+      ),
+      cell: (info) => info.getValue(),
+    }),
+
+    columnHelper.accessor("assignee_name", {
+      header: () => (
+        <Button
+          variant="ghost"
+          className="flex w-full justify-between p-0"
+          onClick={() => applySorting("assignee_name")}
+        >
+          Assignee Name
+          {queryTable?.sortBy === "assignee_name" &&
+            queryTable?.order === OrderKeyEnum.ASC &&
+            ascIcon}
+          {queryTable?.sortBy === "assignee_name" &&
+            queryTable?.order === OrderKeyEnum.DESC &&
+            descIcon}
+          {queryTable?.sortBy !== "assignee_name" && <ArrowUpDown />}
+        </Button>
+      ),
+      cell: (info) => info.getValue() ?? "-",
+    }),
+
     columnHelper.display({
       id: "actions",
       header: "Action",
       cell: ({ row }) => {
-        const user = row.original;
+        const rowOriginal = row.original;
 
         return (
           <DropdownMenu>
@@ -413,19 +434,21 @@ export default function UserTable() {
             />
             <DropdownMenuContent>
               <DropdownMenuGroup>
-                <DropdownMenuItem render={<Link to={`/users/${user.id}`} />}>
+                <DropdownMenuItem
+                  render={<Link to={`/requests/${rowOriginal.id}`} />}
+                >
                   <Eye />
                   View
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  render={<Link to={`/users/${user.id}/edit`} />}
+                  render={<Link to={`/requests/${rowOriginal.id}/edit`} />}
                 >
                   <Pencil />
                   Edit
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   variant="destructive"
-                  onClick={() => setConfirmatedDeletedId(user.id)}
+                  onClick={() => setConfirmatedDeletedId(rowOriginal.id)}
                 >
                   <Trash />
                   Delete{" "}
@@ -443,19 +466,19 @@ export default function UserTable() {
     if (queryTable?.status) {
       filters.push({
         id: "status",
-        value: queryTable?.status as UserStatusEnum,
+        value: queryTable?.status as RequestStatusEnum,
       });
     }
 
-    if (queryTable?.role) {
+    if (queryTable?.priority) {
       filters.push({
-        id: "role",
-        value: queryTable?.role as RoleKeyEnum,
+        id: "priority",
+        value: queryTable?.priority as RequestPriorityEnum,
       });
     }
 
     return filters;
-  }, [queryTable?.status, queryTable?.role]);
+  }, [queryTable?.status, queryTable?.priority]);
 
   const sorting = useMemo<SortingState>(() => {
     const sort = [];
@@ -498,21 +521,26 @@ export default function UserTable() {
               >
                 <FieldGroup className="flex flex-col md:flex-row gap-4 md:gap-2">
                   <Controller
-                    name="role"
+                    name="status"
                     control={control}
                     render={({ field, fieldState }) => (
                       <Field
                         className="grid gap-2"
                         data-invalid={fieldState.invalid}
                       >
-                        <FieldLabel htmlFor="role">Role</FieldLabel>
+                        <FieldLabel htmlFor="status">Status</FieldLabel>
                         <Combobox
-                          id="role"
-                          items={Object.values(RoleKeyEnum)}
-                          onValueChange={field.onChange}
+                          id="status"
+                          items={Object.values(RequestStatusEnum)}
+                          onValueChange={(value) => {
+                            field.onChange(value === "" ? undefined : value);
+                          }}
                           {...field}
                         >
-                          <ComboboxInput placeholder="Select role" showClear />
+                          <ComboboxInput
+                            placeholder="Select status"
+                            showClear
+                          />
                           <ComboboxContent>
                             <ComboboxEmpty>No items found.</ComboboxEmpty>
                             <ComboboxList>
@@ -529,24 +557,22 @@ export default function UserTable() {
                   />
 
                   <Controller
-                    name="status"
+                    name="priority"
                     control={control}
                     render={({ field, fieldState }) => (
                       <Field
                         className="grid gap-2"
                         data-invalid={fieldState.invalid}
                       >
-                        <FieldLabel htmlFor="status">Status</FieldLabel>
+                        <FieldLabel htmlFor="priority">Priority</FieldLabel>
                         <Combobox
-                          id="status"
-                          items={Object.values(UserStatusEnum)}
-                          onValueChange={(value) => {
-                            field.onChange(value === "" ? undefined : value);
-                          }}
+                          id="priority"
+                          items={Object.values(RequestPriorityEnum)}
+                          onValueChange={field.onChange}
                           {...field}
                         >
                           <ComboboxInput
-                            placeholder="Select status"
+                            placeholder="Select priority"
                             showClear
                           />
                           <ComboboxContent>
@@ -610,7 +636,7 @@ export default function UserTable() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={onDeleteUser}>
+            <AlertDialogAction onClick={onDeleteHandler}>
               Continue
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -15,6 +15,12 @@ const CONFIG = {
       USER: {
         ALL: () => [...CONFIG.QUERY_KEY.REQUESTOR_API.ALL(), "user"],
       },
+      REQUEST: {
+        ALL: () => [...CONFIG.QUERY_KEY.REQUESTOR_API.ALL(), "request"],
+      },
+      AUDIT_LOG: {
+        ALL: () => [...CONFIG.QUERY_KEY.REQUESTOR_API.ALL(), "audit-log"],
+      },
     },
   },
 };
