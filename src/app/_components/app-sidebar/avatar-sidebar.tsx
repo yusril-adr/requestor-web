@@ -15,9 +15,10 @@ import { EllipsisVertical, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { useAuth } from "../../_hooks/use-auth";
 import { Skeleton } from "../ui/skeleton";
+import { logout } from "@/utils/logout";
 
 export function AvatarSidebar() {
-  const { auth, authQuery, logout } = useAuth();
+  const { auth, authQuery } = useAuth();
   const { isMobile } = useSidebar();
 
   const isLoading = authQuery?.isLoading;
