@@ -1,12 +1,12 @@
 import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
 import type { LinksFunction } from "react-router";
-import { useMemo } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import appCss from "./index.css?url";
 import { Toaster } from "@/app/_components/ui/sonner";
 import { ThemeProvider } from "@/app/_components/theme-provider";
 import { AuthProvider } from "@/app/_components/auth-provider";
 import { SidebarProvider } from "@/app/_components/ui/sidebar";
+import { globalQueryClient } from "./libs/react-query/global-query-client";
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: appCss },
@@ -35,10 +35,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 // root route — wraps all pages
 export default function Root() {
-  const queryClient = useMemo(() => new QueryClient(), []);
-
   return (
-    <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={globalQueryClient}>
       <AuthProvider>
         <ThemeProvider>
           <SidebarProvider>

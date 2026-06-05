@@ -9,5 +9,4 @@ export type TAuthProviderState = {
     NoInfer<AxiosResponse<TRequestorApiResponse<TUserMeResponse>, any, {}>>,
     Error
   > | null;
-  logout: () => void;
 };

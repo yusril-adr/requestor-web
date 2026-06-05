@@ -37,6 +37,8 @@ import {
 } from "@/app/login/_schema/login-form";
 import AccessToken from "@/libs/local-storage/access-token";
 import CONFIG from "@/common/constants/config";
+import { applyValidationErrors } from "@/utils/validation-helper";
+import RequestorAPIValidationError from "@/api/requestor/errors/validation-error";
 
 export function LoginForm() {
   const [isShowPassword, setIsShowPassword] = useState(false);
@@ -68,41 +70,12 @@ export function LoginForm() {
       navigate("/dashboard");
     },
     onError: (error) => {
-      toast.dismiss();
-
-      if (axios.isAxiosError(error)) {
-        const statusCode = error.response?.status;
-
-        const defaultErrorResponse = error.response
-          ?.data as TRequestorApiResponse<null>;
-
-        switch (statusCode) {
-          case 400:
-            const validationErrorResponse = error.response
-              ?.data as TRequestorApiResponse<
-              null,
-              TRequestorApiErrorResponse<TLoginPayload>
-            >;
-
-            if (Array.isArray(validationErrorResponse.message)) {
-              return validationErrorResponse.message.forEach((errorMessage) => {
-                setError(errorMessage.property, {
-                  message: errorMessage.messages[0],
-                });
-              });
-            } else {
-              toast.error(defaultErrorResponse.message as string);
-            }
-            break;
-          default:
-            toast.error(defaultErrorResponse.message as string);
-            break;
-        }
-
-        return;
+      if (error instanceof RequestorAPIValidationError) {
+        return applyValidationErrors(
+          setError,
+          error.errors as TRequestorApiErrorResponse<null>[],
+        );
       }
-
-      return;
     },
   });
 

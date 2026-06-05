@@ -5,7 +5,7 @@ export type TRequestorApiBaseResponse = {
 
 export type TRequestorApiResponse<
   T,
-  E = TRequestorApiErrorResponse<string>,
+  E = TRequestorApiErrorResponse<{}>,
 > = TRequestorApiBaseResponse & {
   status_code: number;
   data: T;
@@ -13,8 +13,8 @@ export type TRequestorApiResponse<
   message: E[] | string;
 };
 
-export type TRequestorApiErrorResponse<T> = {
-  property: keyof T;
+export type TRequestorApiErrorResponse<T = {}> = {
+  property: keyof T | string;
   messages: string[];
 };
 

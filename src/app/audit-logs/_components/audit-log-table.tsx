@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import {
   ArrowDown01,
   ArrowDown10,
@@ -44,10 +44,6 @@ import {
   AuditLogTableFilterSchema,
   type TAuditLogTableFilterSchema,
 } from "@/app/audit-logs/_schema/audit-log-table-filter";
-import { toast } from "sonner";
-import axios from "axios";
-import type { TRequestorApiResponse } from "@/api/requestor/types/response";
-import { useAuth } from "@/app/_hooks/use-auth";
 import { DataTable } from "@/app/_components/data-table";
 import { AuditLogActionEnum } from "@/api/requestor/audit-logs/enums/audit-log-action";
 import { AuditLogEntityEnum } from "@/api/requestor/audit-logs/enums/audit-log-entity";
@@ -57,7 +53,6 @@ let debounceSearchTimeoutId: number | null = null;
 
 export default function AuditLogTable() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { logout } = useAuth();
 
   const queryTable = useMemo(
     () => ({
@@ -115,7 +110,14 @@ export default function AuditLogTable() {
       action: null,
       targetType: null,
     });
-  }, [reset]);
+
+    setSearchParams((searchParams) => {
+      searchParams.delete("action");
+      searchParams.delete("target_type");
+      searchParams.set("page", "1");
+      return searchParams;
+    });
+  }, [reset, setSearchParams]);
 
   const mappedQueryTablePayload: TAuditLogPaginationPayload = useMemo(
     () => ({
@@ -130,41 +132,13 @@ export default function AuditLogTable() {
     [queryTable],
   );
 
-  const {
-    data: responseData,
-    isLoading,
-    isError,
-    error,
-  } = useQuery({
+  const { data: responseData, isLoading } = useQuery({
     queryKey: [
       CONFIG.QUERY_KEY.REQUESTOR_API.AUDIT_LOG.ALL(),
       mappedQueryTablePayload,
     ],
     queryFn: () => getAuditLogPagination(mappedQueryTablePayload),
   });
-
-  useEffect(() => {
-    if (isError && error) {
-      toast.dismiss();
-      if (axios.isAxiosError(error)) {
-        const statusCode = error.response?.status;
-
-        const defaultErrorResponse = error.response
-          ?.data as TRequestorApiResponse<null>;
-
-        switch (statusCode) {
-          case 401:
-            console.log("401");
-            toast.error(defaultErrorResponse.message as string);
-            logout();
-            break;
-          default:
-            toast.error(defaultErrorResponse.message as string);
-            break;
-        }
-      }
-    }
-  }, [isError, error, logout]);
 
   const ascIcon = <ArrowDown01 />;
   const descIcon = <ArrowDown10 />;

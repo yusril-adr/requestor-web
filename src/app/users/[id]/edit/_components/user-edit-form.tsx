@@ -3,7 +3,6 @@ import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 import { Link, useNavigate, useParams } from "react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import axios from "axios";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 
 import { Card, CardContent, CardFooter } from "@/app/_components/ui/card";
@@ -38,19 +37,17 @@ import { RoleKeyEnum } from "@/common/enums/role-key";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getUserById, updateUserById } from "@/api/requestor/users/[id]";
 import CONFIG from "@/common/constants/config";
-import type {
-  TRequestorApiErrorResponse,
-  TRequestorApiResponse,
-} from "@/api/requestor/types/response";
+import type { TRequestorApiErrorResponse } from "@/api/requestor/types/response";
 import type { TUserUpdatePayload } from "@/api/requestor/users/[id]/types/user-update-payload";
-import { useAuth } from "@/app/_hooks/use-auth";
 import { UserStatusEnum } from "@/api/requestor/users/enums/user-status";
+import RequestorAPINotFoundError from "@/api/requestor/errors/not-found-error";
+import RequestorAPIValidationError from "@/api/requestor/errors/validation-error";
+import { applyValidationErrors } from "@/utils/validation-helper";
 
 export default function UserEditForm() {
   const params = useParams();
   const navigate = useNavigate();
   const [isShowPassword, setIsShowPassword] = useState(false);
-  const { logout } = useAuth();
 
   const getUserDataQuery = useQuery({
     queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.USER.ALL(), params.id],
@@ -61,26 +58,10 @@ export default function UserEditForm() {
   useEffect(() => {
     if (
       getUserDataQuery.isError &&
-      axios.isAxiosError(getUserDataQuery.error)
+      getUserDataQuery.error &&
+      getUserDataQuery.error instanceof RequestorAPINotFoundError
     ) {
-      const statusCode = getUserDataQuery.error.response?.status;
-
-      const defaultErrorResponse = getUserDataQuery.error.response
-        ?.data as TRequestorApiResponse<null>;
-
-      switch (statusCode) {
-        case 401:
-          toast.error(defaultErrorResponse.message as string);
-          logout();
-          break;
-        case 404:
-          toast.error("User not found");
-          navigate("/users");
-          break;
-        default:
-          toast.error(defaultErrorResponse.message as string);
-          break;
-      }
+      navigate("users");
     }
   }, [getUserDataQuery]);
 
@@ -118,42 +99,15 @@ export default function UserEditForm() {
       navigate("/users");
     },
     onError: (error) => {
-      toast.dismiss();
-      if (axios.isAxiosError(error)) {
-        const statusCode = error.response?.status;
+      if (error instanceof RequestorAPIValidationError) {
+        return applyValidationErrors(
+          setError,
+          error.errors as TRequestorApiErrorResponse<TUserUpdatePayload>[],
+        );
+      }
 
-        const defaultErrorResponse = error.response
-          ?.data as TRequestorApiResponse<null>;
-
-        switch (statusCode) {
-          case 400:
-            const validationErrorResponse = error.response
-              ?.data as TRequestorApiResponse<
-              null,
-              TRequestorApiErrorResponse<TUserUpdatePayload>
-            >;
-
-            if (Array.isArray(validationErrorResponse.message)) {
-              return validationErrorResponse.message.forEach((errorMessage) => {
-                setError(errorMessage.property, {
-                  message: errorMessage.messages[0],
-                });
-              });
-            } else {
-              toast.error(defaultErrorResponse.message as string);
-            }
-            break;
-
-          case 401:
-            toast.error(defaultErrorResponse.message as string);
-            logout();
-            break;
-
-          default:
-            toast.error(defaultErrorResponse.message as string);
-            break;
-        }
-
+      if (error instanceof RequestorAPINotFoundError) {
+        navigate("/users");
         return;
       }
 

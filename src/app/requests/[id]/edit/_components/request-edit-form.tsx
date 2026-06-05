@@ -3,7 +3,6 @@ import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 import { Link, useNavigate, useParams } from "react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import axios from "axios";
 
 import { Card, CardContent, CardFooter } from "@/app/_components/ui/card";
 import {
@@ -35,19 +34,17 @@ import {
   updateRequestById,
 } from "@/api/requestor/requests/[id]";
 import CONFIG from "@/common/constants/config";
-import type {
-  TRequestorApiErrorResponse,
-  TRequestorApiResponse,
-} from "@/api/requestor/types/response";
+import type { TRequestorApiErrorResponse } from "@/api/requestor/types/response";
 import type { TRequestUpdatePayload } from "@/api/requestor/requests/[id]/types/request-update-payload";
-import { useAuth } from "@/app/_hooks/use-auth";
 import { RequestStatusEnum } from "@/api/requestor/requests/enums/request-status";
 import { RequestPriorityEnum } from "@/api/requestor/requests/enums/request-priority";
+import RequestorAPINotFoundError from "@/api/requestor/errors/not-found-error";
+import RequestorAPIValidationError from "@/api/requestor/errors/validation-error";
+import { applyValidationErrors } from "@/utils/validation-helper";
 
 export default function RequestEditForm() {
   const params = useParams();
   const navigate = useNavigate();
-  const { logout } = useAuth();
 
   const getDataQuery = useQuery({
     queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.REQUEST.ALL(), params.id],
@@ -56,25 +53,12 @@ export default function RequestEditForm() {
   });
 
   useEffect(() => {
-    if (getDataQuery.isError && axios.isAxiosError(getDataQuery.error)) {
-      const statusCode = getDataQuery.error.response?.status;
-
-      const defaultErrorResponse = getDataQuery.error.response
-        ?.data as TRequestorApiResponse<null>;
-
-      switch (statusCode) {
-        case 401:
-          toast.error(defaultErrorResponse.message as string);
-          logout();
-          break;
-        case 404:
-          toast.error("Request not found");
-          navigate("/requests");
-          break;
-        default:
-          toast.error(defaultErrorResponse.message as string);
-          break;
-      }
+    if (
+      getDataQuery.isError &&
+      getDataQuery.error &&
+      getDataQuery.error instanceof RequestorAPINotFoundError
+    ) {
+      navigate("/requests");
     }
   }, [getDataQuery]);
 
@@ -136,51 +120,23 @@ export default function RequestEditForm() {
       navigate("/requests");
     },
     onError: (error) => {
-      toast.dismiss();
-      if (axios.isAxiosError(error)) {
-        const statusCode = error.response?.status;
+      if (error instanceof RequestorAPIValidationError) {
+        const mappedErrors = (
+          error.errors as TRequestorApiErrorResponse<TRequestUpdatePayload>[]
+        ).map((error) => {
+          return {
+            property:
+              mappedErrorKeys.find((key) => key.key === error.property)
+                ?.mapped ?? error.property,
+            messages: error.messages,
+          };
+        });
 
-        const defaultErrorResponse = error.response
-          ?.data as TRequestorApiResponse<null>;
+        return applyValidationErrors(setError, mappedErrors);
+      }
 
-        switch (statusCode) {
-          case 400:
-            const validationErrorResponse = error.response
-              ?.data as TRequestorApiResponse<
-              null,
-              TRequestorApiErrorResponse<TRequestUpdatePayload>
-            >;
-
-            if (Array.isArray(validationErrorResponse.message)) {
-              return validationErrorResponse.message.forEach((errorMessage) => {
-                const mappedKey = mappedErrorKeys.find(
-                  (mappedErrorKey) =>
-                    mappedErrorKey.mapped === errorMessage.property,
-                );
-
-                if (!mappedKey) {
-                  toast.error(errorMessage.messages[0]);
-                  return;
-                }
-                setError(mappedKey.key, {
-                  message: errorMessage.messages[0],
-                });
-              });
-            } else {
-              toast.error(defaultErrorResponse.message as string);
-            }
-            break;
-
-          case 401:
-            toast.error(defaultErrorResponse.message as string);
-            logout();
-            break;
-
-          default:
-            toast.error(defaultErrorResponse.message as string);
-            break;
-        }
-
+      if (error instanceof RequestorAPINotFoundError) {
+        navigate("/requests");
         return;
       }
 
@@ -196,7 +152,6 @@ export default function RequestEditForm() {
       status: data.status,
       priority: data.priority,
     };
-    console.log(payload);
 
     updateMutation.mutate({ id: params.id as string, payload });
   };

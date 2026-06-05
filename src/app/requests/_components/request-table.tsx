@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import axios from "axios";
 import {
   ArrowDown01,
   ArrowDown10,
@@ -12,7 +11,7 @@ import {
   Search,
   Trash,
 } from "lucide-react";
-import { Link, useSearchParams } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -69,19 +68,23 @@ import {
   type TRequestTableFilterSchema,
 } from "@/app/requests/_schema/request-table-filter";
 
-import type { TRequestorApiResponse } from "@/api/requestor/types/response";
+import type { TRequestorApiErrorResponse } from "@/api/requestor/types/response";
 import { useAuth } from "@/app/_hooks/use-auth";
 import { DataTable } from "@/app/_components/data-table";
 import { deleteRequestById } from "@/api/requestor/requests/[id]";
 import { RequestPriorityEnum } from "@/api/requestor/requests/enums/request-priority";
 import { RoleKeyEnum } from "@/common/enums/role-key";
+import RequestorAPINotFoundError from "@/api/requestor/errors/not-found-error";
+import RequestorAPIValidationError from "@/api/requestor/errors/validation-error";
+import { applyValidationErrors } from "@/utils/validation-helper";
 
 let debounceSearchTimeoutId: number | null = null;
 
 export default function RequestTable() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { auth, logout } = useAuth();
+  const { auth } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [confirmatedDeletedId, setConfirmatedDeletedId] = useState<
     string | null
   >(null);
@@ -99,13 +102,14 @@ export default function RequestTable() {
     [searchParams],
   );
 
-  const { control, handleSubmit, reset } = useForm<TRequestTableFilterSchema>({
-    resolver: zodResolver(RequestTableFilterSchema),
-    defaultValues: {
-      status: (queryTable?.status as RequestStatusEnum) || null,
-      priority: (queryTable?.priority as RequestPriorityEnum) || null,
-    },
-  });
+  const { control, handleSubmit, reset, setError } =
+    useForm<TRequestTableFilterSchema>({
+      resolver: zodResolver(RequestTableFilterSchema),
+      defaultValues: {
+        status: (queryTable?.status as RequestStatusEnum) || null,
+        priority: (queryTable?.priority as RequestPriorityEnum) || null,
+      },
+    });
 
   const { mutate: deleteRequest } = useMutation({
     mutationFn: deleteRequestById,
@@ -120,23 +124,16 @@ export default function RequestTable() {
       });
     },
     onError: (error) => {
-      toast.dismiss();
-      if (axios.isAxiosError(error)) {
-        const statusCode = error.response?.status;
+      if (error instanceof RequestorAPIValidationError) {
+        return applyValidationErrors(
+          setError,
+          error.errors as TRequestorApiErrorResponse<null>[],
+        );
+      }
 
-        const defaultErrorResponse = error.response
-          ?.data as TRequestorApiResponse<null>;
-
-        switch (statusCode) {
-          case 401:
-            console.log("401");
-            toast.error(defaultErrorResponse.message as string);
-            logout();
-            break;
-          default:
-            toast.error(defaultErrorResponse.message as string);
-            break;
-        }
+      if (error instanceof RequestorAPINotFoundError) {
+        navigate("/requests");
+        return;
       }
     },
   });
@@ -184,7 +181,14 @@ export default function RequestTable() {
       status: null,
       priority: null,
     });
-  }, [reset]);
+
+    setSearchParams((searchParams) => {
+      searchParams.delete("status");
+      searchParams.delete("priority");
+      searchParams.set("page", "1");
+      return searchParams;
+    });
+  }, [reset, setSearchParams]);
 
   const mappedQueryTablePayload: TRequestPaginationPayload = useMemo(
     () => ({
@@ -213,27 +217,11 @@ export default function RequestTable() {
   });
 
   useEffect(() => {
-    if (isError && error) {
-      toast.dismiss();
-      if (axios.isAxiosError(error)) {
-        const statusCode = error.response?.status;
-
-        const defaultErrorResponse = error.response
-          ?.data as TRequestorApiResponse<null>;
-
-        switch (statusCode) {
-          case 401:
-            console.log("401");
-            toast.error(defaultErrorResponse.message as string);
-            logout();
-            break;
-          default:
-            toast.error(defaultErrorResponse.message as string);
-            break;
-        }
-      }
+    if (isError && error && error instanceof RequestorAPINotFoundError) {
+      navigate("/requests");
+      return;
     }
-  }, [isError, error, logout]);
+  }, [isError, error]);
 
   const ascIcon = <ArrowDown01 />;
   const descIcon = <ArrowDown10 />;
@@ -621,7 +609,7 @@ export default function RequestTable() {
             <InputGroupInput
               placeholder="Search..."
               onChange={(val) => onSearchChange(val.target.value)}
-              defaultValue={queryTable?.search}
+              defaultValue={queryTable?.search || ""}
             />
             <InputGroupAddon>
               <Search />

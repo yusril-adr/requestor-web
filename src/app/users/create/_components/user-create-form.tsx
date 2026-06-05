@@ -3,7 +3,6 @@ import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 import { Link, useNavigate } from "react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import axios from "axios";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 
 import { Card, CardContent, CardFooter } from "@/app/_components/ui/card";
@@ -38,17 +37,14 @@ import { RoleKeyEnum } from "@/common/enums/role-key";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createUser } from "@/api/requestor/users";
 import CONFIG from "@/common/constants/config";
-import type {
-  TRequestorApiErrorResponse,
-  TRequestorApiResponse,
-} from "@/api/requestor/types/response";
+import type { TRequestorApiErrorResponse } from "@/api/requestor/types/response";
 import type { TUserCreatePayload } from "@/api/requestor/users/types/user-create-payload";
-import { useAuth } from "@/app/_hooks/use-auth";
+import RequestorAPIValidationError from "@/api/requestor/errors/validation-error";
+import { applyValidationErrors } from "@/utils/validation-helper";
 
 export default function UserCreateForm() {
   const navigate = useNavigate();
   const [isShowPassword, setIsShowPassword] = useState(false);
-  const { logout } = useAuth();
 
   const { control, handleSubmit, setError } = useForm<TUserCreateFormSchema>({
     resolver: zodResolver(UserCreateFormSchema),
@@ -72,43 +68,11 @@ export default function UserCreateForm() {
       navigate("/users");
     },
     onError: (error) => {
-      toast.dismiss();
-      if (axios.isAxiosError(error)) {
-        const statusCode = error.response?.status;
-
-        const defaultErrorResponse = error.response
-          ?.data as TRequestorApiResponse<null>;
-
-        switch (statusCode) {
-          case 400:
-            const validationErrorResponse = error.response
-              ?.data as TRequestorApiResponse<
-              null,
-              TRequestorApiErrorResponse<TUserCreatePayload>
-            >;
-
-            if (Array.isArray(validationErrorResponse.message)) {
-              return validationErrorResponse.message.forEach((errorMessage) => {
-                setError(errorMessage.property, {
-                  message: errorMessage.messages[0],
-                });
-              });
-            } else {
-              toast.error(defaultErrorResponse.message as string);
-            }
-            break;
-
-          case 401:
-            toast.error(defaultErrorResponse.message as string);
-            logout();
-            break;
-
-          default:
-            toast.error(defaultErrorResponse.message as string);
-            break;
-        }
-
-        return;
+      if (error instanceof RequestorAPIValidationError) {
+        return applyValidationErrors(
+          setError,
+          error.errors as TRequestorApiErrorResponse<TUserCreatePayload>[],
+        );
       }
 
       return;

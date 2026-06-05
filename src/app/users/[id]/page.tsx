@@ -16,10 +16,7 @@ import { Badge } from "@/app/_components/ui/badge";
 import { ArrowLeft } from "lucide-react";
 import dayjs from "@/libs/dayjs";
 import { Skeleton } from "@/app/_components/ui/skeleton";
-import { toast } from "sonner";
-import axios from "axios";
-import type { TRequestorApiResponse } from "@/api/requestor/types/response";
-import { useAuth } from "@/app/_hooks/use-auth";
+import RequestorAPINotFoundError from "@/api/requestor/errors/not-found-error";
 
 export function meta() {
   return [
@@ -31,7 +28,6 @@ export function meta() {
 
 export default function UserDetailPage() {
   const { id } = useParams();
-  const { logout } = useAuth();
   const navigate = useNavigate();
 
   const { data, isLoading, isError, error } = useQuery({
@@ -42,29 +38,11 @@ export default function UserDetailPage() {
 
   useEffect(() => {
     if (isError && error) {
-      toast.dismiss();
-      if (axios.isAxiosError(error)) {
-        const statusCode = error.response?.status;
-
-        const defaultErrorResponse = error.response
-          ?.data as TRequestorApiResponse<null>;
-
-        switch (statusCode) {
-          case 401:
-            toast.error(defaultErrorResponse.message as string);
-            logout();
-            break;
-          case 404:
-            toast.error("User not found");
-            navigate("/users");
-            break;
-          default:
-            toast.error(defaultErrorResponse.message as string);
-            break;
-        }
+      if (error instanceof RequestorAPINotFoundError) {
+        navigate("/users");
       }
     }
-  }, [isError, error, logout, navigate]);
+  }, [isError, error, navigate]);
 
   const breadcrumbItems = useMemo(
     () => [

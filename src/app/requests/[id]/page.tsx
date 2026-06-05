@@ -2,8 +2,6 @@ import { useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router";
 import { ArrowLeft } from "lucide-react";
-import { toast } from "sonner";
-import axios from "axios";
 
 import CONFIG from "@/common/constants/config";
 import { getRequestById } from "@/api/requestor/requests/[id]";
@@ -20,8 +18,7 @@ import { Badge } from "@/app/_components/ui/badge";
 import dayjs from "@/libs/dayjs";
 import { Skeleton } from "@/app/_components/ui/skeleton";
 
-import type { TRequestorApiResponse } from "@/api/requestor/types/response";
-import { useAuth } from "@/app/_hooks/use-auth";
+import RequestorAPINotFoundError from "@/api/requestor/errors/not-found-error";
 
 export function meta() {
   return [
@@ -33,7 +30,6 @@ export function meta() {
 
 export default function RequestDetailPage() {
   const { id } = useParams();
-  const { logout } = useAuth();
   const navigate = useNavigate();
 
   const { data, isLoading, isError, error } = useQuery({
@@ -43,30 +39,10 @@ export default function RequestDetailPage() {
   });
 
   useEffect(() => {
-    if (isError && error) {
-      toast.dismiss();
-      if (axios.isAxiosError(error)) {
-        const statusCode = error.response?.status;
-
-        const defaultErrorResponse = error.response
-          ?.data as TRequestorApiResponse<null>;
-
-        switch (statusCode) {
-          case 401:
-            toast.error(defaultErrorResponse.message as string);
-            logout();
-            break;
-          case 404:
-            toast.error("Request not found");
-            navigate("/requests");
-            break;
-          default:
-            toast.error(defaultErrorResponse.message as string);
-            break;
-        }
-      }
+    if (isError && error && error instanceof RequestorAPINotFoundError) {
+      navigate("/requests");
     }
-  }, [isError, error, logout, navigate]);
+  }, [isError, error, navigate]);
 
   const breadcrumbItems = useMemo(
     () => [

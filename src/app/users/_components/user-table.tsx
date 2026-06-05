@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   ArrowDown01,
   ArrowDown10,
@@ -70,8 +70,6 @@ import {
   type TUserTableFilterSchema,
 } from "@/app/users/_schema/user-table-filter";
 import { toast } from "sonner";
-import axios from "axios";
-import type { TRequestorApiResponse } from "@/api/requestor/types/response";
 import { useAuth } from "@/app/_hooks/use-auth";
 import { DataTable } from "@/app/_components/data-table";
 import { deleteUserById, updateUserById } from "@/api/requestor/users/[id]";
@@ -85,7 +83,7 @@ let debounceSearchTimeoutId: number | null = null;
 
 export default function UserTable() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { auth, logout } = useAuth();
+  const { auth } = useAuth();
   const queryClient = useQueryClient();
   const [confirmatedAction, setConfirmatedAction] =
     useState<TConfirmedAction | null>(null);
@@ -123,26 +121,6 @@ export default function UserTable() {
         queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.USER.ALL()],
       });
     },
-    onError: (error) => {
-      toast.dismiss();
-      if (axios.isAxiosError(error)) {
-        const statusCode = error.response?.status;
-
-        const defaultErrorResponse = error.response
-          ?.data as TRequestorApiResponse<null>;
-
-        switch (statusCode) {
-          case 401:
-            console.log("401");
-            toast.error(defaultErrorResponse.message as string);
-            logout();
-            break;
-          default:
-            toast.error(defaultErrorResponse.message as string);
-            break;
-        }
-      }
-    },
   });
 
   const { mutate: updateUser } = useMutation({
@@ -156,30 +134,6 @@ export default function UserTable() {
       queryClient.invalidateQueries({
         queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.USER.ALL()],
       });
-    },
-    onError: (error) => {
-      toast.dismiss();
-      if (axios.isAxiosError(error)) {
-        const statusCode = error.response?.status;
-
-        const defaultErrorResponse = error.response
-          ?.data as TRequestorApiResponse<null>;
-
-        switch (statusCode) {
-          case 401:
-            toast.error(defaultErrorResponse.message as string);
-            logout();
-            break;
-
-          default:
-            toast.error(defaultErrorResponse.message as string);
-            break;
-        }
-
-        return;
-      }
-
-      toast.error(error.message as string);
     },
   });
 
@@ -248,7 +202,14 @@ export default function UserTable() {
       status: null,
       role: null,
     });
-  }, [reset]);
+
+    setSearchParams((searchParams) => {
+      searchParams.delete("status");
+      searchParams.delete("role");
+      searchParams.set("page", "1");
+      return searchParams;
+    });
+  }, [reset, setSearchParams]);
 
   const mappedQueryTablePayload: TUserPaginationPayload = useMemo(
     () => ({
@@ -263,41 +224,13 @@ export default function UserTable() {
     [queryTable],
   );
 
-  const {
-    data: responseData,
-    isLoading,
-    isError,
-    error,
-  } = useQuery({
+  const { data: responseData, isLoading } = useQuery({
     queryKey: [
       CONFIG.QUERY_KEY.REQUESTOR_API.USER.ALL(),
       mappedQueryTablePayload,
     ],
     queryFn: () => getUserPagination(mappedQueryTablePayload),
   });
-
-  useEffect(() => {
-    if (isError && error) {
-      toast.dismiss();
-      if (axios.isAxiosError(error)) {
-        const statusCode = error.response?.status;
-
-        const defaultErrorResponse = error.response
-          ?.data as TRequestorApiResponse<null>;
-
-        switch (statusCode) {
-          case 401:
-            console.log("401");
-            toast.error(defaultErrorResponse.message as string);
-            logout();
-            break;
-          default:
-            toast.error(defaultErrorResponse.message as string);
-            break;
-        }
-      }
-    }
-  }, [isError, error, logout]);
 
   const ascIcon = <ArrowDown01 />;
   const descIcon = <ArrowDown10 />;

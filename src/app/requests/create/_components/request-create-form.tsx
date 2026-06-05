@@ -3,7 +3,6 @@ import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 import { Link, useNavigate } from "react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import axios from "axios";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { Card, CardContent, CardFooter } from "@/app/_components/ui/card";
@@ -33,16 +32,13 @@ import {
 import { createRequest } from "@/api/requestor/requests";
 import { RequestPriorityEnum } from "@/api/requestor/requests/enums/request-priority";
 import CONFIG from "@/common/constants/config";
-import type {
-  TRequestorApiErrorResponse,
-  TRequestorApiResponse,
-} from "@/api/requestor/types/response";
+import type { TRequestorApiErrorResponse } from "@/api/requestor/types/response";
 import type { TRequestCreatePayload } from "@/api/requestor/requests/types/request-create-payload";
-import { useAuth } from "@/app/_hooks/use-auth";
+import RequestorAPIValidationError from "@/api/requestor/errors/validation-error";
+import { applyValidationErrors } from "@/utils/validation-helper";
 
 export default function RequestCreateForm() {
   const navigate = useNavigate();
-  const { logout } = useAuth();
 
   const { control, handleSubmit, setError } = useForm<TRequestCreateFormSchema>(
     {
@@ -90,55 +86,20 @@ export default function RequestCreateForm() {
       navigate("/requests");
     },
     onError: (error) => {
-      toast.dismiss();
-      if (axios.isAxiosError(error)) {
-        const statusCode = error.response?.status;
+      if (error instanceof RequestorAPIValidationError) {
+        const mappedErrors = (
+          error.errors as TRequestorApiErrorResponse<null>[]
+        ).map((error) => {
+          return {
+            property:
+              mappedErrorKeys.find((key) => key.key === error.property)
+                ?.mapped ?? error.property,
+            messages: error.messages,
+          };
+        });
 
-        const defaultErrorResponse = error.response
-          ?.data as TRequestorApiResponse<null>;
-
-        switch (statusCode) {
-          case 400:
-            const validationErrorResponse = error.response
-              ?.data as TRequestorApiResponse<
-              null,
-              TRequestorApiErrorResponse<TRequestCreatePayload>
-            >;
-
-            if (Array.isArray(validationErrorResponse.message)) {
-              return validationErrorResponse.message.forEach((errorMessage) => {
-                const mappedKey = mappedErrorKeys.find(
-                  (mappedErrorKey) =>
-                    mappedErrorKey.mapped === errorMessage.property,
-                );
-
-                if (!mappedKey) {
-                  toast.error(errorMessage.messages[0]);
-                  return;
-                }
-                setError(mappedKey.key, {
-                  message: errorMessage.messages[0],
-                });
-              });
-            } else {
-              toast.error(defaultErrorResponse.message as string);
-            }
-            break;
-
-          case 401:
-            toast.error(defaultErrorResponse.message as string);
-            logout();
-            break;
-
-          default:
-            toast.error(defaultErrorResponse.message as string);
-            break;
-        }
-
-        return;
+        return applyValidationErrors(setError, mappedErrors);
       }
-
-      return;
     },
   });
 
