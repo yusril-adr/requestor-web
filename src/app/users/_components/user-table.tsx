@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { Link, useSearchParams } from "react-router";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnFiltersState, SortingState } from "@tanstack/react-table";
 import { createColumnHelper } from "@tanstack/react-table";
@@ -58,14 +57,15 @@ import type { TUserPaginationPayload } from "@/api/requestor/users/types/user-pa
 import { getUserPagination } from "@/api/requestor/users";
 import type { TUserSortBy } from "@/api/requestor/users/consts/user-sort-by";
 import type { TUserTableCol } from "@/app/users/_types/user-table-col";
-import {
-  UserTableFilterSchema,
-  type TUserTableFilterSchema,
-} from "@/app/users/_schema/user-table-filter";
 import { toast } from "sonner";
 import { useAuth } from "@/app/_hooks/use-auth";
 import { DataTable } from "@/app/_components/data-table";
 import { deleteUserById, updateUserById } from "@/api/requestor/users/[id]";
+
+type TUserTableFilterValues = {
+  status: string | null;
+  role: string | null;
+};
 
 let debounceSearchTimeoutId: number | null = null;
 
@@ -94,8 +94,7 @@ export default function UserTable() {
     [searchParams],
   );
 
-  const { control, handleSubmit, reset } = useForm<TUserTableFilterSchema>({
-    resolver: zodResolver(UserTableFilterSchema),
+  const { control, handleSubmit, reset } = useForm<TUserTableFilterValues>({
     defaultValues: {
       status: (queryTable?.status as UserStatusEnum) || null,
       role: (queryTable?.role as RoleKeyEnum) || null,
@@ -173,7 +172,7 @@ export default function UserTable() {
     }, 300);
   };
 
-  const onFilterSubmit: SubmitHandler<TUserTableFilterSchema> = (data) => {
+  const onFilterSubmit: SubmitHandler<TUserTableFilterValues> = (data) => {
     setSearchParams((searchParams) => {
       searchParams.set("status", data.status || "");
 

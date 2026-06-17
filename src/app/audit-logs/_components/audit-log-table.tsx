@@ -8,7 +8,6 @@ import {
 } from "lucide-react";
 import { useSearchParams } from "react-router";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import type { ColumnFiltersState, SortingState } from "@tanstack/react-table";
 import { createColumnHelper } from "@tanstack/react-table";
@@ -40,14 +39,15 @@ import type { TAuditLogPaginationPayload } from "@/api/requestor/audit-logs/type
 import { getAuditLogPagination } from "@/api/requestor/audit-logs";
 import type { TAuditLogSortBy } from "@/api/requestor/audit-logs/consts/audit-log-sort-by";
 import type { TAuditLogTableCol } from "@/app/audit-logs/_types/audit-log-table-col";
-import {
-  AuditLogTableFilterSchema,
-  type TAuditLogTableFilterSchema,
-} from "@/app/audit-logs/_schema/audit-log-table-filter";
 import { DataTable } from "@/app/_components/data-table";
 import { AuditLogActionEnum } from "@/api/requestor/audit-logs/enums/audit-log-action";
 import { AuditLogEntityEnum } from "@/api/requestor/audit-logs/enums/audit-log-entity";
 import dayjs from "@/libs/dayjs";
+
+type TAuditLogTableFilterValues = {
+  action: string | null;
+  targetType: string | null;
+};
 
 let debounceSearchTimeoutId: number | null = null;
 
@@ -67,8 +67,7 @@ export default function AuditLogTable() {
     [searchParams],
   );
 
-  const { control, handleSubmit, reset } = useForm<TAuditLogTableFilterSchema>({
-    resolver: zodResolver(AuditLogTableFilterSchema),
+  const { control, handleSubmit, reset } = useForm<TAuditLogTableFilterValues>({
     defaultValues: {
       action: (queryTable?.action as AuditLogActionEnum) || null,
       targetType: (queryTable?.targetType as AuditLogEntityEnum) || null,
@@ -93,7 +92,7 @@ export default function AuditLogTable() {
     }, 300);
   };
 
-  const onFilterSubmit: SubmitHandler<TAuditLogTableFilterSchema> = (data) => {
+  const onFilterSubmit: SubmitHandler<TAuditLogTableFilterValues> = (data) => {
     setSearchParams((searchParams) => {
       searchParams.set("action", data.action || "");
 

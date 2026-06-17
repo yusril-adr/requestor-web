@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnFiltersState, SortingState } from "@tanstack/react-table";
 import { createColumnHelper } from "@tanstack/react-table";
@@ -63,10 +62,6 @@ import type { TRequestPaginationPayload } from "@/api/requestor/requests/types/r
 import { getRequestPagination } from "@/api/requestor/requests";
 import type { TRequestSortBy } from "@/api/requestor/requests/consts/request-sort-by";
 import type { TRequestTableCol } from "@/app/requests/_types/request-table-col";
-import {
-  RequestTableFilterSchema,
-  type TRequestTableFilterSchema,
-} from "@/app/requests/_schema/request-table-filter";
 
 import type { TRequestorApiErrorResponse } from "@/api/requestor/types/response";
 import { useAuth } from "@/app/_hooks/use-auth";
@@ -77,6 +72,11 @@ import { RoleKeyEnum } from "@/common/enums/role-key";
 import RequestorAPINotFoundError from "@/api/requestor/errors/not-found-error";
 import RequestorAPIValidationError from "@/api/requestor/errors/validation-error";
 import { applyValidationErrors } from "@/utils/validation-helper";
+
+type TRequestTableFilterValues = {
+  status: string | null;
+  priority: string | null;
+};
 
 let debounceSearchTimeoutId: number | null = null;
 
@@ -103,8 +103,7 @@ export default function RequestTable() {
   );
 
   const { control, handleSubmit, reset, setError } =
-    useForm<TRequestTableFilterSchema>({
-      resolver: zodResolver(RequestTableFilterSchema),
+    useForm<TRequestTableFilterValues>({
       defaultValues: {
         status: (queryTable?.status as RequestStatusEnum) || null,
         priority: (queryTable?.priority as RequestPriorityEnum) || null,
@@ -164,7 +163,7 @@ export default function RequestTable() {
     }, 300);
   };
 
-  const onFilterSubmit: SubmitHandler<TRequestTableFilterSchema> = (data) => {
+  const onFilterSubmit: SubmitHandler<TRequestTableFilterValues> = (data) => {
     setSearchParams((searchParams) => {
       searchParams.set("status", data.status || "");
 
