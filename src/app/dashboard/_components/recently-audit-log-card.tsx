@@ -36,7 +36,7 @@ export default function RecentlyAuditLogCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Recently Requests</CardTitle>
+        <CardTitle>Recently Audit Logs</CardTitle>
       </CardHeader>
       <CardContent>
         <Table>

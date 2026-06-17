@@ -21,11 +21,6 @@ import {
   PopoverTrigger,
 } from "@/app/_components/ui/popover";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/app/_components/ui/tooltip";
-import {
   Combobox,
   ComboboxContent,
   ComboboxEmpty,
@@ -462,24 +457,16 @@ export default function AuditLogTable() {
           </PopoverContent>
         </Popover>
 
-        <Tooltip>
-          <TooltipTrigger className="w-full">
-            <InputGroup>
-              <InputGroupInput
-                placeholder="Search..."
-                onChange={(val) => onSearchChange(val.target.value)}
-                defaultValue={queryTable?.search}
-              />
-              <InputGroupAddon>
-                <Search />
-              </InputGroupAddon>
-            </InputGroup>
-          </TooltipTrigger>
-
-          <TooltipContent side="bottom">
-            <p>Type minimum 3 characters to search</p>
-          </TooltipContent>
-        </Tooltip>
+        <InputGroup>
+          <InputGroupInput
+            placeholder="Type minimum 3 characters to search ..."
+            onChange={(val) => onSearchChange(val.target.value)}
+            defaultValue={queryTable?.search}
+          />
+          <InputGroupAddon>
+            <Search />
+          </InputGroupAddon>
+        </InputGroup>
       </div>
     </DataTable>
   );

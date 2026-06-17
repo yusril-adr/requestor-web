@@ -23,8 +23,10 @@ export default function DashboardPage() {
 
   return (
     <div className="w-full flex flex-col">
-      <div className="w-full max-w-7xl flex flex-col px-10 pb-10 gap-4">
-        <AppBreadcrumb items={breadcrumbItems} />
+      <div className="w-full max-w-7xl flex flex-col px-10 pb-10 gap-2">
+        <div className="mb-2">
+          <AppBreadcrumb items={breadcrumbItems} />
+        </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
           <TotalUserCard />
