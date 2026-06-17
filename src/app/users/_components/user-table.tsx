@@ -48,16 +48,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/app/_components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/app/_components/ui/alert-dialog";
+import { ConfirmDeleteUserDialog } from "./confirm-delete-user-dialog";
+import { ConfirmSuspendUserDialog } from "./confirm-suspend-user-dialog";
+import { ConfirmReactivateUserDialog } from "./confirm-reactivate-user-dialog";
 
 import { OrderKeyEnum } from "@/common/enums/order-key";
 import CONFIG from "@/common/constants/config";
@@ -74,19 +67,19 @@ import { useAuth } from "@/app/_hooks/use-auth";
 import { DataTable } from "@/app/_components/data-table";
 import { deleteUserById, updateUserById } from "@/api/requestor/users/[id]";
 
-type TConfirmedAction = {
-  id: string;
-  action: "delete" | "suspend" | "reactivate";
-};
-
 let debounceSearchTimeoutId: number | null = null;
 
 export default function UserTable() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { auth } = useAuth();
   const queryClient = useQueryClient();
-  const [confirmatedAction, setConfirmatedAction] =
-    useState<TConfirmedAction | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [confirmSuspendId, setConfirmSuspendId] = useState<string | null>(
+    null,
+  );
+  const [confirmReactivateId, setConfirmReactivateId] = useState<
+    string | null
+  >(null);
 
   const queryTable = useMemo(
     () => ({
@@ -137,35 +130,30 @@ export default function UserTable() {
     },
   });
 
-  const onActionHandler = useCallback(() => {
-    if (confirmatedAction?.id) {
-      switch (confirmatedAction.action) {
-        case "delete":
-          deleteUser(confirmatedAction.id);
-          break;
-        case "suspend":
-          updateUser({
-            id: confirmatedAction.id,
-            payload: {
-              status: UserStatusEnum.SUSPENDED,
-            },
-          });
-          break;
-        case "reactivate":
-          updateUser({
-            id: confirmatedAction.id,
-            payload: {
-              status: UserStatusEnum.SUSPENDED,
-            },
-          });
-          break;
-        default:
-          break;
-      }
-    }
+  const onDeleteConfirm = useCallback(() => {
+    if (confirmDeleteId) deleteUser(confirmDeleteId);
+    setConfirmDeleteId(null);
+  }, [confirmDeleteId, deleteUser]);
 
-    setConfirmatedAction(null);
-  }, [confirmatedAction, deleteUser]);
+  const onSuspendConfirm = useCallback(() => {
+    if (confirmSuspendId) {
+      updateUser({
+        id: confirmSuspendId,
+        payload: { status: UserStatusEnum.SUSPENDED },
+      });
+    }
+    setConfirmSuspendId(null);
+  }, [confirmSuspendId, updateUser]);
+
+  const onReactivateConfirm = useCallback(() => {
+    if (confirmReactivateId) {
+      updateUser({
+        id: confirmReactivateId,
+        payload: { status: UserStatusEnum.ACTIVE },
+      });
+    }
+    setConfirmReactivateId(null);
+  }, [confirmReactivateId, updateUser]);
 
   const onSearchChange = (value: string) => {
     if (value && value !== "" && value.length < 3) {
@@ -431,12 +419,7 @@ export default function UserTable() {
                 {allowedActionRoles.includes(currentRole) &&
                   user.status !== UserStatusEnum.SUSPENDED && (
                     <DropdownMenuItem
-                      onClick={() =>
-                        setConfirmatedAction({
-                          id: user.id,
-                          action: "suspend",
-                        })
-                      }
+                      onClick={() => setConfirmSuspendId(user.id)}
                     >
                       <Ban />
                       Suspend
@@ -446,12 +429,7 @@ export default function UserTable() {
                 {allowedActionRoles.includes(currentRole) &&
                   user.status === UserStatusEnum.SUSPENDED && (
                     <DropdownMenuItem
-                      onClick={() =>
-                        setConfirmatedAction({
-                          id: user.id,
-                          action: "reactivate",
-                        })
-                      }
+                      onClick={() => setConfirmReactivateId(user.id)}
                     >
                       <ShieldCheck />
                       Reactivate
@@ -462,7 +440,7 @@ export default function UserTable() {
                   <DropdownMenuItem
                     variant="destructive"
                     onClick={() =>
-                      setConfirmatedAction({ id: user.id, action: "delete" })
+                      setConfirmDeleteId(user.id)
                     }
                   >
                     <Trash />
@@ -635,26 +613,21 @@ export default function UserTable() {
         </div>
       </DataTable>
 
-      <AlertDialog
-        open={!!confirmatedAction}
-        onOpenChange={() => setConfirmatedAction(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the
-              data from the server.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={onActionHandler}>
-              Continue
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDeleteUserDialog
+        open={!!confirmDeleteId}
+        onOpenChange={() => setConfirmDeleteId(null)}
+        onConfirm={onDeleteConfirm}
+      />
+      <ConfirmSuspendUserDialog
+        open={!!confirmSuspendId}
+        onOpenChange={() => setConfirmSuspendId(null)}
+        onConfirm={onSuspendConfirm}
+      />
+      <ConfirmReactivateUserDialog
+        open={!!confirmReactivateId}
+        onOpenChange={() => setConfirmReactivateId(null)}
+        onConfirm={onReactivateConfirm}
+      />
     </>
   );
 }
