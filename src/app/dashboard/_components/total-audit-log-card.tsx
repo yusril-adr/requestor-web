@@ -23,7 +23,7 @@ export default function TotalAuditLogCard() {
 
         {!getUserDataQuery.isLoading && (
           <div className="flex flex-col md:flex-row justify-between h-full">
-            <CardTitle>Total Requests</CardTitle>
+            <CardTitle>Total Audit Logs</CardTitle>
 
             {!getUserDataQuery.isLoading && (
               <p>

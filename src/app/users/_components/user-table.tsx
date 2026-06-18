@@ -1,8 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
 import {
-  ArrowDown01,
-  ArrowDown10,
-  ArrowUpDown,
   Ban,
   EllipsisVertical,
   Eye,
@@ -59,7 +56,10 @@ import type { TUserSortBy } from "@/api/requestor/users/consts/user-sort-by";
 import type { TUserTableCol } from "@/app/users/_types/user-table-col";
 import { toast } from "sonner";
 import { useAuth } from "@/app/_hooks/use-auth";
-import { DataTable } from "@/app/_components/data-table";
+import {
+  DataTable,
+  DataTableSortableColHeader,
+} from "@/app/_components/data-table";
 import { deleteUserById, updateUserById } from "@/api/requestor/users/[id]";
 
 type TUserTableFilterValues = {
@@ -85,7 +85,9 @@ export default function UserTable() {
       pageSize: Number(searchParams.get("page_size") || 10),
       search: searchParams.get("search") || undefined,
       sortBy: searchParams.get("sort_by") || undefined,
-      order: searchParams.get("order") || undefined,
+      order: (searchParams.get("order") || undefined) as
+        | OrderKeyEnum
+        | undefined,
       status: searchParams.get("status") || undefined,
       role: searchParams.get("role") || undefined,
     }),
@@ -217,9 +219,6 @@ export default function UserTable() {
     queryFn: () => getUserPagination(mappedQueryTablePayload),
   });
 
-  const ascIcon = <ArrowDown01 />;
-  const descIcon = <ArrowDown10 />;
-
   const applySorting = useCallback(
     (key: string) => {
       if (queryTable?.sortBy === key) {
@@ -292,20 +291,13 @@ export default function UserTable() {
 
     columnHelper.accessor("name", {
       header: () => (
-        <Button
-          variant="ghost"
-          className="flex w-full justify-between p-0"
+        <DataTableSortableColHeader
+          label="Name"
+          sortKey="name"
+          sortBy={queryTable?.sortBy}
+          order={queryTable?.order}
           onClick={() => applySorting("name")}
-        >
-          Name
-          {queryTable?.sortBy === "name" &&
-            queryTable?.order === OrderKeyEnum.ASC &&
-            ascIcon}
-          {queryTable?.sortBy === "name" &&
-            queryTable?.order === OrderKeyEnum.DESC &&
-            descIcon}
-          {queryTable?.sortBy !== "name" && <ArrowUpDown />}
-        </Button>
+        />
       ),
       cell: ({ row }) => {
         const user = row.original;
@@ -323,60 +315,39 @@ export default function UserTable() {
 
     columnHelper.accessor("email", {
       header: () => (
-        <Button
-          variant="ghost"
-          className="flex w-full justify-between p-0"
+        <DataTableSortableColHeader
+          label="Email"
+          sortKey="email"
+          sortBy={queryTable?.sortBy}
+          order={queryTable?.order}
           onClick={() => applySorting("email")}
-        >
-          Email
-          {queryTable?.sortBy === "email" &&
-            queryTable?.order === OrderKeyEnum.ASC &&
-            ascIcon}
-          {queryTable?.sortBy === "email" &&
-            queryTable?.order === OrderKeyEnum.DESC &&
-            descIcon}
-          {queryTable?.sortBy !== "email" && <ArrowUpDown />}
-        </Button>
+        />
       ),
       cell: (info) => info.getValue(),
     }),
 
     columnHelper.accessor("role", {
       header: () => (
-        <Button
-          variant="ghost"
-          className="flex w-full justify-between p-0"
+        <DataTableSortableColHeader
+          label="Role"
+          sortKey="role"
+          sortBy={queryTable?.sortBy}
+          order={queryTable?.order}
           onClick={() => applySorting("role")}
-        >
-          Role
-          {queryTable?.sortBy === "role" &&
-            queryTable?.order === OrderKeyEnum.ASC &&
-            ascIcon}
-          {queryTable?.sortBy === "role" &&
-            queryTable?.order === OrderKeyEnum.DESC &&
-            descIcon}
-          {queryTable?.sortBy !== "role" && <ArrowUpDown />}
-        </Button>
+        />
       ),
       cell: (info) => info.getValue(),
     }),
 
     columnHelper.accessor("status", {
       header: () => (
-        <Button
-          variant="ghost"
-          className="flex w-full justify-between p-0"
+        <DataTableSortableColHeader
+          label="Status"
+          sortKey="status"
+          sortBy={queryTable?.sortBy}
+          order={queryTable?.order}
           onClick={() => applySorting("status")}
-        >
-          Status
-          {queryTable?.sortBy === "status" &&
-            queryTable?.order === OrderKeyEnum.ASC &&
-            ascIcon}
-          {queryTable?.sortBy === "status" &&
-            queryTable?.order === OrderKeyEnum.DESC &&
-            descIcon}
-          {queryTable?.sortBy !== "status" && <ArrowUpDown />}
-        </Button>
+        />
       ),
       cell: (info) => info.getValue(),
     }),

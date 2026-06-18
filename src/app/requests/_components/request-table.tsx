@@ -1,9 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
-  ArrowDown01,
-  ArrowDown10,
-  ArrowUpDown,
   EllipsisVertical,
   Eye,
   Funnel,
@@ -65,7 +62,10 @@ import type { TRequestTableCol } from "@/app/requests/_types/request-table-col";
 
 import type { TRequestorApiErrorResponse } from "@/api/requestor/types/response";
 import { useAuth } from "@/app/_hooks/use-auth";
-import { DataTable } from "@/app/_components/data-table";
+import {
+  DataTable,
+  DataTableSortableColHeader,
+} from "@/app/_components/data-table";
 import { deleteRequestById } from "@/api/requestor/requests/[id]";
 import { RequestPriorityEnum } from "@/api/requestor/requests/enums/request-priority";
 import { RoleKeyEnum } from "@/common/enums/role-key";
@@ -95,7 +95,9 @@ export default function RequestTable() {
       pageSize: Number(searchParams.get("page_size") || 10),
       search: searchParams.get("search") || undefined,
       sortBy: searchParams.get("sort_by") || undefined,
-      order: searchParams.get("order") || undefined,
+      order: (searchParams.get("order") || undefined) as
+        | OrderKeyEnum
+        | undefined,
       status: searchParams.get("status") || undefined,
       priority: searchParams.get("priority") || undefined,
     }),
@@ -222,9 +224,6 @@ export default function RequestTable() {
     }
   }, [isError, error]);
 
-  const ascIcon = <ArrowDown01 />;
-  const descIcon = <ArrowDown10 />;
-
   const applySorting = useCallback(
     (key: string) => {
       if (queryTable?.sortBy === key) {
@@ -298,20 +297,13 @@ export default function RequestTable() {
 
     columnHelper.accessor("title", {
       header: () => (
-        <Button
-          variant="ghost"
-          className="flex w-full justify-between p-0"
+        <DataTableSortableColHeader
+          label="Name"
+          sortKey="title"
+          sortBy={queryTable?.sortBy}
+          order={queryTable?.order}
           onClick={() => applySorting("title")}
-        >
-          Name
-          {queryTable?.sortBy === "title" &&
-            queryTable?.order === OrderKeyEnum.ASC &&
-            ascIcon}
-          {queryTable?.sortBy === "title" &&
-            queryTable?.order === OrderKeyEnum.DESC &&
-            descIcon}
-          {queryTable?.sortBy !== "title" && <ArrowUpDown />}
-        </Button>
+        />
       ),
       cell: ({ row }) => {
         const rowOriginal = row.original;
@@ -329,80 +321,52 @@ export default function RequestTable() {
 
     columnHelper.accessor("requestor_name", {
       header: () => (
-        <Button
-          variant="ghost"
-          className="flex w-full justify-between p-0"
+        <DataTableSortableColHeader
+          label="Requestor Name"
+          sortKey="requestor_name"
+          sortBy={queryTable?.sortBy}
+          order={queryTable?.order}
           onClick={() => applySorting("requestor_name")}
-        >
-          Requestor Name
-          {queryTable?.sortBy === "requestor_name" &&
-            queryTable?.order === OrderKeyEnum.ASC &&
-            ascIcon}
-          {queryTable?.sortBy === "requestor_name" &&
-            queryTable?.order === OrderKeyEnum.DESC &&
-            descIcon}
-          {queryTable?.sortBy !== "requestor_name" && <ArrowUpDown />}
-        </Button>
+        />
       ),
       cell: (info) => info.getValue(),
     }),
 
     columnHelper.accessor("status", {
       header: () => (
-        <Button
-          variant="ghost"
-          className="flex w-full justify-between p-0"
+        <DataTableSortableColHeader
+          label="Status"
+          sortKey="status"
+          sortBy={queryTable?.sortBy}
+          order={queryTable?.order}
           onClick={() => applySorting("status")}
-        >
-          Status
-          {queryTable?.sortBy === "status" &&
-            queryTable?.order === OrderKeyEnum.ASC &&
-            ascIcon}
-          {queryTable?.sortBy === "status" &&
-            queryTable?.order === OrderKeyEnum.DESC &&
-            descIcon}
-          {queryTable?.sortBy !== "status" && <ArrowUpDown />}
-        </Button>
+        />
       ),
       cell: (info) => info.getValue(),
     }),
 
     columnHelper.accessor("priority", {
       header: () => (
-        <Button
-          variant="ghost"
-          className="flex w-full justify-between p-0"
+        <DataTableSortableColHeader
+          label="Priority"
+          sortKey="priority"
+          sortBy={queryTable?.sortBy}
+          order={queryTable?.order}
           onClick={() => applySorting("priority")}
-        >
-          Priority
-          {queryTable?.sortBy === "priority" &&
-            queryTable?.order === OrderKeyEnum.ASC &&
-            ascIcon}
-          {queryTable?.sortBy === "priority" &&
-            queryTable?.order === OrderKeyEnum.DESC &&
-            descIcon}
-          {queryTable?.sortBy !== "priority" && <ArrowUpDown />}
-        </Button>
+        />
       ),
       cell: (info) => info.getValue(),
     }),
 
     columnHelper.accessor("assignee_name", {
       header: () => (
-        <Button
-          variant="ghost"
-          className="flex w-full justify-between p-0"
+        <DataTableSortableColHeader
+          label="Assignee Name"
+          sortKey="assignee_name"
+          sortBy={queryTable?.sortBy}
+          order={queryTable?.order}
           onClick={() => applySorting("assignee_name")}
-        >
-          Assignee Name
-          {queryTable?.sortBy === "assignee_name" &&
-            queryTable?.order === OrderKeyEnum.ASC &&
-            ascIcon}
-          {queryTable?.sortBy === "assignee_name" &&
-            queryTable?.order === OrderKeyEnum.DESC &&
-            descIcon}
-          {queryTable?.sortBy !== "assignee_name" && <ArrowUpDown />}
-        </Button>
+        />
       ),
       cell: (info) => info.getValue() ?? "-",
     }),

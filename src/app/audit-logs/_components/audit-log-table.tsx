@@ -1,11 +1,5 @@
 import { useCallback, useMemo } from "react";
-import {
-  ArrowDown01,
-  ArrowDown10,
-  ArrowUpDown,
-  Funnel,
-  Search,
-} from "lucide-react";
+import { Funnel, Search } from "lucide-react";
 import { useSearchParams } from "react-router";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
@@ -39,7 +33,10 @@ import type { TAuditLogPaginationPayload } from "@/api/requestor/audit-logs/type
 import { getAuditLogPagination } from "@/api/requestor/audit-logs";
 import type { TAuditLogSortBy } from "@/api/requestor/audit-logs/consts/audit-log-sort-by";
 import type { TAuditLogTableCol } from "@/app/audit-logs/_types/audit-log-table-col";
-import { DataTable } from "@/app/_components/data-table";
+import {
+  DataTable,
+  DataTableSortableColHeader,
+} from "@/app/_components/data-table";
 import { AuditLogActionEnum } from "@/api/requestor/audit-logs/enums/audit-log-action";
 import { AuditLogEntityEnum } from "@/api/requestor/audit-logs/enums/audit-log-entity";
 import dayjs from "@/libs/dayjs";
@@ -60,7 +57,9 @@ export default function AuditLogTable() {
       pageSize: Number(searchParams.get("page_size") || 10),
       search: searchParams.get("search") || undefined,
       sortBy: searchParams.get("sort_by") || undefined,
-      order: searchParams.get("order") || undefined,
+      order: (searchParams.get("order") || undefined) as
+        | OrderKeyEnum
+        | undefined,
       action: searchParams.get("action") || undefined,
       targetType: searchParams.get("target_type") || undefined,
     }),
@@ -124,7 +123,7 @@ export default function AuditLogTable() {
       per_page: queryTable.pageSize,
       search: queryTable.search,
       sort_by: queryTable.sortBy as TAuditLogSortBy,
-      order: queryTable.order as OrderKeyEnum,
+      order: queryTable.order,
       action: queryTable.action as AuditLogActionEnum,
       target_type: queryTable.targetType as AuditLogEntityEnum,
     }),
@@ -138,9 +137,6 @@ export default function AuditLogTable() {
     ],
     queryFn: () => getAuditLogPagination(mappedQueryTablePayload),
   });
-
-  const ascIcon = <ArrowDown01 />;
-  const descIcon = <ArrowDown10 />;
 
   const applySorting = useCallback(
     (key: string) => {
@@ -213,100 +209,65 @@ export default function AuditLogTable() {
 
     columnHelper.accessor("actor_name", {
       header: () => (
-        <Button
-          variant="ghost"
-          className="flex w-full justify-between p-0"
+        <DataTableSortableColHeader
+          label="Actor Name"
+          sortKey="actor_name"
+          sortBy={queryTable?.sortBy}
+          order={queryTable?.order}
           onClick={() => applySorting("actor_name")}
-        >
-          Actor Name
-          {queryTable?.sortBy === "actor_name" &&
-            queryTable?.order === OrderKeyEnum.ASC &&
-            ascIcon}
-          {queryTable?.sortBy === "actor_name" &&
-            queryTable?.order === OrderKeyEnum.DESC &&
-            descIcon}
-          {queryTable?.sortBy !== "actor_name" && <ArrowUpDown />}
-        </Button>
+        />
       ),
       cell: (info) => info.getValue(),
     }),
 
     columnHelper.accessor("action", {
       header: () => (
-        <Button
-          variant="ghost"
-          className="flex w-full justify-between p-0"
+        <DataTableSortableColHeader
+          label="Action"
+          sortKey="action"
+          sortBy={queryTable?.sortBy}
+          order={queryTable?.order}
           onClick={() => applySorting("action")}
-        >
-          Action
-          {queryTable?.sortBy === "action" &&
-            queryTable?.order === OrderKeyEnum.ASC &&
-            ascIcon}
-          {queryTable?.sortBy === "action" &&
-            queryTable?.order === OrderKeyEnum.DESC &&
-            descIcon}
-          {queryTable?.sortBy !== "action" && <ArrowUpDown />}
-        </Button>
+        />
       ),
       cell: (info) => info.getValue(),
     }),
 
     columnHelper.accessor("target_type", {
       header: () => (
-        <Button
-          variant="ghost"
-          className="flex w-full justify-between p-0"
+        <DataTableSortableColHeader
+          label="Target Type"
+          sortKey="target_type"
+          sortBy={queryTable?.sortBy}
+          order={queryTable?.order}
           onClick={() => applySorting("target_type")}
-        >
-          Target Type
-          {queryTable?.sortBy === "target_type" &&
-            queryTable?.order === OrderKeyEnum.ASC &&
-            ascIcon}
-          {queryTable?.sortBy === "target_type" &&
-            queryTable?.order === OrderKeyEnum.DESC &&
-            descIcon}
-          {queryTable?.sortBy !== "target_type" && <ArrowUpDown />}
-        </Button>
+        />
       ),
       cell: (info) => info.getValue(),
     }),
 
     columnHelper.accessor("target_id", {
       header: () => (
-        <Button
-          variant="ghost"
-          className="flex w-full justify-between p-0"
+        <DataTableSortableColHeader
+          label="Target Id"
+          sortKey="target_id"
+          sortBy={queryTable?.sortBy}
+          order={queryTable?.order}
           onClick={() => applySorting("target_id")}
-        >
-          Target Id
-          {queryTable?.sortBy === "terget_id" &&
-            queryTable?.order === OrderKeyEnum.ASC &&
-            ascIcon}
-          {queryTable?.sortBy === "terget_id" &&
-            queryTable?.order === OrderKeyEnum.DESC &&
-            descIcon}
-          {queryTable?.sortBy !== "terget_id" && <ArrowUpDown />}
-        </Button>
+        />
       ),
       cell: (info) => info.getValue(),
     }),
 
     columnHelper.accessor("created_at", {
       header: () => (
-        <Button
-          variant="ghost"
-          className="flex w-full justify-between p-0"
+        <DataTableSortableColHeader
+          label="Created At"
+          sortKey="created_at"
+          sortBy={queryTable?.sortBy}
+          order={queryTable?.order}
           onClick={() => applySorting("created_at")}
-        >
-          Created At
-          {queryTable?.sortBy === "created_at" &&
-            queryTable?.order === OrderKeyEnum.ASC &&
-            ascIcon}
-          {queryTable?.sortBy === "created_at" &&
-            queryTable?.order === OrderKeyEnum.DESC &&
-            descIcon}
-          {queryTable?.sortBy !== "created_at" && <ArrowUpDown />}
-        </Button>
+        />
       ),
       cell: (info) => dayjs(info.getValue()).format("YYYY-MM-DD HH:mm:ss"),
     }),

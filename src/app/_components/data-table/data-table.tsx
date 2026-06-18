@@ -42,7 +42,7 @@ const PAGE_SIZE_OPTIONS = [
   { label: "100 / page", value: 100 },
 ];
 
-export interface DataTableProps<TData> {
+export type TDataTableProps<TData> = {
   columns: (
     | (ColumnDefBase<TData, unknown> & StringHeaderIdentifier)
     | (ColumnDefBase<TData, unknown> & IdIdentifier<TData, unknown>)
@@ -65,7 +65,7 @@ export interface DataTableProps<TData> {
     Partial<TableOptions<TData>>,
     "data" | "columns" | "pageCount" | "getCoreRowModel"
   >;
-}
+};
 
 export function DataTable<TData>({
   columns,
@@ -81,7 +81,7 @@ export function DataTable<TData>({
   onPageSizeChange,
   children,
   tableOptions,
-}: DataTableProps<TData>) {
+}: TDataTableProps<TData>) {
   const { state: tableOptionsState, ...restTableOptions } = tableOptions ?? {};
   const totalRowInCurrentPage = data.length;
 
