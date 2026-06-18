@@ -1,14 +1,7 @@
 import { ArrowUp01, ArrowDown10, ArrowUpDown } from "lucide-react";
 import { Button } from "@/app/_components/ui/button";
 import { OrderKeyEnum } from "@/common/enums/order-key";
-
-export type TDataTableSortableColHeaderProps = {
-  label: string;
-  sortKey: string;
-  sortBy?: string;
-  order?: OrderKeyEnum;
-  onClick: () => void;
-};
+import type { TDataTableSortableColHeaderProps } from "@/app/_types/data-table-sortable-col-header-props";
 
 export function DataTableSortableColHeader({
   label,

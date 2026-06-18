@@ -8,18 +8,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/app/_components/ui/alert-dialog";
-
-export type TConfirmReactivateUserDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onConfirm: () => void;
-};
+import type { TConfirmActionDialogProps } from "@/app/users/_types/confirm-action-dialog-props";
 
 export function ConfirmReactivateUserDialog({
   open,
   onOpenChange,
   onConfirm,
-}: TConfirmReactivateUserDialogProps) {
+}: TConfirmActionDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>

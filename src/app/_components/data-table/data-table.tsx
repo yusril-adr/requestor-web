@@ -4,13 +4,6 @@ import {
   useReactTable,
   getCoreRowModel,
   flexRender,
-  type SortingState,
-  type ColumnFiltersState,
-  type TableOptions,
-  type ColumnDefBase,
-  type StringHeaderIdentifier,
-  type IdIdentifier,
-  type AccessorKeyColumnDefBase,
 } from "@tanstack/react-table";
 
 import {
@@ -33,6 +26,7 @@ import {
 } from "@/app/_components/ui/select";
 import { Skeleton } from "@/app/_components/ui/skeleton";
 import { generatePages } from "@/utils/table-helper";
+import type { TDataTableProps } from "@/app/_types/data-table-props";
 
 const PAGE_SIZE_OPTIONS = [
   { label: "5 / page", value: 5 },
@@ -41,31 +35,6 @@ const PAGE_SIZE_OPTIONS = [
   { label: "50 / page", value: 50 },
   { label: "100 / page", value: 100 },
 ];
-
-export type TDataTableProps<TData> = {
-  columns: (
-    | (ColumnDefBase<TData, unknown> & StringHeaderIdentifier)
-    | (ColumnDefBase<TData, unknown> & IdIdentifier<TData, unknown>)
-    | (AccessorKeyColumnDefBase<TData, string> &
-        Partial<IdIdentifier<TData, string>>)
-  )[];
-
-  data: TData[];
-  isLoading?: boolean;
-  pageCount: number;
-  rowCount: number;
-  pageIndex: number;
-  pageSize: number;
-  sorting?: SortingState;
-  columnFilters?: ColumnFiltersState;
-  onPageChange?: (page: number) => void;
-  onPageSizeChange?: (pageSize: number) => void;
-  children?: React.ReactNode;
-  tableOptions?: Omit<
-    Partial<TableOptions<TData>>,
-    "data" | "columns" | "pageCount" | "getCoreRowModel"
-  >;
-};
 
 export function DataTable<TData>({
   columns,

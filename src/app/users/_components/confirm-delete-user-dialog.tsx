@@ -8,18 +8,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/app/_components/ui/alert-dialog";
-
-export type TConfirmDeleteUserDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onConfirm: () => void;
-};
+import type { TConfirmActionDialogProps } from "@/app/users/_types/confirm-action-dialog-props";
 
 export function ConfirmDeleteUserDialog({
   open,
   onOpenChange,
   onConfirm,
-}: TConfirmDeleteUserDialogProps) {
+}: TConfirmActionDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
