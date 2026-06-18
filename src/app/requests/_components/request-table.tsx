@@ -110,7 +110,7 @@ export default function RequestTable() {
       },
     });
 
-  const { mutate: deleteRequest } = useMutation({
+  const { mutate: deleteRequestMutate } = useMutation({
     mutationFn: deleteRequestById,
     onMutate: () => {
       toast.loading("Deleting request...");
@@ -139,11 +139,11 @@ export default function RequestTable() {
 
   const onDeleteHandler = useCallback(() => {
     if (confirmatedDeletedId) {
-      deleteRequest(confirmatedDeletedId);
+      deleteRequestMutate(confirmatedDeletedId);
     }
 
     setConfirmatedDeletedId(null);
-  }, [confirmatedDeletedId, deleteRequest]);
+  }, [confirmatedDeletedId, deleteRequestMutate]);
 
   const onSearchChange = (value: string) => {
     if (value && value !== "" && value.length < 3) {

@@ -74,12 +74,10 @@ export default function UserTable() {
   const { auth } = useAuth();
   const queryClient = useQueryClient();
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [confirmSuspendId, setConfirmSuspendId] = useState<string | null>(
+  const [confirmSuspendId, setConfirmSuspendId] = useState<string | null>(null);
+  const [confirmReactivateId, setConfirmReactivateId] = useState<string | null>(
     null,
   );
-  const [confirmReactivateId, setConfirmReactivateId] = useState<
-    string | null
-  >(null);
 
   const queryTable = useMemo(
     () => ({
@@ -101,7 +99,7 @@ export default function UserTable() {
     },
   });
 
-  const { mutate: deleteUser } = useMutation({
+  const { mutate: deleteUserMutate } = useMutation({
     mutationFn: deleteUserById,
     onMutate: () => {
       toast.loading("Deleting user...");
@@ -115,7 +113,7 @@ export default function UserTable() {
     },
   });
 
-  const { mutate: updateUser } = useMutation({
+  const { mutate: updateUserMutate } = useMutation({
     mutationFn: updateUserById,
     onMutate: () => {
       toast.loading("Updating user...");
@@ -130,29 +128,29 @@ export default function UserTable() {
   });
 
   const onDeleteConfirm = useCallback(() => {
-    if (confirmDeleteId) deleteUser(confirmDeleteId);
+    if (confirmDeleteId) deleteUserMutate(confirmDeleteId);
     setConfirmDeleteId(null);
-  }, [confirmDeleteId, deleteUser]);
+  }, [confirmDeleteId, deleteUserMutate]);
 
   const onSuspendConfirm = useCallback(() => {
     if (confirmSuspendId) {
-      updateUser({
+      updateUserMutate({
         id: confirmSuspendId,
         payload: { status: UserStatusEnum.SUSPENDED },
       });
     }
     setConfirmSuspendId(null);
-  }, [confirmSuspendId, updateUser]);
+  }, [confirmSuspendId, updateUserMutate]);
 
   const onReactivateConfirm = useCallback(() => {
     if (confirmReactivateId) {
-      updateUser({
+      updateUserMutate({
         id: confirmReactivateId,
         payload: { status: UserStatusEnum.ACTIVE },
       });
     }
     setConfirmReactivateId(null);
-  }, [confirmReactivateId, updateUser]);
+  }, [confirmReactivateId, updateUserMutate]);
 
   const onSearchChange = (value: string) => {
     if (value && value !== "" && value.length < 3) {
@@ -438,9 +436,7 @@ export default function UserTable() {
                 {allowedActionRoles.includes(currentRole) && (
                   <DropdownMenuItem
                     variant="destructive"
-                    onClick={() =>
-                      setConfirmDeleteId(user.id)
-                    }
+                    onClick={() => setConfirmDeleteId(user.id)}
                   >
                     <Trash />
                     Delete{" "}

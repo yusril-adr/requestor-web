@@ -106,7 +106,11 @@ export default function RequestEditForm() {
   ];
 
   const queryClient = useQueryClient();
-  const updateMutation = useMutation({
+  const {
+    mutate: updateRequestMutate,
+    isPending: updateRequestIsPending,
+    isPaused: updateRequestIsPaused,
+  } = useMutation({
     mutationFn: updateRequestById,
     onMutate: () => {
       toast.loading("Updating request...");
@@ -153,16 +157,16 @@ export default function RequestEditForm() {
       priority: data.priority,
     };
 
-    updateMutation.mutate({ id: params.id as string, payload });
+    updateRequestMutate({ id: params.id as string, payload });
   };
 
   const isFormDisabled = useMemo(
     () =>
-      updateMutation.isPending ||
-      updateMutation.isPaused ||
+      updateRequestIsPending ||
+      updateRequestIsPaused ||
       getDataQuery.isLoading ||
       getDataQuery.isPaused,
-    [updateMutation, getDataQuery],
+    [updateRequestIsPending, updateRequestIsPaused, getDataQuery],
   );
 
   return (

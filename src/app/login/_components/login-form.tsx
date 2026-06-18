@@ -50,7 +50,11 @@ export function LoginForm() {
     resolver: zodResolver(LoginFormSchema),
   });
 
-  const loginMutation = useMutation({
+  const {
+    mutate: loginMutate,
+    isPending: loginIsPending,
+    isPaused: loginIsPaused,
+  } = useMutation({
     mutationFn: login,
     onMutate: () => {
       toast.loading("Logging in...");
@@ -84,12 +88,12 @@ export function LoginForm() {
       email: data.email,
       password: data.password,
     };
-    loginMutation.mutate(payload);
+    loginMutate(payload);
   };
 
   const isFormDisabled = useMemo(
-    () => loginMutation.isPending || loginMutation.isPaused,
-    [loginMutation],
+    () => loginIsPending || loginIsPaused,
+    [loginIsPending, loginIsPaused],
   );
 
   return (

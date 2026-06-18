@@ -85,7 +85,11 @@ export default function UserEditForm() {
   });
 
   const queryClient = useQueryClient();
-  const updateUserMutation = useMutation({
+  const {
+    mutate: updateUserMutate,
+    isPending: updateUserIsPending,
+    isPaused: updateUserIsPaused,
+  } = useMutation({
     mutationFn: updateUserById,
     onMutate: () => {
       toast.loading("Updating user...");
@@ -124,16 +128,16 @@ export default function UserEditForm() {
       status: data.status,
     };
 
-    updateUserMutation.mutate({ id: params.id as string, payload });
+    updateUserMutate({ id: params.id as string, payload });
   };
 
   const isFormDisabled = useMemo(
     () =>
-      updateUserMutation.isPending ||
-      updateUserMutation.isPaused ||
+      updateUserIsPending ||
+      updateUserIsPaused ||
       getUserDataQuery.isLoading ||
       getUserDataQuery.isPaused,
-    [updateUserMutation, getUserDataQuery],
+    [updateUserIsPending, updateUserIsPaused, getUserDataQuery],
   );
 
   return (

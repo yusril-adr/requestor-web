@@ -54,7 +54,11 @@ export default function UserCreateForm() {
   });
 
   const queryClient = useQueryClient();
-  const createUserMutation = useMutation({
+  const {
+    mutate: createUserMutate,
+    isPending: createUserIsPending,
+    isPaused: createUserIsPaused,
+  } = useMutation({
     mutationFn: createUser,
     onMutate: () => {
       toast.loading("Creating user...");
@@ -87,12 +91,12 @@ export default function UserCreateForm() {
       role: data.role,
     };
 
-    createUserMutation.mutate(payload);
+    createUserMutate(payload);
   };
 
   const isFormDisabled = useMemo(
-    () => createUserMutation.isPending || createUserMutation.isPaused,
-    [createUserMutation],
+    () => createUserIsPending || createUserIsPaused,
+    [createUserIsPending, createUserIsPaused],
   );
 
   return (
