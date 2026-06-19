@@ -307,17 +307,23 @@ export default function AuditLogTable() {
 
   return (
     <DataTable
-      columns={columns}
       data={responseData?.data?.data?.items ?? []}
       isLoading={isLoading}
-      pageCount={responseData?.data?.data?.meta?.total_page || 1}
-      rowCount={responseData?.data?.data?.meta?.total_all_data || 0}
-      pageIndex={responseData?.data?.data?.meta?.current_page || 1}
-      pageSize={queryTable?.pageSize || 10}
-      sorting={sorting}
-      columnFilters={columnFilters}
       onPageChange={handlePageChange}
       onPageSizeChange={handlePageSizeChange}
+      tableOptions={{
+        columns,
+        pageCount: responseData?.data?.data?.meta?.total_page || 1,
+        rowCount: responseData?.data?.data?.meta?.total_all_data || 0,
+        state: {
+          pagination: {
+            pageIndex: responseData?.data?.data?.meta?.current_page || 1,
+            pageSize: queryTable?.pageSize || 10,
+          },
+          sorting,
+          columnFilters,
+        },
+      }}
     >
       <div className="flex items-center justify-between gap-2">
         <Popover>

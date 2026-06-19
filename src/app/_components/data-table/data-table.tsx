@@ -37,22 +37,25 @@ const PAGE_SIZE_OPTIONS = [
 ];
 
 export function DataTable<TData>({
-  columns,
   data,
   isLoading = false,
-  pageCount,
-  rowCount,
-  pageIndex,
-  pageSize,
-  sorting,
-  columnFilters,
   onPageChange,
   onPageSizeChange,
   children,
   tableOptions,
 }: TDataTableProps<TData>) {
-  const { state: tableOptionsState, ...restTableOptions } = tableOptions ?? {};
+  const {
+    state: tableOptionsState,
+    columns = [],
+    rowCount = 0,
+    ...restTableOptions
+  } = tableOptions ?? {};
   const totalRowInCurrentPage = data.length;
+
+  const pagination = tableOptionsState?.pagination;
+  const pageIndex = pagination?.pageIndex ?? 1;
+  const pageSize = pagination?.pageSize ?? 10;
+  const tablePageCount = restTableOptions.pageCount ?? 1;
 
   const dataStartIndex = useMemo(
     () => (pageIndex - 1) * pageSize || 0,
@@ -60,19 +63,13 @@ export function DataTable<TData>({
   );
 
   const tableState = useMemo(
-    () => ({
-      pagination: { pageIndex, pageSize },
-      sorting,
-      columnFilters,
-      ...tableOptionsState,
-    }),
-    [pageIndex, pageSize, sorting, columnFilters, tableOptionsState],
+    () => tableOptionsState ?? {},
+    [tableOptionsState],
   );
 
   const table = useReactTable({
     data,
     columns,
-    pageCount,
     getCoreRowModel: getCoreRowModel(),
     state: tableState,
     ...restTableOptions,
@@ -80,13 +77,13 @@ export function DataTable<TData>({
 
   const pages = generatePages({
     currentPage: pageIndex,
-    totalPages: pageCount,
+    totalPages: tablePageCount,
   });
 
   const indexStart = rowCount === 0 ? 0 : dataStartIndex + 1;
   const indexEnd = Math.min(dataStartIndex + totalRowInCurrentPage, rowCount);
   const isFirstPage = pageIndex === 1;
-  const isLastPage = pageIndex === pageCount;
+  const isLastPage = pageIndex === tablePageCount;
 
   const columnCount =
     table.getHeaderGroups().at(0)?.headers.length ?? columns.length;
