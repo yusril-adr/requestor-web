@@ -102,7 +102,7 @@ export default function UserTable() {
     },
   });
 
-  const { onFilterSubmit, columnFilters, filterParams } =
+  const { onFilterReset, onFilterSubmit, columnFilters, filterParams } =
     useFilter<TUserTableFilterValues>(
       [
         {
@@ -120,6 +120,7 @@ export default function UserTable() {
       ],
       queryTable,
       setSearchParams,
+      reset,
     );
 
   const { mutate: deleteUserMutate } = useMutation({
@@ -192,20 +193,6 @@ export default function UserTable() {
       });
     }, 300);
   };
-
-  const onFilterReset = useCallback(() => {
-    reset({
-      status: null,
-      role: null,
-    });
-
-    setSearchParams((searchParams) => {
-      searchParams.delete("status");
-      searchParams.delete("role");
-      searchParams.set("page", "1");
-      return searchParams;
-    });
-  }, [reset, setSearchParams]);
 
   const mappedQueryTablePayload: TUserPaginationPayload = useMemo(
     () => ({

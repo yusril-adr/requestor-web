@@ -74,7 +74,7 @@ export default function AuditLogTable() {
     },
   });
 
-  const { onFilterSubmit, columnFilters, filterParams } =
+  const { onFilterReset, onFilterSubmit, columnFilters, filterParams } =
     useFilter<TAuditLogTableFilterValues>(
       [
         {
@@ -92,6 +92,7 @@ export default function AuditLogTable() {
       ],
       queryTable,
       setSearchParams,
+      reset,
     );
 
   const onSearchChange = (value: string) => {
@@ -111,20 +112,6 @@ export default function AuditLogTable() {
       });
     }, 300);
   };
-
-  const onFilterReset = useCallback(() => {
-    reset({
-      action: null,
-      targetType: null,
-    });
-
-    setSearchParams((searchParams) => {
-      searchParams.delete("action");
-      searchParams.delete("target_type");
-      searchParams.set("page", "1");
-      return searchParams;
-    });
-  }, [reset, setSearchParams]);
 
   const mappedQueryTablePayload: TAuditLogPaginationPayload = useMemo(
     () => ({

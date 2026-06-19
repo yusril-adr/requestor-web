@@ -15,6 +15,7 @@ export function useFilter<TFormValues extends Record<string, string | null>>(
   setSearchParams: (
     updater: (prev: URLSearchParams) => URLSearchParams,
   ) => void,
+  reset: (values: Record<string, null>) => void,
 ) {
   const onFilterSubmit: SubmitHandler<TFormValues> = useCallback(
     (data) => {
@@ -54,5 +55,21 @@ export function useFilter<TFormValues extends Record<string, string | null>>(
     [config, queryTable],
   );
 
-  return { onFilterSubmit, columnFilters, filterParams };
+  const onFilterReset = useCallback(() => {
+    const resetValues = config.reduce(
+      (acc, { formName }) => ({ ...acc, [formName]: null }),
+      {} as Record<string, null>,
+    );
+    reset(resetValues);
+
+    setSearchParams((prev) => {
+      config.forEach(({ urlParam }) => {
+        prev.delete(urlParam);
+      });
+      prev.set("page", "1");
+      return prev;
+    });
+  }, [config, reset, setSearchParams]);
+
+  return { onFilterSubmit, onFilterReset, columnFilters, filterParams };
 }

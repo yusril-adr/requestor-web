@@ -113,7 +113,7 @@ export default function RequestTable() {
       },
     });
 
-  const { onFilterSubmit, columnFilters, filterParams } =
+  const { onFilterReset, onFilterSubmit, columnFilters, filterParams } =
     useFilter<TRequestTableFilterValues>(
       [
         {
@@ -131,6 +131,7 @@ export default function RequestTable() {
       ],
       queryTable,
       setSearchParams,
+      reset,
     );
 
   const { mutate: deleteRequestMutate } = useMutation({
@@ -185,20 +186,6 @@ export default function RequestTable() {
       });
     }, 300);
   };
-
-  const onFilterReset = useCallback(() => {
-    reset({
-      status: null,
-      priority: null,
-    });
-
-    setSearchParams((searchParams) => {
-      searchParams.delete("status");
-      searchParams.delete("priority");
-      searchParams.set("page", "1");
-      return searchParams;
-    });
-  }, [reset, setSearchParams]);
 
   const mappedQueryTablePayload: TRequestPaginationPayload = useMemo(
     () => ({
