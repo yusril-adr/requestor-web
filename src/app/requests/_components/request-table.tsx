@@ -9,9 +9,9 @@ import {
   Trash,
 } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router";
-import { Controller, useForm, type SubmitHandler } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { ColumnFiltersState, SortingState } from "@tanstack/react-table";
+import type { SortingState } from "@tanstack/react-table";
 import { createColumnHelper } from "@tanstack/react-table";
 
 import { Button } from "@/app/_components/ui/button";
@@ -62,6 +62,7 @@ import type { TRequestTableCol } from "@/app/requests/_types/request-table-col";
 
 import type { TRequestorApiErrorResponse } from "@/api/requestor/types/response";
 import { useAuth } from "@/app/_hooks/use-auth";
+import { useFilter } from "@/app/_hooks/use-filter";
 import {
   DataTable,
   DataTableSortableColHeader,
@@ -111,6 +112,26 @@ export default function RequestTable() {
         priority: (queryTable?.priority as RequestPriorityEnum) || null,
       },
     });
+
+  const { onFilterSubmit, columnFilters, filterParams } =
+    useFilter<TRequestTableFilterValues>(
+      [
+        {
+          formName: "status",
+          urlParam: "status",
+          columnId: "status",
+          apiField: "status",
+        },
+        {
+          formName: "priority",
+          urlParam: "priority",
+          columnId: "priority",
+          apiField: "priority",
+        },
+      ],
+      queryTable,
+      setSearchParams,
+    );
 
   const { mutate: deleteRequestMutate } = useMutation({
     mutationFn: deleteRequestById,
@@ -165,18 +186,6 @@ export default function RequestTable() {
     }, 300);
   };
 
-  const onFilterSubmit: SubmitHandler<TRequestTableFilterValues> = (data) => {
-    setSearchParams((searchParams) => {
-      searchParams.set("status", data.status || "");
-
-      searchParams.set("priority", data.priority || "");
-
-      searchParams.set("page", "1");
-
-      return searchParams;
-    });
-  };
-
   const onFilterReset = useCallback(() => {
     reset({
       status: null,
@@ -198,10 +207,9 @@ export default function RequestTable() {
       search: queryTable.search,
       sort_by: queryTable.sortBy as TRequestSortBy,
       order: queryTable.order as OrderKeyEnum,
-      status: queryTable.status as RequestStatusEnum,
-      priority: queryTable.priority as RequestPriorityEnum,
+      ...filterParams,
     }),
-    [queryTable],
+    [queryTable, filterParams],
   );
 
   const {
@@ -419,25 +427,6 @@ export default function RequestTable() {
       },
     }),
   ];
-
-  const columnFilters = useMemo<ColumnFiltersState>(() => {
-    const filters = [];
-    if (queryTable?.status) {
-      filters.push({
-        id: "status",
-        value: queryTable?.status as RequestStatusEnum,
-      });
-    }
-
-    if (queryTable?.priority) {
-      filters.push({
-        id: "priority",
-        value: queryTable?.priority as RequestPriorityEnum,
-      });
-    }
-
-    return filters;
-  }, [queryTable?.status, queryTable?.priority]);
 
   const sorting = useMemo<SortingState>(() => {
     const sort = [];

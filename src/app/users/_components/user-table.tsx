@@ -10,9 +10,9 @@ import {
   Trash,
 } from "lucide-react";
 import { Link, useSearchParams } from "react-router";
-import { Controller, useForm, type SubmitHandler } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { ColumnFiltersState, SortingState } from "@tanstack/react-table";
+import type { SortingState } from "@tanstack/react-table";
 import { createColumnHelper } from "@tanstack/react-table";
 
 import { Button } from "@/app/_components/ui/button";
@@ -56,6 +56,7 @@ import type { TUserSortBy } from "@/api/requestor/users/consts/user-sort-by";
 import type { TUserTableCol } from "@/app/users/_types/user-table-col";
 import { toast } from "sonner";
 import { useAuth } from "@/app/_hooks/use-auth";
+import { useFilter } from "@/app/_hooks/use-filter";
 import {
   DataTable,
   DataTableSortableColHeader,
@@ -100,6 +101,26 @@ export default function UserTable() {
       role: (queryTable?.role as RoleKeyEnum) || null,
     },
   });
+
+  const { onFilterSubmit, columnFilters, filterParams } =
+    useFilter<TUserTableFilterValues>(
+      [
+        {
+          formName: "status",
+          urlParam: "status",
+          columnId: "status",
+          apiField: "status",
+        },
+        {
+          formName: "role",
+          urlParam: "role",
+          columnId: "role",
+          apiField: "role",
+        },
+      ],
+      queryTable,
+      setSearchParams,
+    );
 
   const { mutate: deleteUserMutate } = useMutation({
     mutationFn: deleteUserById,
@@ -172,18 +193,6 @@ export default function UserTable() {
     }, 300);
   };
 
-  const onFilterSubmit: SubmitHandler<TUserTableFilterValues> = (data) => {
-    setSearchParams((searchParams) => {
-      searchParams.set("status", data.status || "");
-
-      searchParams.set("role", data.role || "");
-
-      searchParams.set("page", "1");
-
-      return searchParams;
-    });
-  };
-
   const onFilterReset = useCallback(() => {
     reset({
       status: null,
@@ -205,10 +214,9 @@ export default function UserTable() {
       search: queryTable.search,
       sort_by: queryTable.sortBy as TUserSortBy,
       order: queryTable.order as OrderKeyEnum,
-      status: queryTable.status as UserStatusEnum,
-      role: queryTable.role as RoleKeyEnum,
+      ...filterParams,
     }),
-    [queryTable],
+    [queryTable, filterParams],
   );
 
   const { data: responseData, isLoading } = useQuery({
@@ -420,25 +428,6 @@ export default function UserTable() {
       },
     }),
   ];
-
-  const columnFilters = useMemo<ColumnFiltersState>(() => {
-    const filters = [];
-    if (queryTable?.status) {
-      filters.push({
-        id: "status",
-        value: queryTable?.status as UserStatusEnum,
-      });
-    }
-
-    if (queryTable?.role) {
-      filters.push({
-        id: "role",
-        value: queryTable?.role as RoleKeyEnum,
-      });
-    }
-
-    return filters;
-  }, [queryTable?.status, queryTable?.role]);
 
   const sorting = useMemo<SortingState>(() => {
     const sort = [];

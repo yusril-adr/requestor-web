@@ -1,9 +1,9 @@
 import { useCallback, useMemo } from "react";
 import { Funnel, Search } from "lucide-react";
 import { useSearchParams } from "react-router";
-import { Controller, useForm, type SubmitHandler } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
-import type { ColumnFiltersState, SortingState } from "@tanstack/react-table";
+import type { SortingState } from "@tanstack/react-table";
 import { createColumnHelper } from "@tanstack/react-table";
 
 import { Button } from "@/app/_components/ui/button";
@@ -40,6 +40,7 @@ import {
 import { AuditLogActionEnum } from "@/api/requestor/audit-logs/enums/audit-log-action";
 import { AuditLogEntityEnum } from "@/api/requestor/audit-logs/enums/audit-log-entity";
 import dayjs from "@/libs/dayjs";
+import { useFilter } from "@/app/_hooks/use-filter";
 
 type TAuditLogTableFilterValues = {
   action: string | null;
@@ -73,6 +74,26 @@ export default function AuditLogTable() {
     },
   });
 
+  const { onFilterSubmit, columnFilters, filterParams } =
+    useFilter<TAuditLogTableFilterValues>(
+      [
+        {
+          formName: "action",
+          urlParam: "action",
+          columnId: "action",
+          apiField: "action",
+        },
+        {
+          formName: "targetType",
+          urlParam: "target_type",
+          columnId: "target_type",
+          apiField: "target_type",
+        },
+      ],
+      queryTable,
+      setSearchParams,
+    );
+
   const onSearchChange = (value: string) => {
     if (value && value !== "" && value.length < 3) {
       return;
@@ -89,18 +110,6 @@ export default function AuditLogTable() {
         return searchParams;
       });
     }, 300);
-  };
-
-  const onFilterSubmit: SubmitHandler<TAuditLogTableFilterValues> = (data) => {
-    setSearchParams((searchParams) => {
-      searchParams.set("action", data.action || "");
-
-      searchParams.set("target_type", data.targetType || "");
-
-      searchParams.set("page", "1");
-
-      return searchParams;
-    });
   };
 
   const onFilterReset = useCallback(() => {
@@ -127,7 +136,7 @@ export default function AuditLogTable() {
       action: queryTable.action as AuditLogActionEnum,
       target_type: queryTable.targetType as AuditLogEntityEnum,
     }),
-    [queryTable],
+    [queryTable, filterParams],
   );
 
   const { data: responseData, isLoading } = useQuery({
@@ -272,25 +281,6 @@ export default function AuditLogTable() {
       cell: (info) => dayjs(info.getValue()).format("YYYY-MM-DD HH:mm:ss"),
     }),
   ];
-
-  const columnFilters = useMemo<ColumnFiltersState>(() => {
-    const filters = [];
-    if (queryTable?.action) {
-      filters.push({
-        id: "action",
-        value: queryTable?.action,
-      });
-    }
-
-    if (queryTable?.targetType) {
-      filters.push({
-        id: "targetType",
-        value: queryTable?.targetType,
-      });
-    }
-
-    return filters;
-  }, [queryTable?.action, queryTable?.targetType]);
 
   const sorting = useMemo<SortingState>(() => {
     const sort = [];
