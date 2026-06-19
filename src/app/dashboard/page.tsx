@@ -28,12 +28,16 @@ export default function DashboardPage() {
           <AppBreadcrumb items={breadcrumbItems} />
         </div>
 
+        <h1 className="font-heading text-2xl">Dashboard</h1>
+
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
           <TotalUserCard />
 
           <TotalRequestCard />
 
-          <TotalAuditLogCard />
+          <div className="col-span-2 md:col-span-1">
+            <TotalAuditLogCard />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
