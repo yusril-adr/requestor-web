@@ -13,12 +13,12 @@ import {
 } from "../ui/dropdown-menu";
 import { EllipsisVertical, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { useAuth } from "../../_hooks/use-auth";
+import { useAuthContext } from "../../_hooks/use-auth-context";
 import { Skeleton } from "../ui/skeleton";
 import { logout } from "@/utils/logout";
 
 export function AvatarSidebar() {
-  const { auth, authQuery } = useAuth();
+  const { auth, authQuery } = useAuthContext();
   const { isMobile } = useSidebar();
 
   const isLoading = authQuery?.isLoading;

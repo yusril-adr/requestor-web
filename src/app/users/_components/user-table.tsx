@@ -55,7 +55,7 @@ import { getUserPagination } from "@/api/requestor/users";
 import type { TUserSortBy } from "@/api/requestor/users/consts/user-sort-by";
 import type { TUserTableCol } from "@/app/users/_types/user-table-col";
 import { toast } from "sonner";
-import { useAuth } from "@/app/_hooks/use-auth";
+import { useAuthContext } from "@/app/_hooks/use-auth-context";
 import { useFilter } from "@/app/_hooks/use-filter";
 import {
   DataTable,
@@ -72,7 +72,7 @@ let debounceSearchTimeoutId: number | null = null;
 
 export default function UserTable() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { auth } = useAuth();
+  const { auth } = useAuthContext();
   const queryClient = useQueryClient();
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [confirmSuspendId, setConfirmSuspendId] = useState<string | null>(null);

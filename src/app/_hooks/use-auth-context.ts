@@ -1,7 +1,7 @@
 import { useContext } from "react";
 import { AuthProviderContext } from "../_components/auth-provider";
 
-export const useAuth = () => {
+export const useAuthContext = () => {
   const context = useContext(AuthProviderContext);
 
   if (context === undefined)

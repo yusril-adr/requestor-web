@@ -61,7 +61,7 @@ import type { TRequestSortBy } from "@/api/requestor/requests/consts/request-sor
 import type { TRequestTableCol } from "@/app/requests/_types/request-table-col";
 
 import type { TRequestorApiErrorResponse } from "@/api/requestor/types/response";
-import { useAuth } from "@/app/_hooks/use-auth";
+import { useAuthContext } from "@/app/_hooks/use-auth-context";
 import { useFilter } from "@/app/_hooks/use-filter";
 import {
   DataTable,
@@ -83,7 +83,7 @@ let debounceSearchTimeoutId: number | null = null;
 
 export default function RequestTable() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { auth } = useAuth();
+  const { auth } = useAuthContext();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [confirmatedDeletedId, setConfirmatedDeletedId] = useState<

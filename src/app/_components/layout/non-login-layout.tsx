@@ -1,10 +1,10 @@
 import { Outlet, useNavigate, useLocation } from "react-router";
-import { useAuth } from "../../_hooks/use-auth";
+import { useAuthContext } from "../../_hooks/use-auth-context";
 import { useEffect } from "react";
 import GlobalLoader from "../global-loader";
 
 export default function NonLoginLayout() {
-  const { auth, authQuery } = useAuth();
+  const { auth, authQuery } = useAuthContext();
   const navigate = useNavigate();
   const location = useLocation();
 

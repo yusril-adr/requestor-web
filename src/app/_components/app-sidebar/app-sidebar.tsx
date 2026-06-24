@@ -11,11 +11,11 @@ import { ThemeToggler } from "../theme-toggler";
 import type { TNavSidebar } from "../../_types/nav-sidebar";
 import { NavSidebar } from "./nav-sidebar";
 import NAV_ROUTES from "@/common/constants/navigation-routes";
-import { useAuth } from "../../_hooks/use-auth";
+import { useAuthContext } from "../../_hooks/use-auth-context";
 import { AvatarSidebar } from "./avatar-sidebar";
 
 export function AppSidebar() {
-  const { auth } = useAuth();
+  const { auth } = useAuthContext();
 
   const navItems: TNavSidebar[] = NAV_ROUTES.filter((nav) => {
     if (!nav.authorizedRoles || nav.authorizedRoles?.length === 0) {
