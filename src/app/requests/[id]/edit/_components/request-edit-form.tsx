@@ -28,11 +28,7 @@ import {
   RequestEditFormSchema,
   type TRequestEditFormSchema,
 } from "@/app/requests/[id]/edit/_schema/request-edit-form";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  getRequestById,
-  updateRequestById,
-} from "@/api/requestor/requests/[id]";
+import { useQueryClient } from "@tanstack/react-query";
 import CONFIG from "@/common/constants/config";
 import type { TRequestorApiErrorResponse } from "@/api/requestor/types/response";
 import type { TRequestUpdatePayload } from "@/api/requestor/requests/[id]/types/request-update-payload";
@@ -41,16 +37,14 @@ import { RequestPriorityEnum } from "@/api/requestor/requests/enums/request-prio
 import RequestorAPINotFoundError from "@/api/requestor/errors/not-found-error";
 import RequestorAPIValidationError from "@/api/requestor/errors/validation-error";
 import { applyValidationErrors } from "@/utils/validation-helper";
+import { useGetRequestById } from "@/app/requests/_hooks/use-get-request-by-id";
+import { useUpdateRequestById } from "@/app/requests/_hooks/use-update-request-by-id";
 
 export default function RequestEditForm() {
   const params = useParams();
   const navigate = useNavigate();
 
-  const getDataQuery = useQuery({
-    queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.REQUEST.ALL(), params.id],
-    queryFn: () => getRequestById(params.id as string),
-    enabled: !!params.id,
-  });
+  const getDataQuery = useGetRequestById(params.id as string);
 
   useEffect(() => {
     if (
@@ -110,43 +104,7 @@ export default function RequestEditForm() {
     mutate: updateRequestMutate,
     isPending: updateRequestIsPending,
     isPaused: updateRequestIsPaused,
-  } = useMutation({
-    mutationFn: updateRequestById,
-    onMutate: () => {
-      toast.loading("Updating request...");
-    },
-    onSuccess: () => {
-      toast.dismiss();
-      toast.success("Request updated.");
-      queryClient.invalidateQueries({
-        queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.REQUEST.ALL()],
-      });
-      navigate("/requests");
-    },
-    onError: (error) => {
-      if (error instanceof RequestorAPIValidationError) {
-        const mappedErrors = (
-          error.errors as TRequestorApiErrorResponse<TRequestUpdatePayload>[]
-        ).map((error) => {
-          return {
-            property:
-              mappedErrorKeys.find((key) => key.key === error.property)
-                ?.mapped ?? error.property,
-            messages: error.messages,
-          };
-        });
-
-        return applyValidationErrors(setError, mappedErrors);
-      }
-
-      if (error instanceof RequestorAPINotFoundError) {
-        navigate("/requests");
-        return;
-      }
-
-      return;
-    },
-  });
+  } = useUpdateRequestById();
 
   const onSubmit: SubmitHandler<TRequestEditFormSchema> = (data) => {
     const payload: TRequestUpdatePayload = {
@@ -157,7 +115,42 @@ export default function RequestEditForm() {
       priority: data.priority,
     };
 
-    updateRequestMutate({ id: params.id as string, payload });
+    updateRequestMutate({ id: params.id as string, payload }, {
+      onMutate: () => {
+        toast.loading("Updating request...");
+      },
+      onSuccess: () => {
+        toast.dismiss();
+        toast.success("Request updated.");
+        queryClient.invalidateQueries({
+          queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.REQUEST.ALL()],
+        });
+        navigate("/requests");
+      },
+      onError: (error) => {
+        if (error instanceof RequestorAPIValidationError) {
+          const mappedErrors = (
+            error.errors as TRequestorApiErrorResponse<TRequestUpdatePayload>[]
+          ).map((error) => {
+            return {
+              property:
+                mappedErrorKeys.find((key) => key.key === error.property)
+                  ?.mapped ?? error.property,
+              messages: error.messages,
+            };
+          });
+
+          return applyValidationErrors(setError, mappedErrors);
+        }
+
+        if (error instanceof RequestorAPINotFoundError) {
+          navigate("/requests");
+          return;
+        }
+
+        return;
+      },
+    });
   };
 
   const isFormDisabled = useMemo(

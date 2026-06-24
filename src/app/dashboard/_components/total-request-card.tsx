@@ -1,20 +1,15 @@
-import { useQuery } from "@tanstack/react-query";
-import { getRequestPagination } from "@/api/requestor/requests";
 import { Card, CardContent, CardTitle } from "@/app/_components/ui/card";
-import CONFIG from "@/common/constants/config";
 import { OrderKeyEnum } from "@/common/enums/order-key";
 import { Skeleton } from "@/app/_components/ui/skeleton";
 import type { TRequestPaginationPayload } from "@/api/requestor/requests/types/request-pagination-payload";
+import { useGetRequestPagination } from "@/app/dashboard/_hooks/use-get-request-pagination";
 
 export default function TotalRequestCard() {
   const getDataPayload: TRequestPaginationPayload = {
     sort_by: "updated_at",
     order: OrderKeyEnum.DESC,
   };
-  const getUserDataQuery = useQuery({
-    queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.REQUEST.ALL(), getDataPayload],
-    queryFn: () => getRequestPagination(getDataPayload),
-  });
+  const getUserDataQuery = useGetRequestPagination(getDataPayload);
 
   return (
     <Card>

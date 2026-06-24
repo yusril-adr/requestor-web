@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 import { Link, useNavigate } from "react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 
 import { Card, CardContent, CardFooter } from "@/app/_components/ui/card";
@@ -34,13 +33,11 @@ import {
   type TUserCreateFormSchema,
 } from "@/app/users/create/_schema/user-create-form";
 import { RoleKeyEnum } from "@/common/enums/role-key";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createUser } from "@/api/requestor/users";
-import CONFIG from "@/common/constants/config";
 import type { TRequestorApiErrorResponse } from "@/api/requestor/types/response";
 import type { TUserCreatePayload } from "@/api/requestor/users/types/user-create-payload";
 import RequestorAPIValidationError from "@/api/requestor/errors/validation-error";
 import { applyValidationErrors } from "@/utils/validation-helper";
+import { useCreateUser } from "@/app/users/_hooks/use-create-user";
 
 export default function UserCreateForm() {
   const navigate = useNavigate();
@@ -53,22 +50,12 @@ export default function UserCreateForm() {
     },
   });
 
-  const queryClient = useQueryClient();
   const {
     mutate: createUserMutate,
     isPending: createUserIsPending,
     isPaused: createUserIsPaused,
-  } = useMutation({
-    mutationFn: createUser,
-    onMutate: () => {
-      toast.loading("Creating user...");
-    },
+  } = useCreateUser({
     onSuccess: () => {
-      toast.dismiss();
-      toast.success("User created");
-      queryClient.invalidateQueries({
-        queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.USER.ALL()],
-      });
       navigate("/users");
     },
     onError: (error) => {

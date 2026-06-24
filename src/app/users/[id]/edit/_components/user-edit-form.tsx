@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 import { Link, useNavigate, useParams } from "react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 
 import { Card, CardContent, CardFooter } from "@/app/_components/ui/card";
@@ -34,26 +33,21 @@ import {
   type TUserEditFormSchema,
 } from "@/app/users/[id]/edit/_schema/user-edit-form";
 import { RoleKeyEnum } from "@/common/enums/role-key";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getUserById, updateUserById } from "@/api/requestor/users/[id]";
-import CONFIG from "@/common/constants/config";
 import type { TRequestorApiErrorResponse } from "@/api/requestor/types/response";
 import type { TUserUpdatePayload } from "@/api/requestor/users/[id]/types/user-update-payload";
 import { UserStatusEnum } from "@/api/requestor/users/enums/user-status";
 import RequestorAPINotFoundError from "@/api/requestor/errors/not-found-error";
 import RequestorAPIValidationError from "@/api/requestor/errors/validation-error";
 import { applyValidationErrors } from "@/utils/validation-helper";
+import { useGetUserById } from "@/app/users/_hooks/use-get-user-by-id";
+import { useUpdateUserById } from "@/app/users/_hooks/use-update-user-by-id";
 
 export default function UserEditForm() {
   const params = useParams();
   const navigate = useNavigate();
   const [isShowPassword, setIsShowPassword] = useState(false);
 
-  const getUserDataQuery = useQuery({
-    queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.USER.ALL(), params.id],
-    queryFn: () => getUserById(params.id as string),
-    enabled: !!params.id,
-  });
+  const getUserDataQuery = useGetUserById(params.id as string);
 
   useEffect(() => {
     if (
@@ -84,22 +78,12 @@ export default function UserEditForm() {
     values: defaultValues,
   });
 
-  const queryClient = useQueryClient();
   const {
     mutate: updateUserMutate,
     isPending: updateUserIsPending,
     isPaused: updateUserIsPaused,
-  } = useMutation({
-    mutationFn: updateUserById,
-    onMutate: () => {
-      toast.loading("Updating user...");
-    },
+  } = useUpdateUserById({
     onSuccess: () => {
-      toast.dismiss();
-      toast.success("User updated.");
-      queryClient.invalidateQueries({
-        queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.USER.ALL()],
-      });
       navigate("/users");
     },
     onError: (error) => {

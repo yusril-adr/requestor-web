@@ -2,7 +2,6 @@ import { useCallback, useMemo } from "react";
 import { Funnel, Search } from "lucide-react";
 import { useSearchParams } from "react-router";
 import { Controller, useForm } from "react-hook-form";
-import { useQuery } from "@tanstack/react-query";
 import type { SortingState } from "@tanstack/react-table";
 import { createColumnHelper } from "@tanstack/react-table";
 
@@ -28,9 +27,7 @@ import {
 } from "@/app/_components/ui/input-group";
 
 import { OrderKeyEnum } from "@/common/enums/order-key";
-import CONFIG from "@/common/constants/config";
 import type { TAuditLogPaginationPayload } from "@/api/requestor/audit-logs/types/audit-log-pagination-payload";
-import { getAuditLogPagination } from "@/api/requestor/audit-logs";
 import type { TAuditLogSortBy } from "@/api/requestor/audit-logs/consts/audit-log-sort-by";
 import type { TAuditLogTableCol } from "@/app/audit-logs/_types/audit-log-table-col";
 import {
@@ -41,6 +38,7 @@ import { AuditLogActionEnum } from "@/api/requestor/audit-logs/enums/audit-log-a
 import { AuditLogEntityEnum } from "@/api/requestor/audit-logs/enums/audit-log-entity";
 import dayjs from "@/libs/dayjs";
 import { useFilter } from "@/app/_hooks/use-filter";
+import { useGetAuditLogPagination } from "@/app/audit-logs/_hooks/use-get-audit-log-pagination";
 
 type TAuditLogTableFilterValues = {
   action: string | null;
@@ -126,13 +124,8 @@ export default function AuditLogTable() {
     [queryTable, filterParams],
   );
 
-  const { data: responseData, isLoading } = useQuery({
-    queryKey: [
-      CONFIG.QUERY_KEY.REQUESTOR_API.AUDIT_LOG.ALL(),
-      mappedQueryTablePayload,
-    ],
-    queryFn: () => getAuditLogPagination(mappedQueryTablePayload),
-  });
+  const { data: responseData, isLoading } =
+    useGetAuditLogPagination(mappedQueryTablePayload);
 
   const applySorting = useCallback(
     (key: string) => {

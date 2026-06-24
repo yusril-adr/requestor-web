@@ -3,7 +3,7 @@ import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 import { Link, useNavigate } from "react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { Card, CardContent, CardFooter } from "@/app/_components/ui/card";
 import {
@@ -29,13 +29,13 @@ import {
   type TRequestCreateFormSchema,
 } from "@/app/requests/create/_schema/request-create-form";
 
-import { createRequest } from "@/api/requestor/requests";
 import { RequestPriorityEnum } from "@/api/requestor/requests/enums/request-priority";
 import CONFIG from "@/common/constants/config";
 import type { TRequestorApiErrorResponse } from "@/api/requestor/types/response";
 import type { TRequestCreatePayload } from "@/api/requestor/requests/types/request-create-payload";
 import RequestorAPIValidationError from "@/api/requestor/errors/validation-error";
 import { applyValidationErrors } from "@/utils/validation-helper";
+import { useCreateRequest } from "@/app/requests/_hooks/use-create-request";
 
 export default function RequestCreateForm() {
   const navigate = useNavigate();
@@ -76,36 +76,7 @@ export default function RequestCreateForm() {
     mutate: createRequestMutate,
     isPending: createRequestIsPending,
     isPaused: createRequestIsPaused,
-  } = useMutation({
-    mutationFn: createRequest,
-    onMutate: () => {
-      toast.loading("Creating request...");
-    },
-    onSuccess: () => {
-      toast.dismiss();
-      toast.success("Request created");
-      queryClient.invalidateQueries({
-        queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.REQUEST.ALL()],
-      });
-      navigate("/requests");
-    },
-    onError: (error) => {
-      if (error instanceof RequestorAPIValidationError) {
-        const mappedErrors = (
-          error.errors as TRequestorApiErrorResponse<null>[]
-        ).map((error) => {
-          return {
-            property:
-              mappedErrorKeys.find((key) => key.key === error.property)
-                ?.mapped ?? error.property,
-            messages: error.messages,
-          };
-        });
-
-        return applyValidationErrors(setError, mappedErrors);
-      }
-    },
-  });
+  } = useCreateRequest();
 
   const onSubmit: SubmitHandler<TRequestCreateFormSchema> = (data) => {
     const payload: TRequestCreatePayload = {
@@ -115,7 +86,35 @@ export default function RequestCreateForm() {
       assignee_name: data.assigneeName,
     };
 
-    createRequestMutate(payload);
+    createRequestMutate(payload, {
+      onMutate: () => {
+        toast.loading("Creating request...");
+      },
+      onSuccess: () => {
+        toast.dismiss();
+        toast.success("Request created");
+        queryClient.invalidateQueries({
+          queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.REQUEST.ALL()],
+        });
+        navigate("/requests");
+      },
+      onError: (error) => {
+        if (error instanceof RequestorAPIValidationError) {
+          const mappedErrors = (
+            error.errors as TRequestorApiErrorResponse<null>[]
+          ).map((error) => {
+            return {
+              property:
+                mappedErrorKeys.find((key) => key.key === error.property)
+                  ?.mapped ?? error.property,
+              messages: error.messages,
+            };
+          });
+
+          return applyValidationErrors(setError, mappedErrors);
+        }
+      },
+    });
   };
 
   const isFormDisabled = useMemo(

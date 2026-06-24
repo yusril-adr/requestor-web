@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { Controller, useForm } from "react-hook-form";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import type { SortingState } from "@tanstack/react-table";
 import { createColumnHelper } from "@tanstack/react-table";
 
@@ -56,7 +56,6 @@ import { OrderKeyEnum } from "@/common/enums/order-key";
 import { RequestStatusEnum } from "@/api/requestor/requests/enums/request-status";
 import CONFIG from "@/common/constants/config";
 import type { TRequestPaginationPayload } from "@/api/requestor/requests/types/request-pagination-payload";
-import { getRequestPagination } from "@/api/requestor/requests";
 import type { TRequestSortBy } from "@/api/requestor/requests/consts/request-sort-by";
 import type { TRequestTableCol } from "@/app/requests/_types/request-table-col";
 
@@ -67,12 +66,13 @@ import {
   DataTable,
   DataTableSortableColHeader,
 } from "@/app/_components/data-table";
-import { deleteRequestById } from "@/api/requestor/requests/[id]";
 import { RequestPriorityEnum } from "@/api/requestor/requests/enums/request-priority";
 import { RoleKeyEnum } from "@/common/enums/role-key";
 import RequestorAPINotFoundError from "@/api/requestor/errors/not-found-error";
 import RequestorAPIValidationError from "@/api/requestor/errors/validation-error";
 import { applyValidationErrors } from "@/utils/validation-helper";
+import { useGetRequestPagination } from "@/app/requests/_hooks/use-get-request-pagination";
+import { useDeleteRequestById } from "@/app/requests/_hooks/use-delete-request-by-id";
 
 type TRequestTableFilterValues = {
   status: string | null;
@@ -134,40 +134,39 @@ export default function RequestTable() {
       reset,
     );
 
-  const { mutate: deleteRequestMutate } = useMutation({
-    mutationFn: deleteRequestById,
-    onMutate: () => {
-      toast.loading("Deleting request...");
-    },
-    onSuccess: () => {
-      toast.dismiss();
-      toast.success("Request deleted");
-      queryClient.invalidateQueries({
-        queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.REQUEST.ALL()],
-      });
-    },
-    onError: (error) => {
-      if (error instanceof RequestorAPIValidationError) {
-        return applyValidationErrors(
-          setError,
-          error.errors as TRequestorApiErrorResponse<null>[],
-        );
-      }
-
-      if (error instanceof RequestorAPINotFoundError) {
-        navigate("/requests");
-        return;
-      }
-    },
-  });
+  const { mutate: deleteRequestMutate } = useDeleteRequestById();
 
   const onDeleteHandler = useCallback(() => {
     if (confirmatedDeletedId) {
-      deleteRequestMutate(confirmatedDeletedId);
+      deleteRequestMutate(confirmatedDeletedId, {
+        onMutate: () => {
+          toast.loading("Deleting request...");
+        },
+        onSuccess: () => {
+          toast.dismiss();
+          toast.success("Request deleted");
+          queryClient.invalidateQueries({
+            queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.REQUEST.ALL()],
+          });
+        },
+        onError: (error) => {
+          if (error instanceof RequestorAPIValidationError) {
+            return applyValidationErrors(
+              setError,
+              error.errors as TRequestorApiErrorResponse<null>[],
+            );
+          }
+
+          if (error instanceof RequestorAPINotFoundError) {
+            navigate("/requests");
+            return;
+          }
+        },
+      });
     }
 
     setConfirmatedDeletedId(null);
-  }, [confirmatedDeletedId, deleteRequestMutate]);
+  }, [confirmatedDeletedId, deleteRequestMutate, queryClient, setError, navigate]);
 
   const onSearchChange = (value: string) => {
     if (value && value !== "" && value.length < 3) {
@@ -199,18 +198,8 @@ export default function RequestTable() {
     [queryTable, filterParams],
   );
 
-  const {
-    data: responseData,
-    isLoading,
-    isError,
-    error,
-  } = useQuery({
-    queryKey: [
-      CONFIG.QUERY_KEY.REQUESTOR_API.REQUEST.ALL(),
-      mappedQueryTablePayload,
-    ],
-    queryFn: () => getRequestPagination(mappedQueryTablePayload),
-  });
+  const { data: responseData, isLoading, isError, error } =
+    useGetRequestPagination(mappedQueryTablePayload);
 
   useEffect(() => {
     if (isError && error && error instanceof RequestorAPINotFoundError) {

@@ -1,9 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router";
-import CONFIG from "@/common/constants/config";
-import { getUserById } from "@/api/requestor/users/[id]";
 import AppBreadcrumb from "@/app/_components/app-breadcrumb";
 import { useEffect, useMemo } from "react";
+import { useGetUserById } from "@/app/users/_hooks/use-get-user-by-id";
 import { Card, CardContent } from "@/app/_components/ui/card";
 import {
   Table,
@@ -30,11 +28,7 @@ export default function UserDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const { data, isLoading, isError, error } = useQuery({
-    queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.USER.ALL(), id],
-    queryFn: () => getUserById(id as string),
-    enabled: !!id,
-  });
+  const { data, isLoading, isError, error } = useGetUserById(id as string);
 
   useEffect(() => {
     if (isError && error) {

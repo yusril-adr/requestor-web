@@ -1,11 +1,9 @@
 import { useEffect, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router";
 import { ArrowLeft } from "lucide-react";
 
-import CONFIG from "@/common/constants/config";
-import { getRequestById } from "@/api/requestor/requests/[id]";
 import AppBreadcrumb from "@/app/_components/app-breadcrumb";
+import { useGetRequestById } from "@/app/requests/_hooks/use-get-request-by-id";
 import { Card, CardContent } from "@/app/_components/ui/card";
 import {
   Table,
@@ -32,11 +30,7 @@ export default function RequestDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const { data, isLoading, isError, error } = useQuery({
-    queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.REQUEST.ALL(), id],
-    queryFn: () => getRequestById(id as string),
-    enabled: !!id,
-  });
+  const { data, isLoading, isError, error } = useGetRequestById(id as string);
 
   useEffect(() => {
     if (isError && error && error instanceof RequestorAPINotFoundError) {

@@ -1,9 +1,6 @@
 import { EyeOffIcon, EyeIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useForm, Controller, type SubmitHandler } from "react-hook-form";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
-import { toast } from "sonner";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router";
 
@@ -25,26 +22,19 @@ import {
 import { Field, FieldError, FieldLabel } from "@/app/_components/ui/field";
 import { Spinner } from "@/app/_components/ui/spinner";
 
-import { login } from "@/api/requestor/auth/login";
-import type {
-  TRequestorApiResponse,
-  TRequestorApiErrorResponse,
-} from "@/api/requestor/types/response";
+import type { TRequestorApiErrorResponse } from "@/api/requestor/types/response";
 import type { TLoginPayload } from "@/api/requestor/auth/login/types/login-payload";
 import {
   LoginFormSchema,
   type TLoginFormSchema,
 } from "@/app/login/_schema/login-form";
-import AccessToken from "@/libs/local-storage/access-token";
-import CONFIG from "@/common/constants/config";
 import { applyValidationErrors } from "@/utils/validation-helper";
 import RequestorAPIValidationError from "@/api/requestor/errors/validation-error";
+import { useLogin } from "@/app/login/_hooks/use-login";
 
 export function LoginForm() {
   const [isShowPassword, setIsShowPassword] = useState(false);
   const navigate = useNavigate();
-
-  const queryClient = useQueryClient();
 
   const { control, handleSubmit, setError } = useForm<TLoginFormSchema>({
     resolver: zodResolver(LoginFormSchema),
@@ -54,23 +44,8 @@ export function LoginForm() {
     mutate: loginMutate,
     isPending: loginIsPending,
     isPaused: loginIsPaused,
-  } = useMutation({
-    mutationFn: login,
-    onMutate: () => {
-      toast.loading("Logging in...");
-    },
-    onSuccess: async (response) => {
-      const responseData = response.data.data;
-
-      AccessToken.set(responseData.access_token);
-
-      toast.dismiss();
-      toast.success("Login Success");
-
-      queryClient.invalidateQueries({
-        queryKey: CONFIG.QUERY_KEY.REQUESTOR_API.AUTH.ALL(),
-      });
-
+  } = useLogin({
+    onSuccess: () => {
       navigate("/dashboard");
     },
     onError: (error) => {

@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { Link, useSearchParams } from "react-router";
 import { Controller, useForm } from "react-hook-form";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import type { SortingState } from "@tanstack/react-table";
 import { createColumnHelper } from "@tanstack/react-table";
 
@@ -51,7 +51,6 @@ import { ConfirmReactivateUserDialog } from "./confirm-reactivate-user-dialog";
 import { OrderKeyEnum } from "@/common/enums/order-key";
 import CONFIG from "@/common/constants/config";
 import type { TUserPaginationPayload } from "@/api/requestor/users/types/user-pagination-payload";
-import { getUserPagination } from "@/api/requestor/users";
 import type { TUserSortBy } from "@/api/requestor/users/consts/user-sort-by";
 import type { TUserTableCol } from "@/app/users/_types/user-table-col";
 import { toast } from "sonner";
@@ -61,7 +60,9 @@ import {
   DataTable,
   DataTableSortableColHeader,
 } from "@/app/_components/data-table";
-import { deleteUserById, updateUserById } from "@/api/requestor/users/[id]";
+import { useGetUserPagination } from "@/app/users/_hooks/use-get-user-pagination";
+import { useDeleteUserById } from "@/app/users/_hooks/use-delete-user-by-id";
+import { useUpdateUserById } from "@/app/users/_hooks/use-update-user-by-id";
 
 type TUserTableFilterValues = {
   status: string | null;
@@ -123,58 +124,62 @@ export default function UserTable() {
       reset,
     );
 
-  const { mutate: deleteUserMutate } = useMutation({
-    mutationFn: deleteUserById,
-    onMutate: () => {
-      toast.loading("Deleting user...");
-    },
-    onSuccess: () => {
-      toast.dismiss();
-      toast.success("User deleted");
-      queryClient.invalidateQueries({
-        queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.USER.ALL()],
-      });
-    },
-  });
-
-  const { mutate: updateUserMutate } = useMutation({
-    mutationFn: updateUserById,
-    onMutate: () => {
-      toast.loading("Updating user...");
-    },
-    onSuccess: () => {
-      toast.dismiss();
-      toast.success("User updated");
-      queryClient.invalidateQueries({
-        queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.USER.ALL()],
-      });
-    },
-  });
+  const { mutate: deleteUserMutate } = useDeleteUserById();
+  const { mutate: updateUserMutate } = useUpdateUserById();
 
   const onDeleteConfirm = useCallback(() => {
-    if (confirmDeleteId) deleteUserMutate(confirmDeleteId);
+    if (confirmDeleteId) {
+      deleteUserMutate(confirmDeleteId, {
+        onMutate: () => toast.loading("Deleting user..."),
+        onSuccess: () => {
+          toast.dismiss();
+          toast.success("User deleted");
+          queryClient.invalidateQueries({
+            queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.USER.ALL()],
+          });
+        },
+      });
+    }
     setConfirmDeleteId(null);
-  }, [confirmDeleteId, deleteUserMutate]);
+  }, [confirmDeleteId, deleteUserMutate, queryClient]);
 
   const onSuspendConfirm = useCallback(() => {
     if (confirmSuspendId) {
-      updateUserMutate({
-        id: confirmSuspendId,
-        payload: { status: UserStatusEnum.SUSPENDED },
-      });
+      updateUserMutate(
+        { id: confirmSuspendId, payload: { status: UserStatusEnum.SUSPENDED } },
+        {
+          onMutate: () => toast.loading("Updating user..."),
+          onSuccess: () => {
+            toast.dismiss();
+            toast.success("User updated");
+            queryClient.invalidateQueries({
+              queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.USER.ALL()],
+            });
+          },
+        },
+      );
     }
     setConfirmSuspendId(null);
-  }, [confirmSuspendId, updateUserMutate]);
+  }, [confirmSuspendId, updateUserMutate, queryClient]);
 
   const onReactivateConfirm = useCallback(() => {
     if (confirmReactivateId) {
-      updateUserMutate({
-        id: confirmReactivateId,
-        payload: { status: UserStatusEnum.ACTIVE },
-      });
+      updateUserMutate(
+        { id: confirmReactivateId, payload: { status: UserStatusEnum.ACTIVE } },
+        {
+          onMutate: () => toast.loading("Updating user..."),
+          onSuccess: () => {
+            toast.dismiss();
+            toast.success("User updated");
+            queryClient.invalidateQueries({
+              queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.USER.ALL()],
+            });
+          },
+        },
+      );
     }
     setConfirmReactivateId(null);
-  }, [confirmReactivateId, updateUserMutate]);
+  }, [confirmReactivateId, updateUserMutate, queryClient]);
 
   const onSearchChange = (value: string) => {
     if (value && value !== "" && value.length < 3) {
@@ -206,13 +211,8 @@ export default function UserTable() {
     [queryTable, filterParams],
   );
 
-  const { data: responseData, isLoading } = useQuery({
-    queryKey: [
-      CONFIG.QUERY_KEY.REQUESTOR_API.USER.ALL(),
-      mappedQueryTablePayload,
-    ],
-    queryFn: () => getUserPagination(mappedQueryTablePayload),
-  });
+  const { data: responseData, isLoading } =
+    useGetUserPagination(mappedQueryTablePayload);
 
   const applySorting = useCallback(
     (key: string) => {

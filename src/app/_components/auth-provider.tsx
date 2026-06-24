@@ -1,13 +1,11 @@
 import { createContext } from "react";
-import { useQuery } from "@tanstack/react-query";
 import type { TAuthProviderState } from "../_types/auth-provider-state";
 import type { TAuthProviderProps } from "../_types/auth-provider-props";
-import { authMe } from "@/api/requestor/auth/me";
 import AccessToken from "@/libs/local-storage/access-token";
-import CONFIG from "@/common/constants/config";
 import { toast } from "sonner";
 import axios from "axios";
 import { logout } from "@/utils/logout";
+import { useAuthMe } from "@/app/_hooks/use-auth-me";
 
 export const AuthProviderContext = createContext<TAuthProviderState>({
   auth: null,
@@ -15,13 +13,7 @@ export const AuthProviderContext = createContext<TAuthProviderState>({
 });
 
 export function AuthProvider({ children, ...props }: TAuthProviderProps) {
-  const authQuery = useQuery({
-    queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.AUTH.ME()],
-    queryFn: authMe,
-    enabled: !!AccessToken.get(),
-    refetchOnWindowFocus: false,
-    retry: false,
-  });
+  const authQuery = useAuthMe({ enabled: !!AccessToken.get() });
 
   const auth = authQuery?.data?.data?.data ?? null;
 

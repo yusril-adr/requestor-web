@@ -1,5 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
-
 import {
   Card,
   CardContent,
@@ -16,10 +14,9 @@ import {
 } from "@/app/_components/ui/table";
 import { Skeleton } from "@/app/_components/ui/skeleton";
 
-import CONFIG from "@/common/constants/config";
 import { OrderKeyEnum } from "@/common/enums/order-key";
-import { getAuditLogPagination } from "@/api/requestor/audit-logs";
 import type { TAuditLogPaginationPayload } from "@/api/requestor/audit-logs/types/audit-log-pagination-payload";
+import { useGetAuditLogPagination } from "@/app/dashboard/_hooks/use-get-audit-log-pagination";
 
 export default function RecentlyAuditLogCard() {
   const getDataPayload: TAuditLogPaginationPayload = {
@@ -28,10 +25,7 @@ export default function RecentlyAuditLogCard() {
     sort_by: "updated_at",
     order: OrderKeyEnum.DESC,
   };
-  const getUserDataQuery = useQuery({
-    queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.AUDIT_LOG.ALL(), getDataPayload],
-    queryFn: () => getAuditLogPagination(getDataPayload),
-  });
+  const getUserDataQuery = useGetAuditLogPagination(getDataPayload);
 
   return (
     <Card>
