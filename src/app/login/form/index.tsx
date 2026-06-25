@@ -27,7 +27,7 @@ import type { TLoginPayload } from "@/api/requestor/auth/login/types/login-paylo
 import {
   LoginFormSchema,
   type TLoginFormSchema,
-} from "@/app/login/_schema/login-form";
+} from "./scheme";
 import { applyValidationErrors } from "@/utils/validation-helper";
 import RequestorAPIValidationError from "@/api/requestor/errors/validation-error";
 import { useLogin } from "@/app/login/_hooks/use-login";

@@ -31,7 +31,7 @@ import { Spinner } from "@/app/_components/ui/spinner";
 import {
   UserCreateFormSchema,
   type TUserCreateFormSchema,
-} from "@/app/users/create/_schema/user-create-form";
+} from "./scheme";
 import { RoleKeyEnum } from "@/common/enums/role-key";
 import type { TRequestorApiErrorResponse } from "@/api/requestor/types/response";
 import type { TUserCreatePayload } from "@/api/requestor/users/types/user-create-payload";

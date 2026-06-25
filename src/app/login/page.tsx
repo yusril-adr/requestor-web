@@ -1,5 +1,5 @@
 import { ThemeToggler } from "@/app/_components/theme-toggler";
-import { LoginForm } from "./_components/login-form";
+import { LoginForm } from "@/app/login/form";
 
 export function meta() {
   return [

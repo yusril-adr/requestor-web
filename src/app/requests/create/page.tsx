@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import { ArrowLeft } from "lucide-react";
 
 import AppBreadcrumb from "@/app/_components/app-breadcrumb";
-import RequestCreateForm from "@/app/requests/create/_components/request-create-form";
+import RequestCreateForm from "@/app/requests/create/form";
 
 export function meta() {
   return [

@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import { ArrowLeft } from "lucide-react";
 
 import AppBreadcrumb from "@/app/_components/app-breadcrumb";
-import UserCreateForm from "@/app/users/create/_components/user-create-form";
+import UserCreateForm from "@/app/users/create/form";
 
 export function meta() {
   return [

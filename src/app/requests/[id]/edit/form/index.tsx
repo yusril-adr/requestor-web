@@ -1,8 +1,7 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 import { Link, useNavigate, useParams } from "react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { EyeIcon, EyeOffIcon } from "lucide-react";
 
 import { Card, CardContent, CardFooter } from "@/app/_components/ui/card";
 import {
@@ -12,11 +11,7 @@ import {
   FieldLabel,
 } from "@/app/_components/ui/field";
 import { Input } from "@/app/_components/ui/input";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@/app/_components/ui/input-group";
+
 import {
   Combobox,
   ComboboxContent,
@@ -29,63 +24,97 @@ import { Button } from "@/app/_components/ui/button";
 import { Spinner } from "@/app/_components/ui/spinner";
 
 import {
-  UserEditFormSchema,
-  type TUserEditFormSchema,
-} from "@/app/users/[id]/edit/_schema/user-edit-form";
-import { RoleKeyEnum } from "@/common/enums/role-key";
+  RequestEditFormSchema,
+  type TRequestEditFormSchema,
+} from "./scheme";
 import type { TRequestorApiErrorResponse } from "@/api/requestor/types/response";
-import type { TUserUpdatePayload } from "@/api/requestor/users/[id]/types/user-update-payload";
-import { UserStatusEnum } from "@/api/requestor/users/enums/user-status";
+import type { TRequestUpdatePayload } from "@/api/requestor/requests/[id]/types/request-update-payload";
+import { RequestStatusEnum } from "@/api/requestor/requests/enums/request-status";
+import { RequestPriorityEnum } from "@/api/requestor/requests/enums/request-priority";
 import RequestorAPINotFoundError from "@/api/requestor/errors/not-found-error";
 import RequestorAPIValidationError from "@/api/requestor/errors/validation-error";
 import { applyValidationErrors } from "@/utils/validation-helper";
-import { useUpdateUserById } from "@/app/users/_hooks/use-update-user-by-id";
-import type { TUserEditFormProps } from "@/app/users/[id]/edit/_types/user-edit-form-props";
+import { useUpdateRequestById } from "@/app/requests/_hooks/use-update-request-by-id";
+import type { TRequestEditFormProps } from "@/app/requests/[id]/edit/_types/request-edit-form-props";
 
-export default function UserEditForm({
-  name,
-  email,
-  role,
+export default function RequestEditForm({
+  title,
+  requestorName,
+  assigneeName,
   status,
+  priority,
   isLoading,
-}: TUserEditFormProps) {
+}: TRequestEditFormProps) {
   const params = useParams();
   const navigate = useNavigate();
-  const [isShowPassword, setIsShowPassword] = useState(false);
 
   const defaultValues = useMemo(() => {
     return {
-      name: name || "",
-      email: email || "",
-      role: (role as RoleKeyEnum | undefined) || RoleKeyEnum.VIEWER,
+      title: title || "",
+      requestorName: requestorName || "",
+      assigneeName: assigneeName || "",
       status:
-        (status as UserStatusEnum | undefined) || UserStatusEnum.SUSPENDED,
+        (status as RequestStatusEnum | undefined) ||
+        RequestStatusEnum.SUSPENDED,
+      priority:
+        (priority as RequestPriorityEnum | undefined) ||
+        RequestPriorityEnum.LOW,
     };
-  }, [email, name, role, status]);
+  }, [assigneeName, priority, requestorName, status, title]);
 
-  const { control, handleSubmit, setError } = useForm<TUserEditFormSchema>({
-    resolver: zodResolver(UserEditFormSchema),
+  const { control, handleSubmit, setError } = useForm<TRequestEditFormSchema>({
+    resolver: zodResolver(RequestEditFormSchema),
     values: defaultValues,
   });
 
+  const mappedErrorKeys: {
+    key: keyof TRequestEditFormSchema;
+    mapped: string;
+  }[] = [
+    {
+      key: "title",
+      mapped: "title",
+    },
+    {
+      key: "requestorName",
+      mapped: "requestor_name",
+    },
+    {
+      key: "priority",
+      mapped: "priority",
+    },
+    {
+      key: "assigneeName",
+      mapped: "assignee_name",
+    },
+  ];
+
   const {
-    mutate: updateUserMutate,
-    isPending: updateUserIsPending,
-    isPaused: updateUserIsPaused,
-  } = useUpdateUserById({
+    mutate: updateRequestMutate,
+    isPending: updateRequestIsPending,
+    isPaused: updateRequestIsPaused,
+  } = useUpdateRequestById({
     onSuccess: () => {
-      navigate("/users");
+      navigate("/requests");
     },
     onError: (error) => {
       if (error instanceof RequestorAPIValidationError) {
-        return applyValidationErrors(
-          setError,
-          error.errors as TRequestorApiErrorResponse<TUserUpdatePayload>[],
-        );
+        const mappedErrors = (
+          error.errors as TRequestorApiErrorResponse<TRequestUpdatePayload>[]
+        ).map((error) => {
+          return {
+            property:
+              mappedErrorKeys.find((key) => key.key === error.property)
+                ?.mapped ?? error.property,
+            messages: error.messages,
+          };
+        });
+
+        return applyValidationErrors(setError, mappedErrors);
       }
 
       if (error instanceof RequestorAPINotFoundError) {
-        navigate("/users");
+        navigate("/requests");
         return;
       }
 
@@ -93,24 +122,24 @@ export default function UserEditForm({
     },
   });
 
-  const onSubmit: SubmitHandler<TUserEditFormSchema> = (data) => {
-    const payload: TUserUpdatePayload = {
-      name: data.name,
-      email: data.email,
-      password: data.password,
-      role: data.role,
+  const onSubmit: SubmitHandler<TRequestEditFormSchema> = (data) => {
+    const payload: TRequestUpdatePayload = {
+      title: data.title,
+      requestor_name: data.requestorName,
+      assignee_name: data.assigneeName || null,
       status: data.status,
+      priority: data.priority,
     };
 
-    updateUserMutate({ id: params.id as string, payload });
+    updateRequestMutate({ id: params.id as string, payload });
   };
 
   const isFormDisabled = useMemo(
     () =>
-      updateUserIsPending ||
-      updateUserIsPaused ||
+      updateRequestIsPending ||
+      updateRequestIsPaused ||
       isLoading,
-    [updateUserIsPending, updateUserIsPaused, isLoading],
+    [updateRequestIsPending, updateRequestIsPaused, isLoading],
   );
 
   return (
@@ -119,12 +148,12 @@ export default function UserEditForm({
         <CardContent>
           <FieldGroup className="grid md:grid-cols-2">
             <Controller
-              name="name"
+              name="title"
               control={control}
               render={({ field, fieldState }) => (
                 <Field className="grid" data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="name">Name</FieldLabel>
-                  <Input id="name" placeholder="Input name" {...field} />
+                  <FieldLabel htmlFor="title">Title</FieldLabel>
+                  <Input id="title" placeholder="Input title" {...field} />
 
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />
@@ -134,15 +163,17 @@ export default function UserEditForm({
             />
 
             <Controller
-              name="email"
+              name="requestorName"
               control={control}
               render={({ field, fieldState }) => (
                 <Field className="grid" data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="email">Email</FieldLabel>
+                  <FieldLabel htmlFor="requestor-name">
+                    Requestor Name
+                  </FieldLabel>
                   <Input
-                    id="email"
-                    type="email"
-                    placeholder="Input email"
+                    id="requestor-name"
+                    type="text"
+                    placeholder="Input requestor name"
                     {...field}
                   />
 
@@ -154,29 +185,17 @@ export default function UserEditForm({
             />
 
             <Controller
-              name="password"
+              name="assigneeName"
               control={control}
               render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="password">Password</FieldLabel>
-                  <InputGroup>
-                    <InputGroupInput
-                      id="password"
-                      type={isShowPassword ? "text" : "password"}
-                      placeholder="Enter password"
-                      autoComplete="off"
-                      {...field}
-                    />
-                    <InputGroupAddon align="inline-end">
-                      <button
-                        className="btn btn-ghost btn-square btn-sm"
-                        type="button"
-                        onClick={() => setIsShowPassword(!isShowPassword)}
-                      >
-                        {isShowPassword ? <EyeOffIcon /> : <EyeIcon />}
-                      </button>
-                    </InputGroupAddon>
-                  </InputGroup>
+                <Field className="grid" data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="assignee-name">Assignee Name</FieldLabel>
+                  <Input
+                    id="assignee-name"
+                    type="text"
+                    placeholder="Input assignee name"
+                    {...field}
+                  />
 
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />
@@ -186,18 +205,18 @@ export default function UserEditForm({
             />
 
             <Controller
-              name="role"
+              name="priority"
               control={control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="role">Role</FieldLabel>
+                  <FieldLabel htmlFor="priority">Priority</FieldLabel>
                   <Combobox
-                    id="role"
-                    items={Object.values(RoleKeyEnum)}
+                    id="priority"
+                    items={Object.values(RequestPriorityEnum)}
                     onValueChange={field.onChange}
                     {...field}
                   >
-                    <ComboboxInput placeholder="Select role" showClear />
+                    <ComboboxInput placeholder="Select priority" showClear />
                     <ComboboxContent>
                       <ComboboxEmpty>No items found.</ComboboxEmpty>
                       <ComboboxList>
@@ -225,7 +244,7 @@ export default function UserEditForm({
                   <FieldLabel htmlFor="status">Status</FieldLabel>
                   <Combobox
                     id="status"
-                    items={Object.values(UserStatusEnum)}
+                    items={Object.values(RequestStatusEnum)}
                     onValueChange={field.onChange}
                     {...field}
                   >
@@ -258,7 +277,7 @@ export default function UserEditForm({
                 className="ms-auto"
                 variant="outline"
                 type="reset"
-                render={<Link to={"/users"} />}
+                render={<Link to={"/requests"} />}
                 disabled={isFormDisabled}
                 nativeButton={false}
               >

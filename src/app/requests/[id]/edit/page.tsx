@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from "react-router";
 import { ArrowLeft } from "lucide-react";
 
 import AppBreadcrumb from "@/app/_components/app-breadcrumb";
-import RequestEditForm from "@/app/requests/[id]/edit/_components/request-edit-form";
+import RequestEditForm from "@/app/requests/[id]/edit/form";
 import { useGetRequestById } from "@/app/requests/_hooks/use-get-request-by-id";
 import RequestorAPINotFoundError from "@/api/requestor/errors/not-found-error";
 

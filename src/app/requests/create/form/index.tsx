@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
-import { Link, useNavigate, useParams } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Card, CardContent, CardFooter } from "@/app/_components/ui/card";
@@ -11,7 +11,6 @@ import {
   FieldLabel,
 } from "@/app/_components/ui/field";
 import { Input } from "@/app/_components/ui/input";
-
 import {
   Combobox,
   ComboboxContent,
@@ -24,51 +23,30 @@ import { Button } from "@/app/_components/ui/button";
 import { Spinner } from "@/app/_components/ui/spinner";
 
 import {
-  RequestEditFormSchema,
-  type TRequestEditFormSchema,
-} from "@/app/requests/[id]/edit/_schema/request-edit-form";
-import type { TRequestorApiErrorResponse } from "@/api/requestor/types/response";
-import type { TRequestUpdatePayload } from "@/api/requestor/requests/[id]/types/request-update-payload";
-import { RequestStatusEnum } from "@/api/requestor/requests/enums/request-status";
+  RequestCreateFormSchema,
+  type TRequestCreateFormSchema,
+} from "./scheme";
+
 import { RequestPriorityEnum } from "@/api/requestor/requests/enums/request-priority";
-import RequestorAPINotFoundError from "@/api/requestor/errors/not-found-error";
+import type { TRequestorApiErrorResponse } from "@/api/requestor/types/response";
+import type { TRequestCreatePayload } from "@/api/requestor/requests/types/request-create-payload";
 import RequestorAPIValidationError from "@/api/requestor/errors/validation-error";
 import { applyValidationErrors } from "@/utils/validation-helper";
-import { useUpdateRequestById } from "@/app/requests/_hooks/use-update-request-by-id";
-import type { TRequestEditFormProps } from "@/app/requests/[id]/edit/_types/request-edit-form-props";
+import { useCreateRequest } from "@/app/requests/_hooks/use-create-request";
 
-export default function RequestEditForm({
-  title,
-  requestorName,
-  assigneeName,
-  status,
-  priority,
-  isLoading,
-}: TRequestEditFormProps) {
-  const params = useParams();
+export default function RequestCreateForm() {
   const navigate = useNavigate();
-
-  const defaultValues = useMemo(() => {
-    return {
-      title: title || "",
-      requestorName: requestorName || "",
-      assigneeName: assigneeName || "",
-      status:
-        (status as RequestStatusEnum | undefined) ||
-        RequestStatusEnum.SUSPENDED,
-      priority:
-        (priority as RequestPriorityEnum | undefined) ||
-        RequestPriorityEnum.LOW,
-    };
-  }, [assigneeName, priority, requestorName, status, title]);
-
-  const { control, handleSubmit, setError } = useForm<TRequestEditFormSchema>({
-    resolver: zodResolver(RequestEditFormSchema),
-    values: defaultValues,
-  });
+  const { control, handleSubmit, setError } = useForm<TRequestCreateFormSchema>(
+    {
+      resolver: zodResolver(RequestCreateFormSchema),
+      defaultValues: {
+        priority: RequestPriorityEnum.LOW,
+      },
+    },
+  );
 
   const mappedErrorKeys: {
-    key: keyof TRequestEditFormSchema;
+    key: keyof TRequestCreateFormSchema;
     mapped: string;
   }[] = [
     {
@@ -90,17 +68,17 @@ export default function RequestEditForm({
   ];
 
   const {
-    mutate: updateRequestMutate,
-    isPending: updateRequestIsPending,
-    isPaused: updateRequestIsPaused,
-  } = useUpdateRequestById({
+    mutate: createRequestMutate,
+    isPending: createRequestIsPending,
+    isPaused: createRequestIsPaused,
+  } = useCreateRequest({
     onSuccess: () => {
       navigate("/requests");
     },
     onError: (error) => {
       if (error instanceof RequestorAPIValidationError) {
         const mappedErrors = (
-          error.errors as TRequestorApiErrorResponse<TRequestUpdatePayload>[]
+          error.errors as TRequestorApiErrorResponse<null>[]
         ).map((error) => {
           return {
             property:
@@ -112,34 +90,23 @@ export default function RequestEditForm({
 
         return applyValidationErrors(setError, mappedErrors);
       }
-
-      if (error instanceof RequestorAPINotFoundError) {
-        navigate("/requests");
-        return;
-      }
-
-      return;
     },
   });
 
-  const onSubmit: SubmitHandler<TRequestEditFormSchema> = (data) => {
-    const payload: TRequestUpdatePayload = {
+  const onSubmit: SubmitHandler<TRequestCreateFormSchema> = (data) => {
+    const payload: TRequestCreatePayload = {
       title: data.title,
       requestor_name: data.requestorName,
-      assignee_name: data.assigneeName || null,
-      status: data.status,
       priority: data.priority,
+      assignee_name: data.assigneeName,
     };
 
-    updateRequestMutate({ id: params.id as string, payload });
+    createRequestMutate(payload);
   };
 
   const isFormDisabled = useMemo(
-    () =>
-      updateRequestIsPending ||
-      updateRequestIsPaused ||
-      isLoading,
-    [updateRequestIsPending, updateRequestIsPaused, isLoading],
+    () => createRequestIsPending || createRequestIsPaused,
+    [createRequestIsPending, createRequestIsPaused],
   );
 
   return (
@@ -217,38 +184,6 @@ export default function RequestEditForm({
                     {...field}
                   >
                     <ComboboxInput placeholder="Select priority" showClear />
-                    <ComboboxContent>
-                      <ComboboxEmpty>No items found.</ComboboxEmpty>
-                      <ComboboxList>
-                        {(item) => (
-                          <ComboboxItem key={item} value={item}>
-                            {item}
-                          </ComboboxItem>
-                        )}
-                      </ComboboxList>
-                    </ComboboxContent>
-                  </Combobox>
-
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
-
-            <Controller
-              name="status"
-              control={control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="status">Status</FieldLabel>
-                  <Combobox
-                    id="status"
-                    items={Object.values(RequestStatusEnum)}
-                    onValueChange={field.onChange}
-                    {...field}
-                  >
-                    <ComboboxInput placeholder="Select status" showClear />
                     <ComboboxContent>
                       <ComboboxEmpty>No items found.</ComboboxEmpty>
                       <ComboboxList>
