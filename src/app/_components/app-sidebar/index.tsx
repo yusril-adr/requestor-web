@@ -1,7 +1,7 @@
 // index.ts
 const modules = import.meta.glob("./*.ts", { eager: true });
 
-let exportsObj: Record<string, any> = {};
+let exportsObj: Record<string, unknown> = {};
 
 for (const path in modules) {
   if (!path.includes("index.ts")) {

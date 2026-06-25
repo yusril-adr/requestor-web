@@ -48,7 +48,7 @@ export default function RequestDetailPage() {
         name: data?.data?.data?.title ?? "Detail",
       },
     ],
-    [data, isLoading],
+    [data],
   );
 
   return (

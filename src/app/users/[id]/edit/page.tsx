@@ -1,11 +1,11 @@
-import { Link, useParams } from "react-router";
+import { useEffect } from "react";
+import { Link, useNavigate, useParams } from "react-router";
 import { ArrowLeft } from "lucide-react";
 
 import AppBreadcrumb from "@/app/_components/app-breadcrumb";
 import UserEditForm from "@/app/users/[id]/edit/_components/user-edit-form";
-import CONFIG from "@/common/constants/config";
-import { useQuery } from "@tanstack/react-query";
-import { getUserById } from "@/api/requestor/users/[id]";
+import { useGetUserById } from "@/app/users/_hooks/use-get-user-by-id";
+import RequestorAPINotFoundError from "@/api/requestor/errors/not-found-error";
 
 export function meta() {
   return [
@@ -17,11 +17,18 @@ export function meta() {
 
 export default function UserEditPage() {
   const params = useParams();
-  const getDataQuery = useQuery({
-    queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.USER.ALL(), params.id],
-    queryFn: () => getUserById(params.id as string),
-    enabled: !!params.id,
-  });
+  const navigate = useNavigate();
+  const getDataQuery = useGetUserById(params.id as string);
+
+  useEffect(() => {
+    if (
+      getDataQuery.isError &&
+      getDataQuery.error &&
+      getDataQuery.error instanceof RequestorAPINotFoundError
+    ) {
+      navigate("/users");
+    }
+  }, [getDataQuery.error, getDataQuery.isError, navigate]);
 
   const breadcrumbItems = [
     {
@@ -32,7 +39,7 @@ export default function UserEditPage() {
       ? [
           {
             name: getDataQuery.data?.data?.data?.name ?? "Detail",
-            link: `/requests/${params.id}`,
+            link: `/users/${params.id}`,
           },
         ]
       : []),
@@ -53,7 +60,13 @@ export default function UserEditPage() {
           <h1 className="font-heading text-2xl">Edit User</h1>
         </div>
 
-        <UserEditForm />
+        <UserEditForm
+          name={getDataQuery.data?.data?.data?.name}
+          email={getDataQuery.data?.data?.data?.email}
+          role={getDataQuery.data?.data?.data?.role}
+          status={getDataQuery.data?.data?.data?.status}
+          isLoading={getDataQuery.isLoading}
+        />
       </div>
     </div>
   );

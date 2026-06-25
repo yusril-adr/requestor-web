@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 import { Link, useNavigate, useParams } from "react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -39,39 +39,29 @@ import { UserStatusEnum } from "@/api/requestor/users/enums/user-status";
 import RequestorAPINotFoundError from "@/api/requestor/errors/not-found-error";
 import RequestorAPIValidationError from "@/api/requestor/errors/validation-error";
 import { applyValidationErrors } from "@/utils/validation-helper";
-import { useGetUserById } from "@/app/users/_hooks/use-get-user-by-id";
 import { useUpdateUserById } from "@/app/users/_hooks/use-update-user-by-id";
+import type { TUserEditFormProps } from "@/app/users/[id]/edit/_types/user-edit-form-props";
 
-export default function UserEditForm() {
+export default function UserEditForm({
+  name,
+  email,
+  role,
+  status,
+  isLoading,
+}: TUserEditFormProps) {
   const params = useParams();
   const navigate = useNavigate();
   const [isShowPassword, setIsShowPassword] = useState(false);
 
-  const getUserDataQuery = useGetUserById(params.id as string);
-
-  useEffect(() => {
-    if (
-      getUserDataQuery.isError &&
-      getUserDataQuery.error &&
-      getUserDataQuery.error instanceof RequestorAPINotFoundError
-    ) {
-      navigate("users");
-    }
-  }, [getUserDataQuery]);
-
   const defaultValues = useMemo(() => {
     return {
-      name: getUserDataQuery.data?.data?.data?.name || "",
-      email: getUserDataQuery.data?.data?.data?.email || "",
-      role:
-        (getUserDataQuery.data?.data?.data?.role as RoleKeyEnum | undefined) ||
-        RoleKeyEnum.VIEWER,
+      name: name || "",
+      email: email || "",
+      role: (role as RoleKeyEnum | undefined) || RoleKeyEnum.VIEWER,
       status:
-        (getUserDataQuery.data?.data?.data?.status as
-          | UserStatusEnum
-          | undefined) || UserStatusEnum.SUSPENDED,
+        (status as UserStatusEnum | undefined) || UserStatusEnum.SUSPENDED,
     };
-  }, [getUserDataQuery]);
+  }, [email, name, role, status]);
 
   const { control, handleSubmit, setError } = useForm<TUserEditFormSchema>({
     resolver: zodResolver(UserEditFormSchema),
@@ -119,9 +109,8 @@ export default function UserEditForm() {
     () =>
       updateUserIsPending ||
       updateUserIsPaused ||
-      getUserDataQuery.isLoading ||
-      getUserDataQuery.isPaused,
-    [updateUserIsPending, updateUserIsPaused, getUserDataQuery],
+      isLoading,
+    [updateUserIsPending, updateUserIsPaused, isLoading],
   );
 
   return (

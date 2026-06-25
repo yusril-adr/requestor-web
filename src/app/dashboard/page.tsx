@@ -5,6 +5,10 @@ import TotalRequestCard from "@/app/dashboard/_components/total-request-card";
 import TotalUserCard from "@/app/dashboard/_components/total-user-card";
 import RecentlyRequestCard from "@/app/dashboard/_components/recently-request-card";
 import RecentlyAuditLogCard from "@/app/dashboard/_components/recently-audit-log-card";
+import { useGetAuditLogPagination } from "@/app/audit-logs/_hooks/use-get-audit-log-pagination";
+import { useGetRequestPagination } from "@/app/requests/_hooks/use-get-request-pagination";
+import { useGetUserPagination } from "@/app/users/_hooks/use-get-user-pagination";
+import { OrderKeyEnum } from "@/common/enums/order-key";
 
 export function meta() {
   return [
@@ -15,6 +19,23 @@ export function meta() {
 }
 
 export default function DashboardPage() {
+  const requestQuery = useGetRequestPagination({
+    page: 1,
+    per_page: 3,
+    sort_by: "updated_at",
+    order: OrderKeyEnum.DESC,
+  });
+  const userQuery = useGetUserPagination({
+    sort_by: "updated_at",
+    order: OrderKeyEnum.DESC,
+  });
+  const auditLogQuery = useGetAuditLogPagination({
+    page: 1,
+    per_page: 3,
+    sort_by: "updated_at",
+    order: OrderKeyEnum.DESC,
+  });
+
   const breadcrumbItems = [
     {
       name: "Dashboard",
@@ -31,19 +52,19 @@ export default function DashboardPage() {
         <h1 className="font-heading text-2xl">Dashboard</h1>
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-          <TotalUserCard />
+          <TotalUserCard query={userQuery} />
 
-          <TotalRequestCard />
+          <TotalRequestCard query={requestQuery} />
 
           <div className="col-span-2 md:col-span-1">
-            <TotalAuditLogCard />
+            <TotalAuditLogCard query={auditLogQuery} />
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          <RecentlyRequestCard />
+          <RecentlyRequestCard query={requestQuery} />
 
-          <RecentlyAuditLogCard />
+          <RecentlyAuditLogCard query={auditLogQuery} />
         </div>
       </div>
     </div>

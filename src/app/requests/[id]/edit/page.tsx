@@ -1,11 +1,11 @@
-import { Link, useParams } from "react-router";
+import { useEffect } from "react";
+import { Link, useNavigate, useParams } from "react-router";
 import { ArrowLeft } from "lucide-react";
 
 import AppBreadcrumb from "@/app/_components/app-breadcrumb";
 import RequestEditForm from "@/app/requests/[id]/edit/_components/request-edit-form";
-import CONFIG from "@/common/constants/config";
-import { useQuery } from "@tanstack/react-query";
-import { getRequestById } from "@/api/requestor/requests/[id]";
+import { useGetRequestById } from "@/app/requests/_hooks/use-get-request-by-id";
+import RequestorAPINotFoundError from "@/api/requestor/errors/not-found-error";
 
 export function meta() {
   return [
@@ -17,11 +17,18 @@ export function meta() {
 
 export default function RequestEditPage() {
   const params = useParams();
-  const getDataQuery = useQuery({
-    queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.REQUEST.ALL(), params.id],
-    queryFn: () => getRequestById(params.id as string),
-    enabled: !!params.id,
-  });
+  const navigate = useNavigate();
+  const getDataQuery = useGetRequestById(params.id as string);
+
+  useEffect(() => {
+    if (
+      getDataQuery.isError &&
+      getDataQuery.error &&
+      getDataQuery.error instanceof RequestorAPINotFoundError
+    ) {
+      navigate("/requests");
+    }
+  }, [getDataQuery.error, getDataQuery.isError, navigate]);
 
   const breadcrumbItems = [
     {
@@ -53,7 +60,14 @@ export default function RequestEditPage() {
           <h1 className="font-heading text-2xl">Edit Request</h1>
         </div>
 
-        <RequestEditForm />
+        <RequestEditForm
+          title={getDataQuery.data?.data?.data?.title}
+          requestorName={getDataQuery.data?.data?.data?.requestor_name}
+          assigneeName={getDataQuery.data?.data?.data?.assignee_name}
+          status={getDataQuery.data?.data?.data?.status}
+          priority={getDataQuery.data?.data?.data?.priority}
+          isLoading={getDataQuery.isLoading}
+        />
       </div>
     </div>
   );

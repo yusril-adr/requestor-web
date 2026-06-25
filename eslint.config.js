@@ -7,14 +7,14 @@ import tanstackLint from '@tanstack/eslint-plugin-query';
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(['dist', 'build', '.react-router']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
       js.configs.recommended,
       tseslint.configs.recommended,
       reactHooks.configs.flat.recommended,
-      tanstackLint.configs.recommended,
+      tanstackLint.configs['flat/recommended'],
       reactRefresh.configs.vite,
     ],
     languageOptions: {

@@ -6,7 +6,13 @@ import type { TRequestorApiResponse } from "@/api/requestor/types/response";
 export type TAuthProviderState = {
   auth: TUserMeResponse | null;
   authQuery: UseQueryResult<
-    NoInfer<AxiosResponse<TRequestorApiResponse<TUserMeResponse>, any, {}>>,
+    NoInfer<
+      AxiosResponse<
+        TRequestorApiResponse<TUserMeResponse>,
+        unknown,
+        Record<string, unknown>
+      >
+    >,
     Error
   > | null;
 };

@@ -1,7 +1,6 @@
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import { Funnel, Search } from "lucide-react";
-import { useSearchParams } from "react-router";
-import { Controller, useForm } from "react-hook-form";
+import { Controller } from "react-hook-form";
 import type { SortingState } from "@tanstack/react-table";
 import { createColumnHelper } from "@tanstack/react-table";
 
@@ -27,9 +26,8 @@ import {
 } from "@/app/_components/ui/input-group";
 
 import { OrderKeyEnum } from "@/common/enums/order-key";
-import type { TAuditLogPaginationPayload } from "@/api/requestor/audit-logs/types/audit-log-pagination-payload";
-import type { TAuditLogSortBy } from "@/api/requestor/audit-logs/consts/audit-log-sort-by";
 import type { TAuditLogTableCol } from "@/app/audit-logs/_types/audit-log-table-col";
+import type { TAuditLogTableProps } from "@/app/audit-logs/_types/audit-log-table-props";
 import {
   DataTable,
   DataTableSortableColHeader,
@@ -37,151 +35,23 @@ import {
 import { AuditLogActionEnum } from "@/api/requestor/audit-logs/enums/audit-log-action";
 import { AuditLogEntityEnum } from "@/api/requestor/audit-logs/enums/audit-log-entity";
 import dayjs from "@/libs/dayjs";
-import { useFilter } from "@/app/_hooks/use-filter";
-import { useGetAuditLogPagination } from "@/app/audit-logs/_hooks/use-get-audit-log-pagination";
 
-type TAuditLogTableFilterValues = {
-  action: string | null;
-  targetType: string | null;
-};
-
-let debounceSearchTimeoutId: number | null = null;
-
-export default function AuditLogTable() {
-  const [searchParams, setSearchParams] = useSearchParams();
-
-  const queryTable = useMemo(
-    () => ({
-      page: Number(searchParams.get("page") || 1),
-      pageSize: Number(searchParams.get("page_size") || 10),
-      search: searchParams.get("search") || undefined,
-      sortBy: searchParams.get("sort_by") || undefined,
-      order: (searchParams.get("order") || undefined) as
-        | OrderKeyEnum
-        | undefined,
-      action: searchParams.get("action") || undefined,
-      targetType: searchParams.get("target_type") || undefined,
-    }),
-    [searchParams],
-  );
-
-  const { control, handleSubmit, reset } = useForm<TAuditLogTableFilterValues>({
-    defaultValues: {
-      action: (queryTable?.action as AuditLogActionEnum) || null,
-      targetType: (queryTable?.targetType as AuditLogEntityEnum) || null,
-    },
-  });
-
-  const { onFilterReset, onFilterSubmit, columnFilters, filterParams } =
-    useFilter<TAuditLogTableFilterValues>(
-      [
-        {
-          formName: "action",
-          urlParam: "action",
-          columnId: "action",
-          apiField: "action",
-        },
-        {
-          formName: "targetType",
-          urlParam: "target_type",
-          columnId: "target_type",
-          apiField: "target_type",
-        },
-      ],
-      queryTable,
-      setSearchParams,
-      reset,
-    );
-
-  const onSearchChange = (value: string) => {
-    if (value && value !== "" && value.length < 3) {
-      return;
-    }
-
-    if (debounceSearchTimeoutId) {
-      clearTimeout(debounceSearchTimeoutId);
-    }
-
-    debounceSearchTimeoutId = setTimeout(() => {
-      setSearchParams((searchParams) => {
-        searchParams.set("search", value);
-        searchParams.set("page", "1");
-        return searchParams;
-      });
-    }, 300);
-  };
-
-  const mappedQueryTablePayload: TAuditLogPaginationPayload = useMemo(
-    () => ({
-      page: queryTable.page,
-      per_page: queryTable.pageSize,
-      search: queryTable.search,
-      sort_by: queryTable.sortBy as TAuditLogSortBy,
-      order: queryTable.order,
-      action: queryTable.action as AuditLogActionEnum,
-      target_type: queryTable.targetType as AuditLogEntityEnum,
-    }),
-    [queryTable, filterParams],
-  );
-
-  const { data: responseData, isLoading } =
-    useGetAuditLogPagination(mappedQueryTablePayload);
-
-  const applySorting = useCallback(
-    (key: string) => {
-      if (queryTable?.sortBy === key) {
-        let desiredOrder = "";
-        let desiredKey = key;
-        switch (queryTable?.order) {
-          case OrderKeyEnum.ASC:
-            desiredOrder = OrderKeyEnum.DESC;
-            break;
-          case OrderKeyEnum.DESC:
-            desiredOrder = "";
-            desiredKey = "";
-            break;
-          default:
-            desiredOrder = OrderKeyEnum.ASC;
-            break;
-        }
-
-        setSearchParams((searchParams) => {
-          searchParams.set("order", desiredOrder);
-          searchParams.set("sort_by", desiredKey);
-          searchParams.set("page", "1");
-          return searchParams;
-        });
-      } else {
-        setSearchParams((searchParams) => {
-          searchParams.set("sort_by", key);
-          searchParams.set("order", OrderKeyEnum.ASC);
-          return searchParams;
-        });
-      }
-    },
-    [searchParams],
-  );
-
-  const handlePageChange = useCallback(
-    (page: number) => {
-      setSearchParams((searchParams) => {
-        searchParams.set("page", page.toString());
-        return searchParams;
-      });
-    },
-    [setSearchParams],
-  );
-
-  const handlePageSizeChange = useCallback(
-    (pageSize: number) => {
-      setSearchParams((searchParams) => {
-        searchParams.set("page_size", pageSize.toString());
-        searchParams.set("page", "1");
-        return searchParams;
-      });
-    },
-    [setSearchParams],
-  );
+export default function AuditLogTable({
+  data,
+  isLoading,
+  pageCount,
+  rowCount,
+  queryTable,
+  columnFilters,
+  onPageChange,
+  onPageSizeChange,
+  onSortingChange,
+  onSearchChange,
+  control,
+  handleSubmit,
+  onFilterSubmit,
+  onFilterReset,
+}: TAuditLogTableProps) {
 
   const columnHelper = createColumnHelper<TAuditLogTableCol>();
   const columns = [
@@ -201,9 +71,9 @@ export default function AuditLogTable() {
         <DataTableSortableColHeader
           label="Actor Name"
           sortKey="actor_name"
-          sortBy={queryTable?.sortBy}
-          order={queryTable?.order}
-          onClick={() => applySorting("actor_name")}
+          sortBy={queryTable.sortBy}
+          order={queryTable.order}
+          onClick={() => onSortingChange("actor_name")}
         />
       ),
       cell: (info) => info.getValue(),
@@ -214,9 +84,9 @@ export default function AuditLogTable() {
         <DataTableSortableColHeader
           label="Action"
           sortKey="action"
-          sortBy={queryTable?.sortBy}
-          order={queryTable?.order}
-          onClick={() => applySorting("action")}
+          sortBy={queryTable.sortBy}
+          order={queryTable.order}
+          onClick={() => onSortingChange("action")}
         />
       ),
       cell: (info) => info.getValue(),
@@ -227,9 +97,9 @@ export default function AuditLogTable() {
         <DataTableSortableColHeader
           label="Target Type"
           sortKey="target_type"
-          sortBy={queryTable?.sortBy}
-          order={queryTable?.order}
-          onClick={() => applySorting("target_type")}
+          sortBy={queryTable.sortBy}
+          order={queryTable.order}
+          onClick={() => onSortingChange("target_type")}
         />
       ),
       cell: (info) => info.getValue(),
@@ -240,9 +110,9 @@ export default function AuditLogTable() {
         <DataTableSortableColHeader
           label="Target Id"
           sortKey="target_id"
-          sortBy={queryTable?.sortBy}
-          order={queryTable?.order}
-          onClick={() => applySorting("target_id")}
+          sortBy={queryTable.sortBy}
+          order={queryTable.order}
+          onClick={() => onSortingChange("target_id")}
         />
       ),
       cell: (info) => info.getValue(),
@@ -253,9 +123,9 @@ export default function AuditLogTable() {
         <DataTableSortableColHeader
           label="Created At"
           sortKey="created_at"
-          sortBy={queryTable?.sortBy}
-          order={queryTable?.order}
-          onClick={() => applySorting("created_at")}
+          sortBy={queryTable.sortBy}
+          order={queryTable.order}
+          onClick={() => onSortingChange("created_at")}
         />
       ),
       cell: (info) => dayjs(info.getValue()).format("YYYY-MM-DD HH:mm:ss"),
@@ -265,30 +135,30 @@ export default function AuditLogTable() {
   const sorting = useMemo<SortingState>(() => {
     const sort = [];
 
-    if (queryTable?.sortBy) {
+    if (queryTable.sortBy) {
       sort.push({
-        id: queryTable?.sortBy,
-        desc: queryTable?.order === OrderKeyEnum.DESC,
+        id: queryTable.sortBy,
+        desc: queryTable.order === OrderKeyEnum.DESC,
       });
     }
 
     return sort;
-  }, [queryTable?.sortBy, queryTable?.order]);
+  }, [queryTable.sortBy, queryTable.order]);
 
   return (
     <DataTable
-      data={responseData?.data?.data?.items ?? []}
+      data={data}
       isLoading={isLoading}
-      onPageChange={handlePageChange}
-      onPageSizeChange={handlePageSizeChange}
+      onPageChange={onPageChange}
+      onPageSizeChange={onPageSizeChange}
       tableOptions={{
         columns,
-        pageCount: responseData?.data?.data?.meta?.total_page || 1,
-        rowCount: responseData?.data?.data?.meta?.total_all_data || 0,
+        pageCount,
+        rowCount,
         state: {
           pagination: {
-            pageIndex: responseData?.data?.data?.meta?.current_page || 1,
-            pageSize: queryTable?.pageSize || 10,
+            pageIndex: queryTable.page,
+            pageSize: queryTable.pageSize,
           },
           sorting,
           columnFilters,
@@ -397,7 +267,7 @@ export default function AuditLogTable() {
           <InputGroupInput
             placeholder="Type minimum 3 characters to search ..."
             onChange={(val) => onSearchChange(val.target.value)}
-            defaultValue={queryTable?.search}
+            defaultValue={queryTable.search}
           />
           <InputGroupAddon>
             <Search />

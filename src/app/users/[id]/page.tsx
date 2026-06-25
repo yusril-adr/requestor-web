@@ -48,7 +48,7 @@ export default function UserDetailPage() {
         name: data?.data?.data?.name ?? "Detail",
       },
     ],
-    [data, isLoading],
+    [data],
   );
 
   return (

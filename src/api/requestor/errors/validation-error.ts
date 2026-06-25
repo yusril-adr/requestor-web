@@ -1,6 +1,6 @@
 import ApiError from "@/common/errors/api-error";
 
-export class RequestorAPIValidationError<T = {}> extends ApiError {
+export class RequestorAPIValidationError<T = unknown> extends ApiError {
   constructor(
     public errors: {
       property: keyof T | string;

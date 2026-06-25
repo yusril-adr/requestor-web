@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 import { Link, useNavigate, useParams } from "react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -34,40 +34,33 @@ import { RequestPriorityEnum } from "@/api/requestor/requests/enums/request-prio
 import RequestorAPINotFoundError from "@/api/requestor/errors/not-found-error";
 import RequestorAPIValidationError from "@/api/requestor/errors/validation-error";
 import { applyValidationErrors } from "@/utils/validation-helper";
-import { useGetRequestById } from "@/app/requests/_hooks/use-get-request-by-id";
 import { useUpdateRequestById } from "@/app/requests/_hooks/use-update-request-by-id";
+import type { TRequestEditFormProps } from "@/app/requests/[id]/edit/_types/request-edit-form-props";
 
-export default function RequestEditForm() {
+export default function RequestEditForm({
+  title,
+  requestorName,
+  assigneeName,
+  status,
+  priority,
+  isLoading,
+}: TRequestEditFormProps) {
   const params = useParams();
   const navigate = useNavigate();
 
-  const getDataQuery = useGetRequestById(params.id as string);
-
-  useEffect(() => {
-    if (
-      getDataQuery.isError &&
-      getDataQuery.error &&
-      getDataQuery.error instanceof RequestorAPINotFoundError
-    ) {
-      navigate("/requests");
-    }
-  }, [getDataQuery]);
-
   const defaultValues = useMemo(() => {
     return {
-      title: getDataQuery.data?.data?.data?.title || "",
-      requestorName: getDataQuery.data?.data?.data?.requestor_name || "",
-      assigneeName: getDataQuery.data?.data?.data?.assignee_name || "",
+      title: title || "",
+      requestorName: requestorName || "",
+      assigneeName: assigneeName || "",
       status:
-        (getDataQuery.data?.data?.data?.status as
-          | RequestStatusEnum
-          | undefined) || RequestStatusEnum.SUSPENDED,
+        (status as RequestStatusEnum | undefined) ||
+        RequestStatusEnum.SUSPENDED,
       priority:
-        (getDataQuery.data?.data?.data?.priority as
-          | RequestPriorityEnum
-          | undefined) || RequestPriorityEnum.LOW,
+        (priority as RequestPriorityEnum | undefined) ||
+        RequestPriorityEnum.LOW,
     };
-  }, [getDataQuery]);
+  }, [assigneeName, priority, requestorName, status, title]);
 
   const { control, handleSubmit, setError } = useForm<TRequestEditFormSchema>({
     resolver: zodResolver(RequestEditFormSchema),
@@ -145,9 +138,8 @@ export default function RequestEditForm() {
     () =>
       updateRequestIsPending ||
       updateRequestIsPaused ||
-      getDataQuery.isLoading ||
-      getDataQuery.isPaused,
-    [updateRequestIsPending, updateRequestIsPaused, getDataQuery],
+      isLoading,
+    [updateRequestIsPending, updateRequestIsPaused, isLoading],
   );
 
   return (

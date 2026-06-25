@@ -14,19 +14,11 @@ import {
 } from "@/app/_components/ui/table";
 import { Skeleton } from "@/app/_components/ui/skeleton";
 
-import { OrderKeyEnum } from "@/common/enums/order-key";
-import type { TRequestPaginationPayload } from "@/api/requestor/requests/types/request-pagination-payload";
-import { useGetRequestPagination } from "@/app/dashboard/_hooks/use-get-request-pagination";
+import type { TRecentlyRequestCardProps } from "@/app/dashboard/_types/dashboard-card-props";
 
-export default function RecentlyRequestCard() {
-  const getDataPayload: TRequestPaginationPayload = {
-    page: 1,
-    per_page: 3,
-    sort_by: "updated_at",
-    order: OrderKeyEnum.DESC,
-  };
-  const getUserDataQuery = useGetRequestPagination(getDataPayload);
-
+export default function RecentlyRequestCard({
+  query,
+}: TRecentlyRequestCardProps) {
   return (
     <Card>
       <CardHeader>
@@ -42,7 +34,7 @@ export default function RecentlyRequestCard() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {getUserDataQuery.isLoading &&
+            {query.isLoading &&
               Array.from({ length: 3 }).map((_, idx) => (
                 <TableRow key={idx}>
                   <TableCell>
@@ -58,8 +50,8 @@ export default function RecentlyRequestCard() {
                 </TableRow>
               ))}
 
-            {!getUserDataQuery.isLoading &&
-              getUserDataQuery.data?.data?.data?.items.map((item) => (
+            {!query.isLoading &&
+              query.data?.data?.data?.items.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell>{item.title}</TableCell>
                   <TableCell>{item.status}</TableCell>

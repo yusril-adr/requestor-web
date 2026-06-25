@@ -21,7 +21,6 @@ export function generatePages({
 
   // fix end overflow
   if (end > totalPages) {
-    end = totalPages;
     start = totalPages - maxVisible + 1;
   }
 

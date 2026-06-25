@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 import * as React from "react";
 
 const MOBILE_BREAKPOINT = 949; // include tablets

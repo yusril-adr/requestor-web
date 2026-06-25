@@ -30,7 +30,7 @@ requestorAxios.interceptors.response.use(
 
       toast.dismiss();
       switch (statusCode) {
-        case 400:
+        case 400: {
           const validationErrorResponse = error.response
             ?.data as TRequestorApiResponse<null>;
 
@@ -42,19 +42,23 @@ requestorAxios.interceptors.response.use(
             toast.error(defaultErrorResponse.message as string);
           }
           break;
+        }
 
-        case 401:
+        case 401: {
           toast.error(defaultErrorResponse.message as string);
           logout();
           break;
-        case 404:
+        }
+        case 404: {
           toast.error(defaultErrorResponse.message as string);
           throw new RequestorAPINotFoundError(
             defaultErrorResponse.message as string,
           );
-        default:
+        }
+        default: {
           toast.error(defaultErrorResponse.message as string);
           break;
+        }
       }
     }
     return Promise.reject(error);

@@ -9,9 +9,8 @@ import {
   ShieldCheck,
   Trash,
 } from "lucide-react";
-import { Link, useSearchParams } from "react-router";
-import { Controller, useForm } from "react-hook-form";
-import { useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router";
+import { Controller } from "react-hook-form";
 import type { SortingState } from "@tanstack/react-table";
 import { createColumnHelper } from "@tanstack/react-table";
 
@@ -49,78 +48,38 @@ import { ConfirmSuspendUserDialog } from "./confirm-suspend-user-dialog";
 import { ConfirmReactivateUserDialog } from "./confirm-reactivate-user-dialog";
 
 import { OrderKeyEnum } from "@/common/enums/order-key";
-import type { TUserPaginationPayload } from "@/api/requestor/users/types/user-pagination-payload";
-import type { TUserSortBy } from "@/api/requestor/users/consts/user-sort-by";
 import type { TUserTableCol } from "@/app/users/_types/user-table-col";
+import type { TUserTableProps } from "@/app/users/_types/user-table-props";
 import { useAuthContext } from "@/app/_hooks/use-auth-context";
-import { useFilter } from "@/app/_hooks/use-filter";
 import {
   DataTable,
   DataTableSortableColHeader,
 } from "@/app/_components/data-table";
-import { useGetUserPagination } from "@/app/users/_hooks/use-get-user-pagination";
 import { useDeleteUserById } from "@/app/users/_hooks/use-delete-user-by-id";
 import { useUpdateUserById } from "@/app/users/_hooks/use-update-user-by-id";
 
-type TUserTableFilterValues = {
-  status: string | null;
-  role: string | null;
-};
-
-let debounceSearchTimeoutId: number | null = null;
-
-export default function UserTable() {
-  const [searchParams, setSearchParams] = useSearchParams();
+export default function UserTable({
+  data,
+  isLoading,
+  pageCount,
+  rowCount,
+  queryTable,
+  columnFilters,
+  onPageChange,
+  onPageSizeChange,
+  onSortingChange,
+  onSearchChange,
+  control,
+  handleSubmit,
+  onFilterSubmit,
+  onFilterReset,
+}: TUserTableProps) {
   const { auth } = useAuthContext();
-  const queryClient = useQueryClient();
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [confirmSuspendId, setConfirmSuspendId] = useState<string | null>(null);
   const [confirmReactivateId, setConfirmReactivateId] = useState<string | null>(
     null,
   );
-
-  const queryTable = useMemo(
-    () => ({
-      page: Number(searchParams.get("page") || 1),
-      pageSize: Number(searchParams.get("page_size") || 10),
-      search: searchParams.get("search") || undefined,
-      sortBy: searchParams.get("sort_by") || undefined,
-      order: (searchParams.get("order") || undefined) as
-        | OrderKeyEnum
-        | undefined,
-      status: searchParams.get("status") || undefined,
-      role: searchParams.get("role") || undefined,
-    }),
-    [searchParams],
-  );
-
-  const { control, handleSubmit, reset } = useForm<TUserTableFilterValues>({
-    defaultValues: {
-      status: (queryTable?.status as UserStatusEnum) || null,
-      role: (queryTable?.role as RoleKeyEnum) || null,
-    },
-  });
-
-  const { onFilterReset, onFilterSubmit, columnFilters, filterParams } =
-    useFilter<TUserTableFilterValues>(
-      [
-        {
-          formName: "status",
-          urlParam: "status",
-          columnId: "status",
-          apiField: "status",
-        },
-        {
-          formName: "role",
-          urlParam: "role",
-          columnId: "role",
-          apiField: "role",
-        },
-      ],
-      queryTable,
-      setSearchParams,
-      reset,
-    );
 
   const { mutate: deleteUserMutate } = useDeleteUserById();
   const { mutate: updateUserMutate } = useUpdateUserById();
@@ -130,7 +89,7 @@ export default function UserTable() {
       deleteUserMutate(confirmDeleteId);
     }
     setConfirmDeleteId(null);
-  }, [confirmDeleteId, deleteUserMutate, queryClient]);
+  }, [confirmDeleteId, deleteUserMutate]);
 
   const onSuspendConfirm = useCallback(() => {
     if (confirmSuspendId) {
@@ -140,7 +99,7 @@ export default function UserTable() {
       });
     }
     setConfirmSuspendId(null);
-  }, [confirmSuspendId, updateUserMutate, queryClient]);
+  }, [confirmSuspendId, updateUserMutate]);
 
   const onReactivateConfirm = useCallback(() => {
     if (confirmReactivateId) {
@@ -150,97 +109,7 @@ export default function UserTable() {
       });
     }
     setConfirmReactivateId(null);
-  }, [confirmReactivateId, updateUserMutate, queryClient]);
-
-  const onSearchChange = (value: string) => {
-    if (value && value !== "" && value.length < 3) {
-      return;
-    }
-
-    if (debounceSearchTimeoutId) {
-      clearTimeout(debounceSearchTimeoutId);
-    }
-
-    debounceSearchTimeoutId = setTimeout(() => {
-      setSearchParams((searchParams) => {
-        searchParams.set("search", value);
-        searchParams.set("page", "1");
-        return searchParams;
-      });
-    }, 300);
-  };
-
-  const mappedQueryTablePayload: TUserPaginationPayload = useMemo(
-    () => ({
-      page: queryTable.page,
-      per_page: queryTable.pageSize,
-      search: queryTable.search,
-      sort_by: queryTable.sortBy as TUserSortBy,
-      order: queryTable.order as OrderKeyEnum,
-      ...filterParams,
-    }),
-    [queryTable, filterParams],
-  );
-
-  const { data: responseData, isLoading } = useGetUserPagination(
-    mappedQueryTablePayload,
-  );
-
-  const applySorting = useCallback(
-    (key: string) => {
-      if (queryTable?.sortBy === key) {
-        let desiredOrder = "";
-        let desiredKey = key;
-        switch (queryTable?.order) {
-          case OrderKeyEnum.ASC:
-            desiredOrder = OrderKeyEnum.DESC;
-            break;
-          case OrderKeyEnum.DESC:
-            desiredOrder = "";
-            desiredKey = "";
-            break;
-          default:
-            desiredOrder = OrderKeyEnum.ASC;
-            break;
-        }
-
-        setSearchParams((searchParams) => {
-          searchParams.set("order", desiredOrder);
-          searchParams.set("sort_by", desiredKey);
-          searchParams.set("page", "1");
-          return searchParams;
-        });
-      } else {
-        setSearchParams((searchParams) => {
-          searchParams.set("sort_by", key);
-          searchParams.set("order", OrderKeyEnum.ASC);
-          return searchParams;
-        });
-      }
-    },
-    [searchParams],
-  );
-
-  const handlePageChange = useCallback(
-    (page: number) => {
-      setSearchParams((searchParams) => {
-        searchParams.set("page", page.toString());
-        return searchParams;
-      });
-    },
-    [setSearchParams],
-  );
-
-  const handlePageSizeChange = useCallback(
-    (pageSize: number) => {
-      setSearchParams((searchParams) => {
-        searchParams.set("page_size", pageSize.toString());
-        searchParams.set("page", "1");
-        return searchParams;
-      });
-    },
-    [setSearchParams],
-  );
+  }, [confirmReactivateId, updateUserMutate]);
 
   const allowedActionRoles = [RoleKeyEnum.ADMIN, RoleKeyEnum.OPERATOR];
   const columnHelper = createColumnHelper<TUserTableCol>();
@@ -261,9 +130,9 @@ export default function UserTable() {
         <DataTableSortableColHeader
           label="Name"
           sortKey="name"
-          sortBy={queryTable?.sortBy}
-          order={queryTable?.order}
-          onClick={() => applySorting("name")}
+          sortBy={queryTable.sortBy}
+          order={queryTable.order}
+          onClick={() => onSortingChange("name")}
         />
       ),
       cell: ({ row }) => {
@@ -285,9 +154,9 @@ export default function UserTable() {
         <DataTableSortableColHeader
           label="Email"
           sortKey="email"
-          sortBy={queryTable?.sortBy}
-          order={queryTable?.order}
-          onClick={() => applySorting("email")}
+          sortBy={queryTable.sortBy}
+          order={queryTable.order}
+          onClick={() => onSortingChange("email")}
         />
       ),
       cell: (info) => info.getValue(),
@@ -298,9 +167,9 @@ export default function UserTable() {
         <DataTableSortableColHeader
           label="Role"
           sortKey="role"
-          sortBy={queryTable?.sortBy}
-          order={queryTable?.order}
-          onClick={() => applySorting("role")}
+          sortBy={queryTable.sortBy}
+          order={queryTable.order}
+          onClick={() => onSortingChange("role")}
         />
       ),
       cell: (info) => info.getValue(),
@@ -311,9 +180,9 @@ export default function UserTable() {
         <DataTableSortableColHeader
           label="Status"
           sortKey="status"
-          sortBy={queryTable?.sortBy}
-          order={queryTable?.order}
-          onClick={() => applySorting("status")}
+          sortBy={queryTable.sortBy}
+          order={queryTable.order}
+          onClick={() => onSortingChange("status")}
         />
       ),
       cell: (info) => info.getValue(),
@@ -391,31 +260,31 @@ export default function UserTable() {
   const sorting = useMemo<SortingState>(() => {
     const sort = [];
 
-    if (queryTable?.sortBy) {
+    if (queryTable.sortBy) {
       sort.push({
-        id: queryTable?.sortBy,
-        desc: queryTable?.order === OrderKeyEnum.DESC,
+        id: queryTable.sortBy,
+        desc: queryTable.order === OrderKeyEnum.DESC,
       });
     }
 
     return sort;
-  }, [queryTable?.sortBy, queryTable?.order]);
+  }, [queryTable.sortBy, queryTable.order]);
 
   return (
     <>
       <DataTable
-        data={responseData?.data?.data?.items ?? []}
+        data={data}
         isLoading={isLoading}
-        onPageChange={handlePageChange}
-        onPageSizeChange={handlePageSizeChange}
+        onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
         tableOptions={{
           columns,
-          pageCount: responseData?.data?.data?.meta?.total_page || 1,
-          rowCount: responseData?.data?.data?.meta?.total_all_data || 0,
+          pageCount,
+          rowCount,
           state: {
             pagination: {
-              pageIndex: responseData?.data?.data?.meta?.current_page || 1,
-              pageSize: queryTable?.pageSize || 10,
+              pageIndex: queryTable.page,
+              pageSize: queryTable.pageSize,
             },
             sorting,
             columnFilters,
@@ -524,7 +393,7 @@ export default function UserTable() {
             <InputGroupInput
               placeholder="Type minimum 3 characters to search ..."
               onChange={(val) => onSearchChange(val.target.value)}
-              defaultValue={queryTable?.search}
+              defaultValue={queryTable.search}
             />
             <InputGroupAddon>
               <Search />

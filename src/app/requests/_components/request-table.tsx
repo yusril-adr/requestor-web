@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   EllipsisVertical,
   Eye,
@@ -7,9 +7,8 @@ import {
   Search,
   Trash,
 } from "lucide-react";
-import { Link, useNavigate, useSearchParams } from "react-router";
-import { Controller, useForm } from "react-hook-form";
-import { useQueryClient } from "@tanstack/react-query";
+import { Link, useNavigate } from "react-router";
+import { Controller } from "react-hook-form";
 import type { SortingState } from "@tanstack/react-table";
 import { createColumnHelper } from "@tanstack/react-table";
 
@@ -53,13 +52,11 @@ import {
 
 import { OrderKeyEnum } from "@/common/enums/order-key";
 import { RequestStatusEnum } from "@/api/requestor/requests/enums/request-status";
-import type { TRequestPaginationPayload } from "@/api/requestor/requests/types/request-pagination-payload";
-import type { TRequestSortBy } from "@/api/requestor/requests/consts/request-sort-by";
 import type { TRequestTableCol } from "@/app/requests/_types/request-table-col";
+import type { TRequestTableProps } from "@/app/requests/_types/request-table-props";
 
 import type { TRequestorApiErrorResponse } from "@/api/requestor/types/response";
 import { useAuthContext } from "@/app/_hooks/use-auth-context";
-import { useFilter } from "@/app/_hooks/use-filter";
 import {
   DataTable,
   DataTableSortableColHeader,
@@ -69,68 +66,30 @@ import { RoleKeyEnum } from "@/common/enums/role-key";
 import RequestorAPINotFoundError from "@/api/requestor/errors/not-found-error";
 import RequestorAPIValidationError from "@/api/requestor/errors/validation-error";
 import { applyValidationErrors } from "@/utils/validation-helper";
-import { useGetRequestPagination } from "@/app/requests/_hooks/use-get-request-pagination";
 import { useDeleteRequestById } from "@/app/requests/_hooks/use-delete-request-by-id";
 
-type TRequestTableFilterValues = {
-  status: string | null;
-  priority: string | null;
-};
-
-let debounceSearchTimeoutId: number | null = null;
-
-export default function RequestTable() {
-  const [searchParams, setSearchParams] = useSearchParams();
+export default function RequestTable({
+  data,
+  isLoading,
+  pageCount,
+  rowCount,
+  queryTable,
+  columnFilters,
+  onPageChange,
+  onPageSizeChange,
+  onSortingChange,
+  onSearchChange,
+  control,
+  handleSubmit,
+  setError,
+  onFilterSubmit,
+  onFilterReset,
+}: TRequestTableProps) {
   const { auth } = useAuthContext();
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [confirmatedDeletedId, setConfirmatedDeletedId] = useState<
     string | null
   >(null);
-
-  const queryTable = useMemo(
-    () => ({
-      page: Number(searchParams.get("page") || 1),
-      pageSize: Number(searchParams.get("page_size") || 10),
-      search: searchParams.get("search") || undefined,
-      sortBy: searchParams.get("sort_by") || undefined,
-      order: (searchParams.get("order") || undefined) as
-        | OrderKeyEnum
-        | undefined,
-      status: searchParams.get("status") || undefined,
-      priority: searchParams.get("priority") || undefined,
-    }),
-    [searchParams],
-  );
-
-  const { control, handleSubmit, reset, setError } =
-    useForm<TRequestTableFilterValues>({
-      defaultValues: {
-        status: (queryTable?.status as RequestStatusEnum) || null,
-        priority: (queryTable?.priority as RequestPriorityEnum) || null,
-      },
-    });
-
-  const { onFilterReset, onFilterSubmit, columnFilters, filterParams } =
-    useFilter<TRequestTableFilterValues>(
-      [
-        {
-          formName: "status",
-          urlParam: "status",
-          columnId: "status",
-          apiField: "status",
-        },
-        {
-          formName: "priority",
-          urlParam: "priority",
-          columnId: "priority",
-          apiField: "priority",
-        },
-      ],
-      queryTable,
-      setSearchParams,
-      reset,
-    );
 
   const { mutate: deleteRequestMutate } = useDeleteRequestById({
     onError: (error) => {
@@ -154,113 +113,7 @@ export default function RequestTable() {
     }
 
     setConfirmatedDeletedId(null);
-  }, [
-    confirmatedDeletedId,
-    deleteRequestMutate,
-    queryClient,
-    setError,
-    navigate,
-  ]);
-
-  const onSearchChange = (value: string) => {
-    if (value && value !== "" && value.length < 3) {
-      return;
-    }
-
-    if (debounceSearchTimeoutId) {
-      clearTimeout(debounceSearchTimeoutId);
-    }
-
-    debounceSearchTimeoutId = setTimeout(() => {
-      setSearchParams((searchParams) => {
-        searchParams.set("search", value);
-        searchParams.set("page", "1");
-        return searchParams;
-      });
-    }, 300);
-  };
-
-  const mappedQueryTablePayload: TRequestPaginationPayload = useMemo(
-    () => ({
-      page: queryTable.page,
-      per_page: queryTable.pageSize,
-      search: queryTable.search,
-      sort_by: queryTable.sortBy as TRequestSortBy,
-      order: queryTable.order as OrderKeyEnum,
-      ...filterParams,
-    }),
-    [queryTable, filterParams],
-  );
-
-  const {
-    data: responseData,
-    isLoading,
-    isError,
-    error,
-  } = useGetRequestPagination(mappedQueryTablePayload);
-
-  useEffect(() => {
-    if (isError && error && error instanceof RequestorAPINotFoundError) {
-      navigate("/requests");
-      return;
-    }
-  }, [isError, error]);
-
-  const applySorting = useCallback(
-    (key: string) => {
-      if (queryTable?.sortBy === key) {
-        let desiredOrder = "";
-        let desiredKey = key;
-        switch (queryTable?.order) {
-          case OrderKeyEnum.ASC:
-            desiredOrder = OrderKeyEnum.DESC;
-            break;
-          case OrderKeyEnum.DESC:
-            desiredOrder = "";
-            desiredKey = "";
-            break;
-          default:
-            desiredOrder = OrderKeyEnum.ASC;
-            break;
-        }
-
-        setSearchParams((searchParams) => {
-          searchParams.set("order", desiredOrder);
-          searchParams.set("sort_by", desiredKey);
-          searchParams.set("page", "1");
-          return searchParams;
-        });
-      } else {
-        setSearchParams((searchParams) => {
-          searchParams.set("sort_by", key);
-          searchParams.set("order", OrderKeyEnum.ASC);
-          return searchParams;
-        });
-      }
-    },
-    [searchParams],
-  );
-
-  const handlePageChange = useCallback(
-    (page: number) => {
-      setSearchParams((searchParams) => {
-        searchParams.set("page", page.toString());
-        return searchParams;
-      });
-    },
-    [setSearchParams],
-  );
-
-  const handlePageSizeChange = useCallback(
-    (pageSize: number) => {
-      setSearchParams((searchParams) => {
-        searchParams.set("page_size", pageSize.toString());
-        searchParams.set("page", "1");
-        return searchParams;
-      });
-    },
-    [setSearchParams],
-  );
+  }, [confirmatedDeletedId, deleteRequestMutate]);
 
   const allowedActionRoles = [RoleKeyEnum.ADMIN, RoleKeyEnum.OPERATOR];
 
@@ -282,9 +135,9 @@ export default function RequestTable() {
         <DataTableSortableColHeader
           label="Name"
           sortKey="title"
-          sortBy={queryTable?.sortBy}
-          order={queryTable?.order}
-          onClick={() => applySorting("title")}
+          sortBy={queryTable.sortBy}
+          order={queryTable.order}
+          onClick={() => onSortingChange("title")}
         />
       ),
       cell: ({ row }) => {
@@ -306,9 +159,9 @@ export default function RequestTable() {
         <DataTableSortableColHeader
           label="Requestor Name"
           sortKey="requestor_name"
-          sortBy={queryTable?.sortBy}
-          order={queryTable?.order}
-          onClick={() => applySorting("requestor_name")}
+          sortBy={queryTable.sortBy}
+          order={queryTable.order}
+          onClick={() => onSortingChange("requestor_name")}
         />
       ),
       cell: (info) => info.getValue(),
@@ -319,9 +172,9 @@ export default function RequestTable() {
         <DataTableSortableColHeader
           label="Status"
           sortKey="status"
-          sortBy={queryTable?.sortBy}
-          order={queryTable?.order}
-          onClick={() => applySorting("status")}
+          sortBy={queryTable.sortBy}
+          order={queryTable.order}
+          onClick={() => onSortingChange("status")}
         />
       ),
       cell: (info) => info.getValue(),
@@ -332,9 +185,9 @@ export default function RequestTable() {
         <DataTableSortableColHeader
           label="Priority"
           sortKey="priority"
-          sortBy={queryTable?.sortBy}
-          order={queryTable?.order}
-          onClick={() => applySorting("priority")}
+          sortBy={queryTable.sortBy}
+          order={queryTable.order}
+          onClick={() => onSortingChange("priority")}
         />
       ),
       cell: (info) => info.getValue(),
@@ -345,9 +198,9 @@ export default function RequestTable() {
         <DataTableSortableColHeader
           label="Assignee Name"
           sortKey="assignee_name"
-          sortBy={queryTable?.sortBy}
-          order={queryTable?.order}
-          onClick={() => applySorting("assignee_name")}
+          sortBy={queryTable.sortBy}
+          order={queryTable.order}
+          onClick={() => onSortingChange("assignee_name")}
         />
       ),
       cell: (info) => info.getValue() ?? "-",
@@ -405,31 +258,31 @@ export default function RequestTable() {
   const sorting = useMemo<SortingState>(() => {
     const sort = [];
 
-    if (queryTable?.sortBy) {
+    if (queryTable.sortBy) {
       sort.push({
-        id: queryTable?.sortBy,
-        desc: queryTable?.order === OrderKeyEnum.DESC,
+        id: queryTable.sortBy,
+        desc: queryTable.order === OrderKeyEnum.DESC,
       });
     }
 
     return sort;
-  }, [queryTable?.sortBy, queryTable?.order]);
+  }, [queryTable.sortBy, queryTable.order]);
 
   return (
     <>
       <DataTable
-        data={responseData?.data?.data?.items ?? []}
+        data={data}
         isLoading={isLoading}
-        onPageChange={handlePageChange}
-        onPageSizeChange={handlePageSizeChange}
+        onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
         tableOptions={{
           columns,
-          pageCount: responseData?.data?.data?.meta?.total_page || 1,
-          rowCount: responseData?.data?.data?.meta?.total_all_data || 0,
+          pageCount,
+          rowCount,
           state: {
             pagination: {
-              pageIndex: responseData?.data?.data?.meta?.current_page || 1,
-              pageSize: queryTable?.pageSize || 10,
+              pageIndex: queryTable.page,
+              pageSize: queryTable.pageSize,
             },
             sorting,
             columnFilters,
@@ -541,7 +394,7 @@ export default function RequestTable() {
             <InputGroupInput
               placeholder="Type minimum 3 characters to search ..."
               onChange={(val) => onSearchChange(val.target.value)}
-              defaultValue={queryTable?.search}
+              defaultValue={queryTable.search}
             />
             <InputGroupAddon>
               <Search />
