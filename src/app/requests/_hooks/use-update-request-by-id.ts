@@ -22,6 +22,7 @@ export function useUpdateRequestById(
   const queryClient = useQueryClient();
 
   return useMutation({
+    ...options,
     mutationFn: updateRequestById,
     onMutate: (...args) => {
       toast.loading("Updating request...");
@@ -34,9 +35,6 @@ export function useUpdateRequestById(
         queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.REQUEST.ALL()],
       });
       options?.onSuccess?.(...args);
-    },
-    onError: (...args) => {
-      options?.onError?.(...args);
     },
   });
 }

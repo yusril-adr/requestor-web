@@ -2,8 +2,6 @@ import { useMemo } from "react";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 import { Link, useNavigate } from "react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
 
 import { Card, CardContent, CardFooter } from "@/app/_components/ui/card";
 import {
@@ -30,7 +28,6 @@ import {
 } from "@/app/requests/create/_schema/request-create-form";
 
 import { RequestPriorityEnum } from "@/api/requestor/requests/enums/request-priority";
-import CONFIG from "@/common/constants/config";
 import type { TRequestorApiErrorResponse } from "@/api/requestor/types/response";
 import type { TRequestCreatePayload } from "@/api/requestor/requests/types/request-create-payload";
 import RequestorAPIValidationError from "@/api/requestor/errors/validation-error";
@@ -39,7 +36,6 @@ import { useCreateRequest } from "@/app/requests/_hooks/use-create-request";
 
 export default function RequestCreateForm() {
   const navigate = useNavigate();
-
   const { control, handleSubmit, setError } = useForm<TRequestCreateFormSchema>(
     {
       resolver: zodResolver(RequestCreateFormSchema),
@@ -71,12 +67,31 @@ export default function RequestCreateForm() {
     },
   ];
 
-  const queryClient = useQueryClient();
   const {
     mutate: createRequestMutate,
     isPending: createRequestIsPending,
     isPaused: createRequestIsPaused,
-  } = useCreateRequest();
+  } = useCreateRequest({
+    onSuccess: () => {
+      navigate("/requests");
+    },
+    onError: (error) => {
+      if (error instanceof RequestorAPIValidationError) {
+        const mappedErrors = (
+          error.errors as TRequestorApiErrorResponse<null>[]
+        ).map((error) => {
+          return {
+            property:
+              mappedErrorKeys.find((key) => key.key === error.property)
+                ?.mapped ?? error.property,
+            messages: error.messages,
+          };
+        });
+
+        return applyValidationErrors(setError, mappedErrors);
+      }
+    },
+  });
 
   const onSubmit: SubmitHandler<TRequestCreateFormSchema> = (data) => {
     const payload: TRequestCreatePayload = {
@@ -86,35 +101,7 @@ export default function RequestCreateForm() {
       assignee_name: data.assigneeName,
     };
 
-    createRequestMutate(payload, {
-      onMutate: () => {
-        toast.loading("Creating request...");
-      },
-      onSuccess: () => {
-        toast.dismiss();
-        toast.success("Request created");
-        queryClient.invalidateQueries({
-          queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.REQUEST.ALL()],
-        });
-        navigate("/requests");
-      },
-      onError: (error) => {
-        if (error instanceof RequestorAPIValidationError) {
-          const mappedErrors = (
-            error.errors as TRequestorApiErrorResponse<null>[]
-          ).map((error) => {
-            return {
-              property:
-                mappedErrorKeys.find((key) => key.key === error.property)
-                  ?.mapped ?? error.property,
-              messages: error.messages,
-            };
-          });
-
-          return applyValidationErrors(setError, mappedErrors);
-        }
-      },
-    });
+    createRequestMutate(payload);
   };
 
   const isFormDisabled = useMemo(

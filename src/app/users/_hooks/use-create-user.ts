@@ -18,6 +18,7 @@ export function useCreateUser(
   const queryClient = useQueryClient();
 
   return useMutation({
+    ...options,
     mutationFn: createUser,
     onMutate: (...args) => {
       toast.loading("Creating user...");
@@ -30,9 +31,6 @@ export function useCreateUser(
         queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.USER.ALL()],
       });
       options?.onSuccess?.(...args);
-    },
-    onError: (...args) => {
-      options?.onError?.(...args);
     },
   });
 }

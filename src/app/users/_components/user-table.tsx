@@ -49,11 +49,9 @@ import { ConfirmSuspendUserDialog } from "./confirm-suspend-user-dialog";
 import { ConfirmReactivateUserDialog } from "./confirm-reactivate-user-dialog";
 
 import { OrderKeyEnum } from "@/common/enums/order-key";
-import CONFIG from "@/common/constants/config";
 import type { TUserPaginationPayload } from "@/api/requestor/users/types/user-pagination-payload";
 import type { TUserSortBy } from "@/api/requestor/users/consts/user-sort-by";
 import type { TUserTableCol } from "@/app/users/_types/user-table-col";
-import { toast } from "sonner";
 import { useAuthContext } from "@/app/_hooks/use-auth-context";
 import { useFilter } from "@/app/_hooks/use-filter";
 import {
@@ -129,54 +127,27 @@ export default function UserTable() {
 
   const onDeleteConfirm = useCallback(() => {
     if (confirmDeleteId) {
-      deleteUserMutate(confirmDeleteId, {
-        onMutate: () => toast.loading("Deleting user..."),
-        onSuccess: () => {
-          toast.dismiss();
-          toast.success("User deleted");
-          queryClient.invalidateQueries({
-            queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.USER.ALL()],
-          });
-        },
-      });
+      deleteUserMutate(confirmDeleteId);
     }
     setConfirmDeleteId(null);
   }, [confirmDeleteId, deleteUserMutate, queryClient]);
 
   const onSuspendConfirm = useCallback(() => {
     if (confirmSuspendId) {
-      updateUserMutate(
-        { id: confirmSuspendId, payload: { status: UserStatusEnum.SUSPENDED } },
-        {
-          onMutate: () => toast.loading("Updating user..."),
-          onSuccess: () => {
-            toast.dismiss();
-            toast.success("User updated");
-            queryClient.invalidateQueries({
-              queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.USER.ALL()],
-            });
-          },
-        },
-      );
+      updateUserMutate({
+        id: confirmSuspendId,
+        payload: { status: UserStatusEnum.SUSPENDED },
+      });
     }
     setConfirmSuspendId(null);
   }, [confirmSuspendId, updateUserMutate, queryClient]);
 
   const onReactivateConfirm = useCallback(() => {
     if (confirmReactivateId) {
-      updateUserMutate(
-        { id: confirmReactivateId, payload: { status: UserStatusEnum.ACTIVE } },
-        {
-          onMutate: () => toast.loading("Updating user..."),
-          onSuccess: () => {
-            toast.dismiss();
-            toast.success("User updated");
-            queryClient.invalidateQueries({
-              queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.USER.ALL()],
-            });
-          },
-        },
-      );
+      updateUserMutate({
+        id: confirmReactivateId,
+        payload: { status: UserStatusEnum.ACTIVE },
+      });
     }
     setConfirmReactivateId(null);
   }, [confirmReactivateId, updateUserMutate, queryClient]);
@@ -211,8 +182,9 @@ export default function UserTable() {
     [queryTable, filterParams],
   );
 
-  const { data: responseData, isLoading } =
-    useGetUserPagination(mappedQueryTablePayload);
+  const { data: responseData, isLoading } = useGetUserPagination(
+    mappedQueryTablePayload,
+  );
 
   const applySorting = useCallback(
     (key: string) => {

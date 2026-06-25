@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
 import {
   EllipsisVertical,
   Eye,
@@ -54,7 +53,6 @@ import {
 
 import { OrderKeyEnum } from "@/common/enums/order-key";
 import { RequestStatusEnum } from "@/api/requestor/requests/enums/request-status";
-import CONFIG from "@/common/constants/config";
 import type { TRequestPaginationPayload } from "@/api/requestor/requests/types/request-pagination-payload";
 import type { TRequestSortBy } from "@/api/requestor/requests/consts/request-sort-by";
 import type { TRequestTableCol } from "@/app/requests/_types/request-table-col";
@@ -134,39 +132,35 @@ export default function RequestTable() {
       reset,
     );
 
-  const { mutate: deleteRequestMutate } = useDeleteRequestById();
+  const { mutate: deleteRequestMutate } = useDeleteRequestById({
+    onError: (error) => {
+      if (error instanceof RequestorAPIValidationError) {
+        return applyValidationErrors(
+          setError,
+          error.errors as TRequestorApiErrorResponse<null>[],
+        );
+      }
+
+      if (error instanceof RequestorAPINotFoundError) {
+        navigate("/requests");
+        return;
+      }
+    },
+  });
 
   const onDeleteHandler = useCallback(() => {
     if (confirmatedDeletedId) {
-      deleteRequestMutate(confirmatedDeletedId, {
-        onMutate: () => {
-          toast.loading("Deleting request...");
-        },
-        onSuccess: () => {
-          toast.dismiss();
-          toast.success("Request deleted");
-          queryClient.invalidateQueries({
-            queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.REQUEST.ALL()],
-          });
-        },
-        onError: (error) => {
-          if (error instanceof RequestorAPIValidationError) {
-            return applyValidationErrors(
-              setError,
-              error.errors as TRequestorApiErrorResponse<null>[],
-            );
-          }
-
-          if (error instanceof RequestorAPINotFoundError) {
-            navigate("/requests");
-            return;
-          }
-        },
-      });
+      deleteRequestMutate(confirmatedDeletedId);
     }
 
     setConfirmatedDeletedId(null);
-  }, [confirmatedDeletedId, deleteRequestMutate, queryClient, setError, navigate]);
+  }, [
+    confirmatedDeletedId,
+    deleteRequestMutate,
+    queryClient,
+    setError,
+    navigate,
+  ]);
 
   const onSearchChange = (value: string) => {
     if (value && value !== "" && value.length < 3) {
@@ -198,8 +192,12 @@ export default function RequestTable() {
     [queryTable, filterParams],
   );
 
-  const { data: responseData, isLoading, isError, error } =
-    useGetRequestPagination(mappedQueryTablePayload);
+  const {
+    data: responseData,
+    isLoading,
+    isError,
+    error,
+  } = useGetRequestPagination(mappedQueryTablePayload);
 
   useEffect(() => {
     if (isError && error && error instanceof RequestorAPINotFoundError) {

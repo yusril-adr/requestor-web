@@ -17,6 +17,7 @@ export function useDeleteUserById(
   const queryClient = useQueryClient();
 
   return useMutation({
+    ...options,
     mutationFn: deleteUserById,
     onMutate: (...args) => {
       toast.loading("Deleting user...");
@@ -29,9 +30,6 @@ export function useDeleteUserById(
         queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.USER.ALL()],
       });
       options?.onSuccess?.(...args);
-    },
-    onError: (...args) => {
-      options?.onError?.(...args);
     },
   });
 }

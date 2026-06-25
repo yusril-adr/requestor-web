@@ -18,6 +18,7 @@ export function useCreateRequest(
   const queryClient = useQueryClient();
 
   return useMutation({
+    ...options,
     mutationFn: createRequest,
     onMutate: (...args) => {
       toast.loading("Creating request...");
@@ -30,9 +31,6 @@ export function useCreateRequest(
         queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.REQUEST.ALL()],
       });
       options?.onSuccess?.(...args);
-    },
-    onError: (...args) => {
-      options?.onError?.(...args);
     },
   });
 }

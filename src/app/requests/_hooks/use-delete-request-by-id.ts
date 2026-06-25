@@ -17,6 +17,7 @@ export function useDeleteRequestById(
   const queryClient = useQueryClient();
 
   return useMutation({
+    ...options,
     mutationFn: deleteRequestById,
     onMutate: (...args) => {
       toast.loading("Deleting request...");
@@ -29,9 +30,6 @@ export function useDeleteRequestById(
         queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.REQUEST.ALL()],
       });
       options?.onSuccess?.(...args);
-    },
-    onError: (...args) => {
-      options?.onError?.(...args);
     },
   });
 }
