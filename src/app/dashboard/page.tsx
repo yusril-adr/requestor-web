@@ -5,9 +5,9 @@ import TotalRequestCard from "@/app/dashboard/_components/total-request-card";
 import TotalUserCard from "@/app/dashboard/_components/total-user-card";
 import RecentlyRequestCard from "@/app/dashboard/_components/recently-request-card";
 import RecentlyAuditLogCard from "@/app/dashboard/_components/recently-audit-log-card";
-import { useGetAuditLogPagination } from "@/app/audit-logs/_hooks/use-get-audit-log-pagination";
-import { useGetRequestPagination } from "@/app/requests/_hooks/use-get-request-pagination";
-import { useGetUserPagination } from "@/app/users/_hooks/use-get-user-pagination";
+import { useGetAuditLogPagination } from "@/app/dashboard/_hooks/use-get-audit-log-pagination";
+import { useGetRequestPagination } from "@/app/dashboard/_hooks/use-get-request-pagination";
+import { useGetUserPagination } from "@/app/dashboard/_hooks/use-get-user-pagination";
 import { OrderKeyEnum } from "@/common/enums/order-key";
 
 export function meta() {
