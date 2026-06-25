@@ -55,20 +55,7 @@ export default function RequstPage() {
 
   const { onFilterReset, onFilterSubmit, columnFilters } =
     useFilter<TRequestTableFilterValues>(
-      [
-        {
-          formName: "status",
-          urlParam: "status",
-          columnId: "status",
-          apiField: "status",
-        },
-        {
-          formName: "priority",
-          urlParam: "priority",
-          columnId: "priority",
-          apiField: "priority",
-        },
-      ],
+      ["status", "priority"],
       queryUrl,
       setSearchParams,
       reset,

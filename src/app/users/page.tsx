@@ -52,20 +52,7 @@ export default function UserPage() {
 
   const { onFilterReset, onFilterSubmit, columnFilters } =
     useFilter<TUserTableFilterValues>(
-      [
-        {
-          formName: "status",
-          urlParam: "status",
-          columnId: "status",
-          apiField: "status",
-        },
-        {
-          formName: "role",
-          urlParam: "role",
-          columnId: "role",
-          apiField: "role",
-        },
-      ],
+      ["status", "role"],
       queryUrl,
       setSearchParams,
       reset,

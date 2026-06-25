@@ -50,20 +50,7 @@ export default function AuditLogPage() {
 
   const { onFilterReset, onFilterSubmit, columnFilters } =
     useFilter<TAuditLogTableFilterValues>(
-      [
-        {
-          formName: "action",
-          urlParam: "action",
-          columnId: "action",
-          apiField: "action",
-        },
-        {
-          formName: "targetType",
-          urlParam: "target_type",
-          columnId: "target_type",
-          apiField: "target_type",
-        },
-      ],
+      ["action", "targetType"],
       queryUrl,
       setSearchParams,
       reset,
