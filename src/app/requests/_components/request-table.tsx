@@ -7,7 +7,7 @@ import {
   Search,
   Trash,
 } from "lucide-react";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 import { Controller } from "react-hook-form";
 import type { SortingState } from "@tanstack/react-table";
 import { createColumnHelper } from "@tanstack/react-table";
@@ -55,7 +55,6 @@ import { RequestStatusEnum } from "@/api/requestor/requests/enums/request-status
 import type { TRequestTableCol } from "@/app/requests/_types/request-table-col";
 import type { TRequestTableProps } from "@/app/requests/_types/request-table-props";
 
-import type { TRequestorApiErrorResponse } from "@/api/requestor/types/response";
 import { useAuthContext } from "@/app/_hooks/use-auth-context";
 import {
   DataTable,
@@ -63,10 +62,6 @@ import {
 } from "@/app/_components/data-table";
 import { RequestPriorityEnum } from "@/api/requestor/requests/enums/request-priority";
 import { RoleKeyEnum } from "@/common/enums/role-key";
-import RequestorAPINotFoundError from "@/api/requestor/errors/not-found-error";
-import RequestorAPIValidationError from "@/api/requestor/errors/validation-error";
-import { applyValidationErrors } from "@/utils/validation-helper";
-import { useDeleteRequestById } from "@/app/requests/_hooks/use-delete-request-by-id";
 
 export default function RequestTable({
   data,
@@ -81,39 +76,22 @@ export default function RequestTable({
   onSearchChange,
   control,
   handleSubmit,
-  setError,
   onFilterSubmit,
   onFilterReset,
+  onDeleteRequest,
 }: TRequestTableProps) {
   const { auth } = useAuthContext();
-  const navigate = useNavigate();
   const [confirmatedDeletedId, setConfirmatedDeletedId] = useState<
     string | null
   >(null);
 
-  const { mutate: deleteRequestMutate } = useDeleteRequestById({
-    onError: (error) => {
-      if (error instanceof RequestorAPIValidationError) {
-        return applyValidationErrors(
-          setError,
-          error.errors as TRequestorApiErrorResponse<null>[],
-        );
-      }
-
-      if (error instanceof RequestorAPINotFoundError) {
-        navigate("/requests");
-        return;
-      }
-    },
-  });
-
   const onDeleteHandler = useCallback(() => {
     if (confirmatedDeletedId) {
-      deleteRequestMutate(confirmatedDeletedId);
+      onDeleteRequest(confirmatedDeletedId);
     }
 
     setConfirmatedDeletedId(null);
-  }, [confirmatedDeletedId, deleteRequestMutate]);
+  }, [confirmatedDeletedId, onDeleteRequest]);
 
   const allowedActionRoles = [RoleKeyEnum.ADMIN, RoleKeyEnum.OPERATOR];
 

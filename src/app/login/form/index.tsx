@@ -1,8 +1,7 @@
 import { EyeOffIcon, EyeIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm, Controller, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate } from "react-router";
 
 import {
   Card,
@@ -24,51 +23,46 @@ import { Spinner } from "@/app/_components/ui/spinner";
 
 import type { TRequestorApiErrorResponse } from "@/api/requestor/types/response";
 import type { TLoginPayload } from "@/api/requestor/auth/login/types/login-payload";
+import type { TLoginFormProps } from "@/app/login/_types/login-form-props";
 import {
   LoginFormSchema,
   type TLoginFormSchema,
 } from "./scheme";
 import { applyValidationErrors } from "@/utils/validation-helper";
 import RequestorAPIValidationError from "@/api/requestor/errors/validation-error";
-import { useLogin } from "@/app/login/_hooks/use-login";
 
-export function LoginForm() {
+export function LoginForm({
+  onSubmitPayload,
+  mutationError,
+  isPending,
+  isPaused,
+}: TLoginFormProps) {
   const [isShowPassword, setIsShowPassword] = useState(false);
-  const navigate = useNavigate();
 
   const { control, handleSubmit, setError } = useForm<TLoginFormSchema>({
     resolver: zodResolver(LoginFormSchema),
   });
 
-  const {
-    mutate: loginMutate,
-    isPending: loginIsPending,
-    isPaused: loginIsPaused,
-  } = useLogin({
-    onSuccess: () => {
-      navigate("/dashboard");
-    },
-    onError: (error) => {
-      if (error instanceof RequestorAPIValidationError) {
-        return applyValidationErrors(
-          setError,
-          error.errors as TRequestorApiErrorResponse<null>[],
-        );
-      }
-    },
-  });
+  useEffect(() => {
+    if (mutationError instanceof RequestorAPIValidationError) {
+      applyValidationErrors(
+        setError,
+        mutationError.errors as TRequestorApiErrorResponse<null>[],
+      );
+    }
+  }, [mutationError, setError]);
 
   const onSubmit: SubmitHandler<TLoginFormSchema> = (data) => {
     const payload: TLoginPayload = {
       email: data.email,
       password: data.password,
     };
-    loginMutate(payload);
+    onSubmitPayload(payload);
   };
 
   const isFormDisabled = useMemo(
-    () => loginIsPending || loginIsPaused,
-    [loginIsPending, loginIsPaused],
+    () => isPending || isPaused,
+    [isPending, isPaused],
   );
 
   return (

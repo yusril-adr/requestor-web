@@ -1,5 +1,8 @@
+import { useNavigate } from "react-router";
+
 import { ThemeToggler } from "@/app/_components/theme-toggler";
 import { LoginForm } from "@/app/login/form";
+import { useLogin } from "@/app/login/_hooks/use-login";
 
 export function meta() {
   return [
@@ -10,6 +13,18 @@ export function meta() {
 }
 
 export default function Login() {
+  const navigate = useNavigate();
+  const {
+    mutate: loginMutate,
+    error: loginError,
+    isPending: loginIsPending,
+    isPaused: loginIsPaused,
+  } = useLogin({
+    onSuccess: () => {
+      navigate("/dashboard");
+    },
+  });
+
   return (
     <div className="w-full flex justify-center items-center">
       <main className="flex w-full h-[calc(100vh-32px)] max-w-7xl px-10 relative">
@@ -24,7 +39,12 @@ export default function Login() {
           />
         </div>
 
-        <LoginForm />
+        <LoginForm
+          onSubmitPayload={loginMutate}
+          mutationError={loginError}
+          isPending={loginIsPending}
+          isPaused={loginIsPaused}
+        />
       </main>
     </div>
   );

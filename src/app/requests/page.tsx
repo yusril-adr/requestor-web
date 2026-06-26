@@ -8,13 +8,17 @@ import { Button } from "@/app/_components/ui/button";
 import { useFilter } from "@/app/_hooks/use-filter";
 import RequestTable from "@/app/requests/_components/request-table";
 import { useGetRequestPagination } from "@/app/requests/_hooks/use-get-request-pagination";
+import { useDeleteRequestById } from "@/app/requests/_hooks/use-delete-request-by-id";
 import type { TRequestTableFilterValues } from "@/app/requests/_types/request-table-props";
 import type { TRequestPaginationPayload } from "@/api/requestor/requests/types/request-pagination-payload";
 import type { TRequestSortBy } from "@/api/requestor/requests/consts/request-sort-by";
 import type { RequestStatusEnum } from "@/api/requestor/requests/enums/request-status";
 import type { RequestPriorityEnum } from "@/api/requestor/requests/enums/request-priority";
+import type { TRequestorApiErrorResponse } from "@/api/requestor/types/response";
 import { OrderKeyEnum } from "@/common/enums/order-key";
 import RequestorAPINotFoundError from "@/api/requestor/errors/not-found-error";
+import RequestorAPIValidationError from "@/api/requestor/errors/validation-error";
+import { applyValidationErrors } from "@/utils/validation-helper";
 
 let debounceSearchTimeoutId: number | null = null;
 
@@ -80,6 +84,20 @@ export default function RequstPage() {
     isError,
     error,
   } = useGetRequestPagination(queryUrlIntoPayload);
+  const { mutate: deleteRequestMutate } = useDeleteRequestById({
+    onError: (error) => {
+      if (error instanceof RequestorAPIValidationError) {
+        return applyValidationErrors(
+          setError,
+          error.errors as TRequestorApiErrorResponse<null>[],
+        );
+      }
+
+      if (error instanceof RequestorAPINotFoundError) {
+        navigate("/requests");
+      }
+    },
+  });
 
   useEffect(() => {
     if (isError && error && error instanceof RequestorAPINotFoundError) {
@@ -201,9 +219,9 @@ export default function RequstPage() {
           onSearchChange={onSearchChange}
           control={control}
           handleSubmit={handleSubmit}
-          setError={setError}
           onFilterSubmit={onFilterSubmit}
           onFilterReset={onFilterReset}
+          onDeleteRequest={deleteRequestMutate}
         />
       </div>
     </div>

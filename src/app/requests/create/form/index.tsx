@@ -1,6 +1,6 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Card, CardContent, CardFooter } from "@/app/_components/ui/card";
@@ -30,12 +30,16 @@ import {
 import { RequestPriorityEnum } from "@/api/requestor/requests/enums/request-priority";
 import type { TRequestorApiErrorResponse } from "@/api/requestor/types/response";
 import type { TRequestCreatePayload } from "@/api/requestor/requests/types/request-create-payload";
+import type { TRequestCreateFormProps } from "@/app/requests/create/_types/request-create-form-props";
 import RequestorAPIValidationError from "@/api/requestor/errors/validation-error";
 import { applyValidationErrors } from "@/utils/validation-helper";
-import { useCreateRequest } from "@/app/requests/_hooks/use-create-request";
 
-export default function RequestCreateForm() {
-  const navigate = useNavigate();
+export default function RequestCreateForm({
+  onSubmitPayload,
+  mutationError,
+  isPending,
+  isPaused,
+}: TRequestCreateFormProps) {
   const { control, handleSubmit, setError } = useForm<TRequestCreateFormSchema>(
     {
       resolver: zodResolver(RequestCreateFormSchema),
@@ -48,50 +52,44 @@ export default function RequestCreateForm() {
   const mappedErrorKeys: {
     key: keyof TRequestCreateFormSchema;
     mapped: string;
-  }[] = [
-    {
-      key: "title",
-      mapped: "title",
-    },
-    {
-      key: "requestorName",
-      mapped: "requestor_name",
-    },
-    {
-      key: "priority",
-      mapped: "priority",
-    },
-    {
-      key: "assigneeName",
-      mapped: "assignee_name",
-    },
-  ];
+  }[] = useMemo(
+    () => [
+      {
+        key: "title",
+        mapped: "title",
+      },
+      {
+        key: "requestorName",
+        mapped: "requestor_name",
+      },
+      {
+        key: "priority",
+        mapped: "priority",
+      },
+      {
+        key: "assigneeName",
+        mapped: "assignee_name",
+      },
+    ],
+    [],
+  );
 
-  const {
-    mutate: createRequestMutate,
-    isPending: createRequestIsPending,
-    isPaused: createRequestIsPaused,
-  } = useCreateRequest({
-    onSuccess: () => {
-      navigate("/requests");
-    },
-    onError: (error) => {
-      if (error instanceof RequestorAPIValidationError) {
-        const mappedErrors = (
-          error.errors as TRequestorApiErrorResponse<null>[]
-        ).map((error) => {
-          return {
-            property:
-              mappedErrorKeys.find((key) => key.key === error.property)
-                ?.mapped ?? error.property,
-            messages: error.messages,
-          };
-        });
+  useEffect(() => {
+    if (mutationError instanceof RequestorAPIValidationError) {
+      const mappedErrors = (
+        mutationError.errors as TRequestorApiErrorResponse<null>[]
+      ).map((error) => {
+        return {
+          property:
+            mappedErrorKeys.find((key) => key.key === error.property)?.mapped ??
+            error.property,
+          messages: error.messages,
+        };
+      });
 
-        return applyValidationErrors(setError, mappedErrors);
-      }
-    },
-  });
+      applyValidationErrors(setError, mappedErrors);
+    }
+  }, [mappedErrorKeys, mutationError, setError]);
 
   const onSubmit: SubmitHandler<TRequestCreateFormSchema> = (data) => {
     const payload: TRequestCreatePayload = {
@@ -101,12 +99,12 @@ export default function RequestCreateForm() {
       assignee_name: data.assigneeName,
     };
 
-    createRequestMutate(payload);
+    onSubmitPayload(payload);
   };
 
   const isFormDisabled = useMemo(
-    () => createRequestIsPending || createRequestIsPaused,
-    [createRequestIsPending, createRequestIsPaused],
+    () => isPending || isPaused,
+    [isPending, isPaused],
   );
 
   return (

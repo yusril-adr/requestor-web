@@ -1,3 +1,5 @@
+import type { TRequestUpdatePayload } from "@/api/requestor/requests/[id]/types/request-update-payload";
+
 export type TRequestEditFormProps = {
   title: string | undefined;
   requestorName: string | undefined;
@@ -5,4 +7,8 @@ export type TRequestEditFormProps = {
   status: string | undefined;
   priority: string | undefined;
   isLoading: boolean;
+  onSubmitPayload: (payload: TRequestUpdatePayload) => void;
+  mutationError: Error | null;
+  isPending: boolean;
+  isPaused: boolean;
 };

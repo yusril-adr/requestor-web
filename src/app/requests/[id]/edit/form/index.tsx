@@ -1,6 +1,6 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
-import { Link, useNavigate, useParams } from "react-router";
+import { Link } from "react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Card, CardContent, CardFooter } from "@/app/_components/ui/card";
@@ -31,10 +31,8 @@ import type { TRequestorApiErrorResponse } from "@/api/requestor/types/response"
 import type { TRequestUpdatePayload } from "@/api/requestor/requests/[id]/types/request-update-payload";
 import { RequestStatusEnum } from "@/api/requestor/requests/enums/request-status";
 import { RequestPriorityEnum } from "@/api/requestor/requests/enums/request-priority";
-import RequestorAPINotFoundError from "@/api/requestor/errors/not-found-error";
 import RequestorAPIValidationError from "@/api/requestor/errors/validation-error";
 import { applyValidationErrors } from "@/utils/validation-helper";
-import { useUpdateRequestById } from "@/app/requests/_hooks/use-update-request-by-id";
 import type { TRequestEditFormProps } from "@/app/requests/[id]/edit/_types/request-edit-form-props";
 
 export default function RequestEditForm({
@@ -44,10 +42,11 @@ export default function RequestEditForm({
   status,
   priority,
   isLoading,
+  onSubmitPayload,
+  mutationError,
+  isPending,
+  isPaused,
 }: TRequestEditFormProps) {
-  const params = useParams();
-  const navigate = useNavigate();
-
   const defaultValues = useMemo(() => {
     return {
       title: title || "",
@@ -70,57 +69,44 @@ export default function RequestEditForm({
   const mappedErrorKeys: {
     key: keyof TRequestEditFormSchema;
     mapped: string;
-  }[] = [
-    {
-      key: "title",
-      mapped: "title",
-    },
-    {
-      key: "requestorName",
-      mapped: "requestor_name",
-    },
-    {
-      key: "priority",
-      mapped: "priority",
-    },
-    {
-      key: "assigneeName",
-      mapped: "assignee_name",
-    },
-  ];
+  }[] = useMemo(
+    () => [
+      {
+        key: "title",
+        mapped: "title",
+      },
+      {
+        key: "requestorName",
+        mapped: "requestor_name",
+      },
+      {
+        key: "priority",
+        mapped: "priority",
+      },
+      {
+        key: "assigneeName",
+        mapped: "assignee_name",
+      },
+    ],
+    [],
+  );
 
-  const {
-    mutate: updateRequestMutate,
-    isPending: updateRequestIsPending,
-    isPaused: updateRequestIsPaused,
-  } = useUpdateRequestById({
-    onSuccess: () => {
-      navigate("/requests");
-    },
-    onError: (error) => {
-      if (error instanceof RequestorAPIValidationError) {
-        const mappedErrors = (
-          error.errors as TRequestorApiErrorResponse<TRequestUpdatePayload>[]
-        ).map((error) => {
-          return {
-            property:
-              mappedErrorKeys.find((key) => key.key === error.property)
-                ?.mapped ?? error.property,
-            messages: error.messages,
-          };
-        });
+  useEffect(() => {
+    if (mutationError instanceof RequestorAPIValidationError) {
+      const mappedErrors = (
+        mutationError.errors as TRequestorApiErrorResponse<TRequestUpdatePayload>[]
+      ).map((error) => {
+        return {
+          property:
+            mappedErrorKeys.find((key) => key.key === error.property)?.mapped ??
+            error.property,
+          messages: error.messages,
+        };
+      });
 
-        return applyValidationErrors(setError, mappedErrors);
-      }
-
-      if (error instanceof RequestorAPINotFoundError) {
-        navigate("/requests");
-        return;
-      }
-
-      return;
-    },
-  });
+      applyValidationErrors(setError, mappedErrors);
+    }
+  }, [mappedErrorKeys, mutationError, setError]);
 
   const onSubmit: SubmitHandler<TRequestEditFormSchema> = (data) => {
     const payload: TRequestUpdatePayload = {
@@ -131,15 +117,12 @@ export default function RequestEditForm({
       priority: data.priority,
     };
 
-    updateRequestMutate({ id: params.id as string, payload });
+    onSubmitPayload(payload);
   };
 
   const isFormDisabled = useMemo(
-    () =>
-      updateRequestIsPending ||
-      updateRequestIsPaused ||
-      isLoading,
-    [updateRequestIsPending, updateRequestIsPaused, isLoading],
+    () => isPending || isPaused || isLoading,
+    [isPending, isPaused, isLoading],
   );
 
   return (

@@ -1,8 +1,9 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { ArrowLeft } from "lucide-react";
 
 import AppBreadcrumb from "@/app/_components/app-breadcrumb";
 import UserCreateForm from "@/app/users/create/form";
+import { useCreateUser } from "@/app/users/_hooks/use-create-user";
 
 export function meta() {
   return [
@@ -13,6 +14,18 @@ export function meta() {
 }
 
 export default function UserCreatePage() {
+  const navigate = useNavigate();
+  const {
+    mutate: createUserMutate,
+    error: createUserError,
+    isPending: createUserIsPending,
+    isPaused: createUserIsPaused,
+  } = useCreateUser({
+    onSuccess: () => {
+      navigate("/users");
+    },
+  });
+
   const breadcrumbItems = [
     {
       name: "Users",
@@ -35,7 +48,12 @@ export default function UserCreatePage() {
           <h1 className="font-heading text-2xl">Create User</h1>
         </div>
 
-        <UserCreateForm />
+        <UserCreateForm
+          onSubmitPayload={createUserMutate}
+          mutationError={createUserError}
+          isPending={createUserIsPending}
+          isPaused={createUserIsPaused}
+        />
       </div>
     </div>
   );

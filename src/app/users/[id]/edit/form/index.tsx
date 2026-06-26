@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
-import { Link, useNavigate, useParams } from "react-router";
+import { Link } from "react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 
@@ -36,10 +36,8 @@ import { RoleKeyEnum } from "@/common/enums/role-key";
 import type { TRequestorApiErrorResponse } from "@/api/requestor/types/response";
 import type { TUserUpdatePayload } from "@/api/requestor/users/[id]/types/user-update-payload";
 import { UserStatusEnum } from "@/api/requestor/users/enums/user-status";
-import RequestorAPINotFoundError from "@/api/requestor/errors/not-found-error";
 import RequestorAPIValidationError from "@/api/requestor/errors/validation-error";
 import { applyValidationErrors } from "@/utils/validation-helper";
-import { useUpdateUserById } from "@/app/users/_hooks/use-update-user-by-id";
 import type { TUserEditFormProps } from "@/app/users/[id]/edit/_types/user-edit-form-props";
 
 export default function UserEditForm({
@@ -48,9 +46,11 @@ export default function UserEditForm({
   role,
   status,
   isLoading,
+  onSubmitPayload,
+  mutationError,
+  isPending,
+  isPaused,
 }: TUserEditFormProps) {
-  const params = useParams();
-  const navigate = useNavigate();
   const [isShowPassword, setIsShowPassword] = useState(false);
 
   const defaultValues = useMemo(() => {
@@ -68,30 +68,14 @@ export default function UserEditForm({
     values: defaultValues,
   });
 
-  const {
-    mutate: updateUserMutate,
-    isPending: updateUserIsPending,
-    isPaused: updateUserIsPaused,
-  } = useUpdateUserById({
-    onSuccess: () => {
-      navigate("/users");
-    },
-    onError: (error) => {
-      if (error instanceof RequestorAPIValidationError) {
-        return applyValidationErrors(
-          setError,
-          error.errors as TRequestorApiErrorResponse<TUserUpdatePayload>[],
-        );
-      }
-
-      if (error instanceof RequestorAPINotFoundError) {
-        navigate("/users");
-        return;
-      }
-
-      return;
-    },
-  });
+  useEffect(() => {
+    if (mutationError instanceof RequestorAPIValidationError) {
+      applyValidationErrors(
+        setError,
+        mutationError.errors as TRequestorApiErrorResponse<TUserUpdatePayload>[],
+      );
+    }
+  }, [mutationError, setError]);
 
   const onSubmit: SubmitHandler<TUserEditFormSchema> = (data) => {
     const payload: TUserUpdatePayload = {
@@ -102,15 +86,12 @@ export default function UserEditForm({
       status: data.status,
     };
 
-    updateUserMutate({ id: params.id as string, payload });
+    onSubmitPayload(payload);
   };
 
   const isFormDisabled = useMemo(
-    () =>
-      updateUserIsPending ||
-      updateUserIsPaused ||
-      isLoading,
-    [updateUserIsPending, updateUserIsPaused, isLoading],
+    () => isPending || isPaused || isLoading,
+    [isPending, isPaused, isLoading],
   );
 
   return (

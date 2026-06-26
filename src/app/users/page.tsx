@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react";
 import { Plus } from "lucide-react";
-import { Link, useSearchParams } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { useForm } from "react-hook-form";
 
 import AppBreadcrumb from "@/app/_components/app-breadcrumb";
@@ -8,12 +8,15 @@ import UserTable from "@/app/users/_components/user-table";
 import { Button } from "@/app/_components/ui/button";
 import { useFilter } from "@/app/_hooks/use-filter";
 import { useGetUserPagination } from "@/app/users/_hooks/use-get-user-pagination";
+import { useDeleteUserById } from "@/app/users/_hooks/use-delete-user-by-id";
+import { useUpdateUserById } from "@/app/users/_hooks/use-update-user-by-id";
 import type { TUserTableFilterValues } from "@/app/users/_types/user-table-props";
 import type { TUserPaginationPayload } from "@/api/requestor/users/types/user-pagination-payload";
 import type { TUserSortBy } from "@/api/requestor/users/consts/user-sort-by";
 import { UserStatusEnum } from "@/api/requestor/users/enums/user-status";
 import { OrderKeyEnum } from "@/common/enums/order-key";
 import { RoleKeyEnum } from "@/common/enums/role-key";
+import RequestorAPINotFoundError from "@/api/requestor/errors/not-found-error";
 
 let debounceSearchTimeoutId: number | null = null;
 
@@ -27,6 +30,7 @@ export function meta() {
 
 export default function UserPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const queryUrl = useMemo(
     () => ({
@@ -73,6 +77,20 @@ export default function UserPage() {
 
   const { data: responseData, isLoading } =
     useGetUserPagination(queryUrlIntoPayload);
+  const { mutate: deleteUserMutate } = useDeleteUserById({
+    onError: (error) => {
+      if (error instanceof RequestorAPINotFoundError) {
+        navigate("/users");
+      }
+    },
+  });
+  const { mutate: updateUserMutate } = useUpdateUserById({
+    onError: (error) => {
+      if (error instanceof RequestorAPINotFoundError) {
+        navigate("/users");
+      }
+    },
+  });
 
   const onSearchChange = useCallback(
     (value: string) => {
@@ -187,6 +205,19 @@ export default function UserPage() {
           handleSubmit={handleSubmit}
           onFilterSubmit={onFilterSubmit}
           onFilterReset={onFilterReset}
+          onDeleteUser={deleteUserMutate}
+          onSuspendUser={(id) =>
+            updateUserMutate({
+              id,
+              payload: { status: UserStatusEnum.SUSPENDED },
+            })
+          }
+          onReactivateUser={(id) =>
+            updateUserMutate({
+              id,
+              payload: { status: UserStatusEnum.ACTIVE },
+            })
+          }
         />
       </div>
     </div>

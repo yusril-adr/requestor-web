@@ -1,8 +1,9 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { ArrowLeft } from "lucide-react";
 
 import AppBreadcrumb from "@/app/_components/app-breadcrumb";
 import RequestCreateForm from "@/app/requests/create/form";
+import { useCreateRequest } from "@/app/requests/_hooks/use-create-request";
 
 export function meta() {
   return [
@@ -13,6 +14,18 @@ export function meta() {
 }
 
 export default function RequestCreatePage() {
+  const navigate = useNavigate();
+  const {
+    mutate: createRequestMutate,
+    error: createRequestError,
+    isPending: createRequestIsPending,
+    isPaused: createRequestIsPaused,
+  } = useCreateRequest({
+    onSuccess: () => {
+      navigate("/requests");
+    },
+  });
+
   const breadcrumbItems = [
     {
       name: "Requests",
@@ -35,7 +48,12 @@ export default function RequestCreatePage() {
           <h1 className="font-heading text-2xl">Create Request</h1>
         </div>
 
-        <RequestCreateForm />
+        <RequestCreateForm
+          onSubmitPayload={createRequestMutate}
+          mutationError={createRequestError}
+          isPending={createRequestIsPending}
+          isPaused={createRequestIsPaused}
+        />
       </div>
     </div>
   );

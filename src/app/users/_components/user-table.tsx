@@ -55,8 +55,6 @@ import {
   DataTable,
   DataTableSortableColHeader,
 } from "@/app/_components/data-table";
-import { useDeleteUserById } from "@/app/users/_hooks/use-delete-user-by-id";
-import { useUpdateUserById } from "@/app/users/_hooks/use-update-user-by-id";
 
 export default function UserTable({
   data,
@@ -73,6 +71,9 @@ export default function UserTable({
   handleSubmit,
   onFilterSubmit,
   onFilterReset,
+  onDeleteUser,
+  onSuspendUser,
+  onReactivateUser,
 }: TUserTableProps) {
   const { auth } = useAuthContext();
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -81,35 +82,26 @@ export default function UserTable({
     null,
   );
 
-  const { mutate: deleteUserMutate } = useDeleteUserById();
-  const { mutate: updateUserMutate } = useUpdateUserById();
-
   const onDeleteConfirm = useCallback(() => {
     if (confirmDeleteId) {
-      deleteUserMutate(confirmDeleteId);
+      onDeleteUser(confirmDeleteId);
     }
     setConfirmDeleteId(null);
-  }, [confirmDeleteId, deleteUserMutate]);
+  }, [confirmDeleteId, onDeleteUser]);
 
   const onSuspendConfirm = useCallback(() => {
     if (confirmSuspendId) {
-      updateUserMutate({
-        id: confirmSuspendId,
-        payload: { status: UserStatusEnum.SUSPENDED },
-      });
+      onSuspendUser(confirmSuspendId);
     }
     setConfirmSuspendId(null);
-  }, [confirmSuspendId, updateUserMutate]);
+  }, [confirmSuspendId, onSuspendUser]);
 
   const onReactivateConfirm = useCallback(() => {
     if (confirmReactivateId) {
-      updateUserMutate({
-        id: confirmReactivateId,
-        payload: { status: UserStatusEnum.ACTIVE },
-      });
+      onReactivateUser(confirmReactivateId);
     }
     setConfirmReactivateId(null);
-  }, [confirmReactivateId, updateUserMutate]);
+  }, [confirmReactivateId, onReactivateUser]);
 
   const allowedActionRoles = [RoleKeyEnum.ADMIN, RoleKeyEnum.OPERATOR];
   const columnHelper = createColumnHelper<TUserTableCol>();

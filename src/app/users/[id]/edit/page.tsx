@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import AppBreadcrumb from "@/app/_components/app-breadcrumb";
 import UserEditForm from "@/app/users/[id]/edit/form";
 import { useGetUserById } from "@/app/users/_hooks/use-get-user-by-id";
+import { useUpdateUserById } from "@/app/users/_hooks/use-update-user-by-id";
 import RequestorAPINotFoundError from "@/api/requestor/errors/not-found-error";
 
 export function meta() {
@@ -19,6 +20,21 @@ export default function UserEditPage() {
   const params = useParams();
   const navigate = useNavigate();
   const getDataQuery = useGetUserById(params.id as string);
+  const {
+    mutate: updateUserMutate,
+    error: updateUserError,
+    isPending: updateUserIsPending,
+    isPaused: updateUserIsPaused,
+  } = useUpdateUserById({
+    onSuccess: () => {
+      navigate("/users");
+    },
+    onError: (error) => {
+      if (error instanceof RequestorAPINotFoundError) {
+        navigate("/users");
+      }
+    },
+  });
 
   useEffect(() => {
     if (
@@ -66,6 +82,12 @@ export default function UserEditPage() {
           role={getDataQuery.data?.data?.data?.role}
           status={getDataQuery.data?.data?.data?.status}
           isLoading={getDataQuery.isLoading}
+          onSubmitPayload={(payload) =>
+            updateUserMutate({ id: params.id as string, payload })
+          }
+          mutationError={updateUserError}
+          isPending={updateUserIsPending}
+          isPaused={updateUserIsPaused}
         />
       </div>
     </div>

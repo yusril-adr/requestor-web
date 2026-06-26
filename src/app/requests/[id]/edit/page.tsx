@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import AppBreadcrumb from "@/app/_components/app-breadcrumb";
 import RequestEditForm from "@/app/requests/[id]/edit/form";
 import { useGetRequestById } from "@/app/requests/_hooks/use-get-request-by-id";
+import { useUpdateRequestById } from "@/app/requests/_hooks/use-update-request-by-id";
 import RequestorAPINotFoundError from "@/api/requestor/errors/not-found-error";
 
 export function meta() {
@@ -19,6 +20,21 @@ export default function RequestEditPage() {
   const params = useParams();
   const navigate = useNavigate();
   const getDataQuery = useGetRequestById(params.id as string);
+  const {
+    mutate: updateRequestMutate,
+    error: updateRequestError,
+    isPending: updateRequestIsPending,
+    isPaused: updateRequestIsPaused,
+  } = useUpdateRequestById({
+    onSuccess: () => {
+      navigate("/requests");
+    },
+    onError: (error) => {
+      if (error instanceof RequestorAPINotFoundError) {
+        navigate("/requests");
+      }
+    },
+  });
 
   useEffect(() => {
     if (
@@ -67,6 +83,12 @@ export default function RequestEditPage() {
           status={getDataQuery.data?.data?.data?.status}
           priority={getDataQuery.data?.data?.data?.priority}
           isLoading={getDataQuery.isLoading}
+          onSubmitPayload={(payload) =>
+            updateRequestMutate({ id: params.id as string, payload })
+          }
+          mutationError={updateRequestError}
+          isPending={updateRequestIsPending}
+          isPaused={updateRequestIsPaused}
         />
       </div>
     </div>
