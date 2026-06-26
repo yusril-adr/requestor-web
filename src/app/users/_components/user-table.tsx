@@ -63,19 +63,10 @@ export default function UserTable({
   rowCount,
   queryTable,
   columnFilters,
-  onPageChange,
-  onPageSizeChange,
-  onSortingChange,
-  onSearchChange,
-  control,
-  handleSubmit,
-  onFilterSubmit,
-  onFilterReset,
-  onDeleteUser,
-  onSuspendUser,
-  onReactivateUser,
+  onActionHandler,
 }: TUserTableProps) {
   const { auth } = useAuthContext();
+  const filterForm = onActionHandler.onFilterForm!;
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [confirmSuspendId, setConfirmSuspendId] = useState<string | null>(null);
   const [confirmReactivateId, setConfirmReactivateId] = useState<string | null>(
@@ -84,24 +75,24 @@ export default function UserTable({
 
   const onDeleteConfirm = useCallback(() => {
     if (confirmDeleteId) {
-      onDeleteUser(confirmDeleteId);
+      onActionHandler.onDeleteUser(confirmDeleteId);
     }
     setConfirmDeleteId(null);
-  }, [confirmDeleteId, onDeleteUser]);
+  }, [confirmDeleteId, onActionHandler]);
 
   const onSuspendConfirm = useCallback(() => {
     if (confirmSuspendId) {
-      onSuspendUser(confirmSuspendId);
+      onActionHandler.onSuspendUser(confirmSuspendId);
     }
     setConfirmSuspendId(null);
-  }, [confirmSuspendId, onSuspendUser]);
+  }, [confirmSuspendId, onActionHandler]);
 
   const onReactivateConfirm = useCallback(() => {
     if (confirmReactivateId) {
-      onReactivateUser(confirmReactivateId);
+      onActionHandler.onReactivateUser(confirmReactivateId);
     }
     setConfirmReactivateId(null);
-  }, [confirmReactivateId, onReactivateUser]);
+  }, [confirmReactivateId, onActionHandler]);
 
   const allowedActionRoles = [RoleKeyEnum.ADMIN, RoleKeyEnum.OPERATOR];
   const columnHelper = createColumnHelper<TUserTableCol>();
@@ -124,7 +115,7 @@ export default function UserTable({
           sortKey="name"
           sortBy={queryTable.sortBy}
           order={queryTable.order}
-          onClick={() => onSortingChange("name")}
+          onClick={() => onActionHandler.onSortingChange?.("name")}
         />
       ),
       cell: ({ row }) => {
@@ -148,7 +139,7 @@ export default function UserTable({
           sortKey="email"
           sortBy={queryTable.sortBy}
           order={queryTable.order}
-          onClick={() => onSortingChange("email")}
+          onClick={() => onActionHandler.onSortingChange?.("email")}
         />
       ),
       cell: (info) => info.getValue(),
@@ -161,7 +152,7 @@ export default function UserTable({
           sortKey="role"
           sortBy={queryTable.sortBy}
           order={queryTable.order}
-          onClick={() => onSortingChange("role")}
+          onClick={() => onActionHandler.onSortingChange?.("role")}
         />
       ),
       cell: (info) => info.getValue(),
@@ -174,7 +165,7 @@ export default function UserTable({
           sortKey="status"
           sortBy={queryTable.sortBy}
           order={queryTable.order}
-          onClick={() => onSortingChange("status")}
+          onClick={() => onActionHandler.onSortingChange?.("status")}
         />
       ),
       cell: (info) => info.getValue(),
@@ -267,8 +258,8 @@ export default function UserTable({
       <DataTable
         data={data}
         isLoading={isLoading}
-        onPageChange={onPageChange}
-        onPageSizeChange={onPageSizeChange}
+        onPageChange={onActionHandler.onPageChange}
+        onPageSizeChange={onActionHandler.onPageSizeChange}
         tableOptions={{
           columns,
           pageCount,
@@ -292,12 +283,12 @@ export default function UserTable({
             <PopoverContent align="start">
               <form
                 className="flex flex-col gap-4 md:gap-2"
-                onSubmit={handleSubmit(onFilterSubmit)}
+                onSubmit={filterForm.onFilterSubmit}
               >
                 <FieldGroup className="flex flex-col md:flex-row gap-4 md:gap-2">
                   <Controller
                     name="role"
-                    control={control}
+                    control={filterForm.filterControl}
                     render={({ field, fieldState }) => (
                       <Field
                         className="grid gap-2"
@@ -328,7 +319,7 @@ export default function UserTable({
 
                   <Controller
                     name="status"
-                    control={control}
+                    control={filterForm.filterControl}
                     render={({ field, fieldState }) => (
                       <Field
                         className="grid gap-2"
@@ -369,7 +360,7 @@ export default function UserTable({
                       className="ms-auto"
                       variant="outline"
                       type="reset"
-                      onClick={onFilterReset}
+                      onClick={filterForm.onFilterReset}
                     >
                       Clear
                     </Button>
@@ -384,7 +375,9 @@ export default function UserTable({
           <InputGroup>
             <InputGroupInput
               placeholder="Type minimum 3 characters to search ..."
-              onChange={(val) => onSearchChange(val.target.value)}
+              onChange={(val) =>
+                onActionHandler.onSearchChange?.(val.target.value)
+              }
               defaultValue={queryTable.search}
             />
             <InputGroupAddon>

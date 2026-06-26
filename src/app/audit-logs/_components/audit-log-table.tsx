@@ -43,15 +43,9 @@ export default function AuditLogTable({
   rowCount,
   queryTable,
   columnFilters,
-  onPageChange,
-  onPageSizeChange,
-  onSortingChange,
-  onSearchChange,
-  control,
-  handleSubmit,
-  onFilterSubmit,
-  onFilterReset,
+  onActionHandler,
 }: TAuditLogTableProps) {
+  const filterForm = onActionHandler.onFilterForm!;
 
   const columnHelper = createColumnHelper<TAuditLogTableCol>();
   const columns = [
@@ -73,7 +67,7 @@ export default function AuditLogTable({
           sortKey="actor_name"
           sortBy={queryTable.sortBy}
           order={queryTable.order}
-          onClick={() => onSortingChange("actor_name")}
+          onClick={() => onActionHandler.onSortingChange?.("actor_name")}
         />
       ),
       cell: (info) => info.getValue(),
@@ -86,7 +80,7 @@ export default function AuditLogTable({
           sortKey="action"
           sortBy={queryTable.sortBy}
           order={queryTable.order}
-          onClick={() => onSortingChange("action")}
+          onClick={() => onActionHandler.onSortingChange?.("action")}
         />
       ),
       cell: (info) => info.getValue(),
@@ -99,7 +93,7 @@ export default function AuditLogTable({
           sortKey="target_type"
           sortBy={queryTable.sortBy}
           order={queryTable.order}
-          onClick={() => onSortingChange("target_type")}
+          onClick={() => onActionHandler.onSortingChange?.("target_type")}
         />
       ),
       cell: (info) => info.getValue(),
@@ -112,7 +106,7 @@ export default function AuditLogTable({
           sortKey="target_id"
           sortBy={queryTable.sortBy}
           order={queryTable.order}
-          onClick={() => onSortingChange("target_id")}
+          onClick={() => onActionHandler.onSortingChange?.("target_id")}
         />
       ),
       cell: (info) => info.getValue(),
@@ -125,7 +119,7 @@ export default function AuditLogTable({
           sortKey="created_at"
           sortBy={queryTable.sortBy}
           order={queryTable.order}
-          onClick={() => onSortingChange("created_at")}
+          onClick={() => onActionHandler.onSortingChange?.("created_at")}
         />
       ),
       cell: (info) => dayjs(info.getValue()).format("YYYY-MM-DD HH:mm:ss"),
@@ -149,8 +143,8 @@ export default function AuditLogTable({
     <DataTable
       data={data}
       isLoading={isLoading}
-      onPageChange={onPageChange}
-      onPageSizeChange={onPageSizeChange}
+      onPageChange={onActionHandler.onPageChange}
+      onPageSizeChange={onActionHandler.onPageSizeChange}
       tableOptions={{
         columns,
         pageCount,
@@ -174,12 +168,12 @@ export default function AuditLogTable({
           <PopoverContent align="start">
             <form
               className="flex flex-col gap-4 md:gap-2"
-              onSubmit={handleSubmit(onFilterSubmit)}
+              onSubmit={filterForm.onFilterSubmit}
             >
               <FieldGroup className="flex flex-col md:flex-row gap-4 md:gap-2">
                 <Controller
                   name="action"
-                  control={control}
+                  control={filterForm.filterControl}
                   render={({ field, fieldState }) => (
                     <Field
                       className="grid gap-2"
@@ -210,7 +204,7 @@ export default function AuditLogTable({
 
                 <Controller
                   name="targetType"
-                  control={control}
+                  control={filterForm.filterControl}
                   render={({ field, fieldState }) => (
                     <Field
                       className="grid gap-2"
@@ -251,7 +245,7 @@ export default function AuditLogTable({
                     className="ms-auto"
                     variant="outline"
                     type="reset"
-                    onClick={onFilterReset}
+                    onClick={filterForm.onFilterReset}
                   >
                     Clear
                   </Button>
@@ -266,7 +260,9 @@ export default function AuditLogTable({
         <InputGroup>
           <InputGroupInput
             placeholder="Type minimum 3 characters to search ..."
-            onChange={(val) => onSearchChange(val.target.value)}
+            onChange={(val) =>
+              onActionHandler.onSearchChange?.(val.target.value)
+            }
             defaultValue={queryTable.search}
           />
           <InputGroupAddon>

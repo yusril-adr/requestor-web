@@ -70,28 +70,21 @@ export default function RequestTable({
   rowCount,
   queryTable,
   columnFilters,
-  onPageChange,
-  onPageSizeChange,
-  onSortingChange,
-  onSearchChange,
-  control,
-  handleSubmit,
-  onFilterSubmit,
-  onFilterReset,
-  onDeleteRequest,
+  onActionHandler,
 }: TRequestTableProps) {
   const { auth } = useAuthContext();
+  const filterForm = onActionHandler.onFilterForm!;
   const [confirmatedDeletedId, setConfirmatedDeletedId] = useState<
     string | null
   >(null);
 
   const onDeleteHandler = useCallback(() => {
     if (confirmatedDeletedId) {
-      onDeleteRequest(confirmatedDeletedId);
+      onActionHandler.onDeleteRequest(confirmatedDeletedId);
     }
 
     setConfirmatedDeletedId(null);
-  }, [confirmatedDeletedId, onDeleteRequest]);
+  }, [confirmatedDeletedId, onActionHandler]);
 
   const allowedActionRoles = [RoleKeyEnum.ADMIN, RoleKeyEnum.OPERATOR];
 
@@ -115,7 +108,7 @@ export default function RequestTable({
           sortKey="title"
           sortBy={queryTable.sortBy}
           order={queryTable.order}
-          onClick={() => onSortingChange("title")}
+          onClick={() => onActionHandler.onSortingChange?.("title")}
         />
       ),
       cell: ({ row }) => {
@@ -139,7 +132,7 @@ export default function RequestTable({
           sortKey="requestor_name"
           sortBy={queryTable.sortBy}
           order={queryTable.order}
-          onClick={() => onSortingChange("requestor_name")}
+          onClick={() => onActionHandler.onSortingChange?.("requestor_name")}
         />
       ),
       cell: (info) => info.getValue(),
@@ -152,7 +145,7 @@ export default function RequestTable({
           sortKey="status"
           sortBy={queryTable.sortBy}
           order={queryTable.order}
-          onClick={() => onSortingChange("status")}
+          onClick={() => onActionHandler.onSortingChange?.("status")}
         />
       ),
       cell: (info) => info.getValue(),
@@ -165,7 +158,7 @@ export default function RequestTable({
           sortKey="priority"
           sortBy={queryTable.sortBy}
           order={queryTable.order}
-          onClick={() => onSortingChange("priority")}
+          onClick={() => onActionHandler.onSortingChange?.("priority")}
         />
       ),
       cell: (info) => info.getValue(),
@@ -178,7 +171,7 @@ export default function RequestTable({
           sortKey="assignee_name"
           sortBy={queryTable.sortBy}
           order={queryTable.order}
-          onClick={() => onSortingChange("assignee_name")}
+          onClick={() => onActionHandler.onSortingChange?.("assignee_name")}
         />
       ),
       cell: (info) => info.getValue() ?? "-",
@@ -251,8 +244,8 @@ export default function RequestTable({
       <DataTable
         data={data}
         isLoading={isLoading}
-        onPageChange={onPageChange}
-        onPageSizeChange={onPageSizeChange}
+        onPageChange={onActionHandler.onPageChange}
+        onPageSizeChange={onActionHandler.onPageSizeChange}
         tableOptions={{
           columns,
           pageCount,
@@ -276,12 +269,12 @@ export default function RequestTable({
             <PopoverContent align="start">
               <form
                 className="flex flex-col gap-4 md:gap-2"
-                onSubmit={handleSubmit(onFilterSubmit)}
+                onSubmit={filterForm.onFilterSubmit}
               >
                 <FieldGroup className="flex flex-col md:flex-row gap-4 md:gap-2">
                   <Controller
                     name="status"
-                    control={control}
+                    control={filterForm.filterControl}
                     render={({ field, fieldState }) => (
                       <Field
                         className="grid gap-2"
@@ -317,7 +310,7 @@ export default function RequestTable({
 
                   <Controller
                     name="priority"
-                    control={control}
+                    control={filterForm.filterControl}
                     render={({ field, fieldState }) => (
                       <Field
                         className="grid gap-2"
@@ -356,7 +349,7 @@ export default function RequestTable({
                       className="ms-auto"
                       variant="outline"
                       type="reset"
-                      onClick={onFilterReset}
+                      onClick={filterForm.onFilterReset}
                     >
                       Clear
                     </Button>
@@ -371,7 +364,9 @@ export default function RequestTable({
           <InputGroup>
             <InputGroupInput
               placeholder="Type minimum 3 characters to search ..."
-              onChange={(val) => onSearchChange(val.target.value)}
+              onChange={(val) =>
+                onActionHandler.onSearchChange?.(val.target.value)
+              }
               defaultValue={queryTable.search}
             />
             <InputGroupAddon>

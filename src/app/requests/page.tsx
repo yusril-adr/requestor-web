@@ -213,15 +213,18 @@ export default function RequstPage() {
           rowCount={responseData?.data?.data?.meta?.total_all_data || 0}
           queryTable={queryUrl}
           columnFilters={columnFilters}
-          onPageChange={handlePageChange}
-          onPageSizeChange={handlePageSizeChange}
-          onSortingChange={applySorting}
-          onSearchChange={onSearchChange}
-          control={control}
-          handleSubmit={handleSubmit}
-          onFilterSubmit={onFilterSubmit}
-          onFilterReset={onFilterReset}
-          onDeleteRequest={deleteRequestMutate}
+          onActionHandler={{
+            onPageChange: handlePageChange,
+            onPageSizeChange: handlePageSizeChange,
+            onSortingChange: applySorting,
+            onSearchChange,
+            onFilterForm: {
+              filterControl: control,
+              onFilterSubmit: handleSubmit(onFilterSubmit),
+              onFilterReset,
+            },
+            onDeleteRequest: deleteRequestMutate,
+          }}
         />
       </div>
     </div>

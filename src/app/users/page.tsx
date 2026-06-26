@@ -197,27 +197,28 @@ export default function UserPage() {
           rowCount={responseData?.data?.data?.meta?.total_all_data || 0}
           queryTable={queryUrl}
           columnFilters={columnFilters}
-          onPageChange={handlePageChange}
-          onPageSizeChange={handlePageSizeChange}
-          onSortingChange={applySorting}
-          onSearchChange={onSearchChange}
-          control={control}
-          handleSubmit={handleSubmit}
-          onFilterSubmit={onFilterSubmit}
-          onFilterReset={onFilterReset}
-          onDeleteUser={deleteUserMutate}
-          onSuspendUser={(id) =>
-            updateUserMutate({
-              id,
-              payload: { status: UserStatusEnum.SUSPENDED },
-            })
-          }
-          onReactivateUser={(id) =>
-            updateUserMutate({
-              id,
-              payload: { status: UserStatusEnum.ACTIVE },
-            })
-          }
+          onActionHandler={{
+            onPageChange: handlePageChange,
+            onPageSizeChange: handlePageSizeChange,
+            onSortingChange: applySorting,
+            onSearchChange,
+            onFilterForm: {
+              filterControl: control,
+              onFilterSubmit: handleSubmit(onFilterSubmit),
+              onFilterReset,
+            },
+            onDeleteUser: deleteUserMutate,
+            onSuspendUser: (id) =>
+              updateUserMutate({
+                id,
+                payload: { status: UserStatusEnum.SUSPENDED },
+              }),
+            onReactivateUser: (id) =>
+              updateUserMutate({
+                id,
+                payload: { status: UserStatusEnum.ACTIVE },
+              }),
+          }}
         />
       </div>
     </div>
