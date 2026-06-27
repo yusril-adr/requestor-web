@@ -15,6 +15,7 @@ import {
 import { Badge } from "@/app/_components/ui/badge";
 import dayjs from "@/libs/dayjs";
 import { Skeleton } from "@/app/_components/ui/skeleton";
+import { useIsMobile } from "@/app/_hooks/use-mobile";
 
 import RequestorAPINotFoundError from "@/api/requestor/errors/not-found-error";
 
@@ -29,6 +30,7 @@ export function meta() {
 export default function RequestDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const { data, isLoading, isError, error } = useGetRequestById(id as string);
 
@@ -51,6 +53,55 @@ export default function RequestDetailPage() {
     [data],
   );
 
+  const titleCell = (
+    <>
+      {isLoading && <Skeleton className="h-7" />}
+      {!isLoading && data?.data?.data?.title}
+    </>
+  );
+  const requestorNameCell = (
+    <>
+      {isLoading && <Skeleton className="h-7" />}
+      {!isLoading && data?.data?.data?.requestor_name}
+    </>
+  );
+  const assigneeNameCell = (
+    <>
+      {isLoading && <Skeleton className="h-7" />}
+      {(!isLoading && data?.data?.data?.assignee_name) ?? "-"}
+    </>
+  );
+  const priorityCell = (
+    <>
+      {isLoading && <Skeleton className="h-7" />}
+      {!isLoading && (
+        <Badge variant="outline">{data?.data?.data?.priority}</Badge>
+      )}
+    </>
+  );
+  const statusCell = (
+    <>
+      {isLoading && <Skeleton className="h-7" />}
+      {!isLoading && (
+        <Badge variant="outline">{data?.data?.data?.status}</Badge>
+      )}
+    </>
+  );
+  const createdAtCell = (
+    <>
+      {isLoading && <Skeleton className="h-7" />}
+      {!isLoading &&
+        dayjs(data?.data?.data?.created_at).format("YYYY-MM-DD HH:mm:ss")}
+    </>
+  );
+  const updatedAtCell = (
+    <>
+      {isLoading && <Skeleton className="h-7" />}
+      {!isLoading &&
+        dayjs(data?.data?.data?.updated_at).format("YYYY-MM-DD HH:mm:ss")}
+    </>
+  );
+
   return (
     <div className="w-full flex justify-center">
       <div className="w-full max-w-7xl flex flex-col px-10 pb-10">
@@ -65,85 +116,136 @@ export default function RequestDetailPage() {
 
         <Card>
           <CardContent>
-            <Table>
+            <Table className="table-fixed lg:table-auto">
               <TableBody>
-                <TableRow>
-                  <TableHead className="border bg-secondary px-4 py-6">
-                    Title
-                  </TableHead>
-                  <TableCell className="border px-4 py-6" colSpan={3}>
-                    {isLoading && <Skeleton className="h-7" />}
-                    {!isLoading && data?.data?.data?.title}
-                  </TableCell>
-                </TableRow>
+                {isMobile ? (
+                  <>
+                    <TableRow>
+                      <TableHead className="border bg-secondary px-4 py-6">
+                        Title
+                      </TableHead>
+                      <TableCell className="border px-4 py-6 whitespace-normal break-words">
+                        {titleCell}
+                      </TableCell>
+                    </TableRow>
 
-                <TableRow>
-                  <TableHead className="border bg-secondary px-4 py-6">
-                    Requestor Name
-                  </TableHead>
-                  <TableCell className="border px-4 py-6">
-                    {isLoading && <Skeleton className="h-7" />}
-                    {!isLoading && data?.data?.data?.requestor_name}
-                  </TableCell>
+                    <TableRow>
+                      <TableHead className="border bg-secondary px-4 py-6">
+                        Requestor Name
+                      </TableHead>
+                      <TableCell className="border px-4 py-6 whitespace-normal break-words">
+                        {requestorNameCell}
+                      </TableCell>
+                    </TableRow>
 
-                  <TableHead className="border bg-secondary px-4 py-6">
-                    Assignee Name
-                  </TableHead>
-                  <TableCell className="border px-4 py-6">
-                    {isLoading && <Skeleton className="h-7" />}
-                    {(!isLoading && data?.data?.data?.assignee_name) ?? "-"}
-                  </TableCell>
-                </TableRow>
+                    <TableRow>
+                      <TableHead className="border bg-secondary px-4 py-6">
+                        Assignee Name
+                      </TableHead>
+                      <TableCell className="border px-4 py-6 whitespace-normal break-words">
+                        {assigneeNameCell}
+                      </TableCell>
+                    </TableRow>
 
-                <TableRow>
-                  <TableHead className="border bg-secondary px-4 py-6">
-                    Priority
-                  </TableHead>
-                  <TableCell className="border px-4 py-6">
-                    {isLoading && <Skeleton className="h-7" />}
-                    {!isLoading && (
-                      <Badge variant="outline">
-                        {data?.data?.data?.priority}
-                      </Badge>
-                    )}
-                  </TableCell>
+                    <TableRow>
+                      <TableHead className="border bg-secondary px-4 py-6">
+                        Priority
+                      </TableHead>
+                      <TableCell className="border px-4 py-6 whitespace-normal break-words">
+                        {priorityCell}
+                      </TableCell>
+                    </TableRow>
 
-                  <TableHead className="border bg-secondary px-4 py-6">
-                    Status
-                  </TableHead>
-                  <TableCell className="border px-4 py-6">
-                    {isLoading && <Skeleton className="h-7" />}
-                    {!isLoading && (
-                      <Badge variant="outline">
-                        {data?.data?.data?.status}
-                      </Badge>
-                    )}
-                  </TableCell>
-                </TableRow>
+                    <TableRow>
+                      <TableHead className="border bg-secondary px-4 py-6">
+                        Status
+                      </TableHead>
+                      <TableCell className="border px-4 py-6 whitespace-normal break-words">
+                        {statusCell}
+                      </TableCell>
+                    </TableRow>
 
-                <TableRow>
-                  <TableHead className="border bg-secondary px-4 py-6">
-                    Created At
-                  </TableHead>
-                  <TableCell className="border px-4 py-6">
-                    {isLoading && <Skeleton className="h-7" />}
-                    {!isLoading &&
-                      dayjs(data?.data?.data?.created_at).format(
-                        "YYYY-MM-DD HH:mm:ss",
-                      )}
-                  </TableCell>
+                    <TableRow>
+                      <TableHead className="border bg-secondary px-4 py-6">
+                        Created At
+                      </TableHead>
+                      <TableCell className="border px-4 py-6 whitespace-normal break-words">
+                        {createdAtCell}
+                      </TableCell>
+                    </TableRow>
 
-                  <TableHead className="border bg-secondary px-4 py-6">
-                    Updated At
-                  </TableHead>
-                  <TableCell className="border px-4 py-6">
-                    {isLoading && <Skeleton className="h-7" />}
-                    {!isLoading &&
-                      dayjs(data?.data?.data?.updated_at).format(
-                        "YYYY-MM-DD HH:mm:ss",
-                      )}
-                  </TableCell>
-                </TableRow>
+                    <TableRow>
+                      <TableHead className="border bg-secondary px-4 py-6">
+                        Updated At
+                      </TableHead>
+                      <TableCell className="border px-4 py-6 whitespace-normal break-words">
+                        {updatedAtCell}
+                      </TableCell>
+                    </TableRow>
+                  </>
+                ) : (
+                  <>
+                    <TableRow>
+                      <TableHead className="border bg-secondary px-4 py-6">
+                        Title
+                      </TableHead>
+                      <TableCell
+                        className="border px-4 py-6 whitespace-normal break-words"
+                        colSpan={3}
+                      >
+                        {titleCell}
+                      </TableCell>
+                    </TableRow>
+
+                    <TableRow>
+                      <TableHead className="border bg-secondary px-4 py-6">
+                        Requestor Name
+                      </TableHead>
+                      <TableCell className="border px-4 py-6 whitespace-normal break-words">
+                        {requestorNameCell}
+                      </TableCell>
+
+                      <TableHead className="border bg-secondary px-4 py-6">
+                        Assignee Name
+                      </TableHead>
+                      <TableCell className="border px-4 py-6 whitespace-normal break-words">
+                        {assigneeNameCell}
+                      </TableCell>
+                    </TableRow>
+
+                    <TableRow>
+                      <TableHead className="border bg-secondary px-4 py-6">
+                        Priority
+                      </TableHead>
+                      <TableCell className="border px-4 py-6 whitespace-normal break-words">
+                        {priorityCell}
+                      </TableCell>
+
+                      <TableHead className="border bg-secondary px-4 py-6">
+                        Status
+                      </TableHead>
+                      <TableCell className="border px-4 py-6 whitespace-normal break-words">
+                        {statusCell}
+                      </TableCell>
+                    </TableRow>
+
+                    <TableRow>
+                      <TableHead className="border bg-secondary px-4 py-6">
+                        Created At
+                      </TableHead>
+                      <TableCell className="border px-4 py-6 whitespace-normal break-words">
+                        {createdAtCell}
+                      </TableCell>
+
+                      <TableHead className="border bg-secondary px-4 py-6">
+                        Updated At
+                      </TableHead>
+                      <TableCell className="border px-4 py-6 whitespace-normal break-words">
+                        {updatedAtCell}
+                      </TableCell>
+                    </TableRow>
+                  </>
+                )}
               </TableBody>
             </Table>
           </CardContent>
