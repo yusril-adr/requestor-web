@@ -1,0 +1,7 @@
+# typescript
+
+- Use `type` aliases instead of `interface` declarations, and prefix type names with `T` (e.g., `type TUserFilterValues`). Confidence: 0.70
+- When a shared hook/utility needs to accept per-call-site types that differ (e.g., different nuqs `setQueryStates` from each page), widen the parameter type on the shared utility (e.g., `{ page?: number; [key: string]: string | number | null | undefined }`) instead of requiring callers to cast with `as`. Confidence: 0.70
+- Type definitions should live in a `_types` or `types` folder nearest to where they're used, not scattered across component/module files. Confidence: 0.70
+- When a `keyof TResponse` union type needs runtime values (e.g., for validation or iteration), define a `const` array with `as const satisfies readonly (keyof TResponse)[]` and derive the type via `type TSortBy = (typeof ARRAY)[number]`. This keeps the array as the single source of truth so call sites only pass the const array — never duplicate field names one-by-one. Confidence: 0.30
+- For sort-by key declarations used with nuqs parsers (like `createSortByParser`), declare the valid keys inline at each page call site as `as const` arrays rather than importing from a shared const file. Each page owns its own list of sortable columns. Confidence: 0.65

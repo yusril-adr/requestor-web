@@ -23,7 +23,6 @@ build
 *.njsproj
 *.sln
 *.sw?
-.commandcode
 
 # environment variables
 .env
