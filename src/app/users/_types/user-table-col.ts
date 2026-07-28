@@ -1,4 +1,4 @@
-import type { TUserResponse } from "@/api/requestor/users/types/user-response";
+import type { TUserResponse } from "@/api/main/users/types/user-response";
 
 export type TUserTableCol = Omit<
   TUserResponse,

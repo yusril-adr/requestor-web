@@ -51,7 +51,7 @@ import {
 } from "@/app/_components/ui/alert-dialog";
 
 import { OrderKeyEnum } from "@/common/enums/order-key";
-import { RequestStatusEnum } from "@/api/requestor/requests/enums/request-status";
+import { RequestStatusEnum } from "@/api/main/requests/enums/request-status";
 import type { TRequestTableCol } from "@/app/requests/_types/request-table-col";
 import type { TRequestTableProps } from "@/app/requests/_types/request-table-props";
 
@@ -60,7 +60,7 @@ import {
   DataTable,
   DataTableSortableColHeader,
 } from "@/app/_components/data-table";
-import { RequestPriorityEnum } from "@/api/requestor/requests/enums/request-priority";
+import { RequestPriorityEnum } from "@/api/main/requests/enums/request-priority";
 import { RoleKeyEnum } from "@/common/enums/role-key";
 
 export default function RequestTable({

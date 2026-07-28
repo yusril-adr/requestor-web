@@ -27,11 +27,11 @@ import {
   RequestEditFormSchema,
   type TRequestEditFormSchema,
 } from "./scheme";
-import type { TRequestorApiErrorResponse } from "@/api/requestor/types/response";
-import type { TRequestUpdatePayload } from "@/api/requestor/requests/[id]/types/request-update-payload";
-import { RequestStatusEnum } from "@/api/requestor/requests/enums/request-status";
-import { RequestPriorityEnum } from "@/api/requestor/requests/enums/request-priority";
-import RequestorAPIValidationError from "@/api/requestor/errors/validation-error";
+import type { TMainApiErrorResponse } from "@/api/main/types/response";
+import type { TRequestUpdatePayload } from "@/api/main/requests/[id]/types/request-update-payload";
+import { RequestStatusEnum } from "@/api/main/requests/enums/request-status";
+import { RequestPriorityEnum } from "@/api/main/requests/enums/request-priority";
+import MainAPIValidationError from "@/api/main/errors/validation-error";
 import { applyValidationErrors } from "@/utils/validation-helper";
 import type { TRequestEditFormProps } from "@/app/requests/[id]/edit/_types/request-edit-form-props";
 
@@ -92,9 +92,9 @@ export default function RequestEditForm({
   );
 
   useEffect(() => {
-    if (mutationError instanceof RequestorAPIValidationError) {
+    if (mutationError instanceof MainAPIValidationError) {
       const mappedErrors = (
-        mutationError.errors as TRequestorApiErrorResponse<TRequestUpdatePayload>[]
+        mutationError.errors as TMainApiErrorResponse<TRequestUpdatePayload>[]
       ).map((error) => {
         return {
           property:

@@ -8,7 +8,7 @@ Web client for the Requestor application — a React Router 7 SPA built with Vit
 
 ## Requirements
 
-- Node.js **20.19+** or **22.12+** (Vite 8 requirement)
+- Node.js **24.16+** (Vite 8 requirement)
 - npm, pnpm, yarn, or bun
 
 ## Install
@@ -81,7 +81,7 @@ src/
 │   ├── login/           # /login
 │   ├── errors/          # 404 / error pages
 │   └── page.tsx         # Index route
-├── api/                 # API client (requestor, endpoints)
+├── api/                 # API client (main, endpoints)
 ├── common/              # Enums, constants
 ├── libs/                # local-storage, dayjs wrappers
 ├── utils/               # Generic helpers
@@ -104,6 +104,7 @@ The `@/` alias resolves to `src/` (configured in `vite.config.ts` and `tsconfig.
 - [Axios](https://axios-http.com/) for HTTP
 - [Sonner](https://sonner.emilkowal.ski/) for toasts
 - [Day.js](https://day.js.org/) for dates
+- [nuqs](https://nuqs.dev/) for URL query string state management
 - [lucide-react](https://lucide.dev/) for icons
 
 ## Configuration

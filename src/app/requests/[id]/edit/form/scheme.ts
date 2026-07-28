@@ -1,6 +1,6 @@
 import * as z from "zod";
-import { RequestPriorityEnum } from "@/api/requestor/requests/enums/request-priority";
-import { RequestStatusEnum } from "@/api/requestor/requests/enums/request-status";
+import { RequestPriorityEnum } from "@/api/main/requests/enums/request-priority";
+import { RequestStatusEnum } from "@/api/main/requests/enums/request-status";
 
 export const RequestEditFormSchema = z.object({
   title: z.string("Title is required"),

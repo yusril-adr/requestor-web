@@ -1,4 +1,4 @@
-import type { TRequestCreatePayload } from "@/api/requestor/requests/types/request-create-payload";
+import type { TRequestCreatePayload } from "@/api/main/requests/types/request-create-payload";
 
 export type TRequestCreateFormProps = {
   onSubmitPayload: (payload: TRequestCreatePayload) => void;

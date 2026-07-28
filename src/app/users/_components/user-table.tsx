@@ -30,7 +30,7 @@ import {
   ComboboxList,
 } from "@/app/_components/ui/combobox";
 import { RoleKeyEnum } from "@/common/enums/role-key";
-import { UserStatusEnum } from "@/api/requestor/users/enums/user-status";
+import { UserStatusEnum } from "@/api/main/users/enums/user-status";
 import {
   InputGroup,
   InputGroupAddon,

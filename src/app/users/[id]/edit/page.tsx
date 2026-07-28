@@ -6,7 +6,7 @@ import AppBreadcrumb from "@/app/_components/app-breadcrumb";
 import UserEditForm from "@/app/users/[id]/edit/form";
 import { useGetUserById } from "@/app/users/_hooks/use-get-user-by-id";
 import { useUpdateUserById } from "@/app/users/_hooks/use-update-user-by-id";
-import RequestorAPINotFoundError from "@/api/requestor/errors/not-found-error";
+import MainAPINotFoundError from "@/api/main/errors/not-found-error";
 
 export function meta() {
   return [
@@ -30,7 +30,7 @@ export default function UserEditPage() {
       navigate("/users");
     },
     onError: (error) => {
-      if (error instanceof RequestorAPINotFoundError) {
+      if (error instanceof MainAPINotFoundError) {
         navigate("/users");
       }
     },
@@ -40,7 +40,7 @@ export default function UserEditPage() {
     if (
       getDataQuery.isError &&
       getDataQuery.error &&
-      getDataQuery.error instanceof RequestorAPINotFoundError
+      getDataQuery.error instanceof MainAPINotFoundError
     ) {
       navigate("/users");
     }

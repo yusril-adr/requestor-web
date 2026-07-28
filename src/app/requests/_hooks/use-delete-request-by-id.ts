@@ -5,7 +5,7 @@ import {
 } from "@tanstack/react-query";
 import type { AxiosResponse } from "axios";
 import { toast } from "sonner";
-import { deleteRequestById } from "@/api/requestor/requests/[id]";
+import { deleteRequestById } from "@/api/main/requests/[id]";
 import CONFIG from "@/common/constants/config";
 
 export function useDeleteRequestById(
@@ -27,7 +27,7 @@ export function useDeleteRequestById(
       toast.dismiss();
       toast.success("Request deleted");
       queryClient.invalidateQueries({
-        queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.REQUEST.ALL()],
+        queryKey: [CONFIG.QUERY_KEY.MAIN_API.REQUEST.ALL()],
       });
       options?.onSuccess?.(...args);
     },

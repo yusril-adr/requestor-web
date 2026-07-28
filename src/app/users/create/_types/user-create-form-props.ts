@@ -1,4 +1,4 @@
-import type { TUserCreatePayload } from "@/api/requestor/users/types/user-create-payload";
+import type { TUserCreatePayload } from "@/api/main/users/types/user-create-payload";
 
 export type TUserCreateFormProps = {
   onSubmitPayload: (payload: TUserCreatePayload) => void;

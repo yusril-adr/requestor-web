@@ -5,7 +5,7 @@ import {
 } from "@tanstack/react-query";
 import type { AxiosResponse } from "axios";
 import { toast } from "sonner";
-import { deleteUserById } from "@/api/requestor/users/[id]";
+import { deleteUserById } from "@/api/main/users/[id]";
 import CONFIG from "@/common/constants/config";
 
 export function useDeleteUserById(
@@ -27,7 +27,7 @@ export function useDeleteUserById(
       toast.dismiss();
       toast.success("User deleted");
       queryClient.invalidateQueries({
-        queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.USER.ALL()],
+        queryKey: [CONFIG.QUERY_KEY.MAIN_API.USER.ALL()],
       });
       options?.onSuccess?.(...args);
     },

@@ -62,6 +62,15 @@ See [typescript/taste.md](typescript/taste.md)
 - When making code changes that involve framework/library quirks or non-obvious transformations (e.g., nuqs returning `null` but the API expecting `undefined`), add inline comments explaining **why** the coercion/transformation is needed so other developers can understand the reasoning without tracing through library internals. Confidence: 0.70
 - Place such explanatory comments directly above the first line that uses the pattern (e.g., above `sort_by`), not above the enclosing variable declaration or block header, so the comment is as close as possible to the code it describes. Confidence: 0.55
 
+# documentation
+
+- Keep the README tech stack section up-to-date when adding new project dependencies. Confidence: 0.60
+- Version requirements in the README (e.g., Node.js, package manager) must stay in sync with the authoritative config files — `.nvmrc`, `Dockerfile`, `package.json` `engines` field, etc. When one changes, update all others to match. Confidence: 0.70
+
+# git
+
+- Commit messages follow the format `type: :gitmoji: short description` using gitmoji conventions (e.g., `refactor: :truck: rename requestor API layer to main for boilerplate reuse`). Match the existing repo style visible in `git log`. Confidence: 0.70
+
 # architecture
 
 - Place all data-fetching queries (useQuery) at the page level instead of inside child components. Mutations (useMutation) stay in their respective components. Confidence: 0.75

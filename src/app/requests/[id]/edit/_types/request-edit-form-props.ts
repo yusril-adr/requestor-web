@@ -1,4 +1,4 @@
-import type { TRequestUpdatePayload } from "@/api/requestor/requests/[id]/types/request-update-payload";
+import type { TRequestUpdatePayload } from "@/api/main/requests/[id]/types/request-update-payload";
 
 export type TRequestEditFormProps = {
   title: string | undefined;

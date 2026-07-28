@@ -1,4 +1,4 @@
-import { UserStatusEnum } from "@/api/requestor/users/enums/user-status";
+import { UserStatusEnum } from "@/api/main/users/enums/user-status";
 import { RoleKeyEnum } from "@/common/enums/role-key";
 import * as z from "zod";
 

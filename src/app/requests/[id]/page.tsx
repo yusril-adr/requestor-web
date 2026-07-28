@@ -17,7 +17,7 @@ import dayjs from "@/libs/dayjs";
 import { Skeleton } from "@/app/_components/ui/skeleton";
 import { useIsMobile } from "@/app/_hooks/use-mobile";
 
-import RequestorAPINotFoundError from "@/api/requestor/errors/not-found-error";
+import MainAPINotFoundError from "@/api/main/errors/not-found-error";
 
 export function meta() {
   return [
@@ -35,7 +35,7 @@ export default function RequestDetailPage() {
   const { data, isLoading, isError, error } = useGetRequestById(id as string);
 
   useEffect(() => {
-    if (isError && error && error instanceof RequestorAPINotFoundError) {
+    if (isError && error && error instanceof MainAPINotFoundError) {
       navigate("/requests");
     }
   }, [isError, error, navigate]);

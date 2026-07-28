@@ -5,8 +5,8 @@ import {
 } from "@tanstack/react-query";
 import type { AxiosResponse } from "axios";
 import { toast } from "sonner";
-import { updateUserById } from "@/api/requestor/users/[id]";
-import type { TUserUpdatePayload } from "@/api/requestor/users/[id]/types/user-update-payload";
+import { updateUserById } from "@/api/main/users/[id]";
+import type { TUserUpdatePayload } from "@/api/main/users/[id]/types/user-update-payload";
 import CONFIG from "@/common/constants/config";
 
 export function useUpdateUserById(
@@ -32,7 +32,7 @@ export function useUpdateUserById(
       toast.dismiss();
       toast.success("User updated");
       queryClient.invalidateQueries({
-        queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.USER.ALL()],
+        queryKey: [CONFIG.QUERY_KEY.MAIN_API.USER.ALL()],
       });
       options?.onSuccess?.(...args);
     },

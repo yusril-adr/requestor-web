@@ -32,8 +32,8 @@ import {
   DataTable,
   DataTableSortableColHeader,
 } from "@/app/_components/data-table";
-import { AuditLogActionEnum } from "@/api/requestor/audit-logs/enums/audit-log-action";
-import { AuditLogEntityEnum } from "@/api/requestor/audit-logs/enums/audit-log-entity";
+import { AuditLogActionEnum } from "@/api/main/audit-logs/enums/audit-log-action";
+import { AuditLogEntityEnum } from "@/api/main/audit-logs/enums/audit-log-entity";
 import dayjs from "@/libs/dayjs";
 
 export default function AuditLogTable({

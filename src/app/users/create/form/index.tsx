@@ -33,10 +33,10 @@ import {
   type TUserCreateFormSchema,
 } from "./scheme";
 import { RoleKeyEnum } from "@/common/enums/role-key";
-import type { TRequestorApiErrorResponse } from "@/api/requestor/types/response";
-import type { TUserCreatePayload } from "@/api/requestor/users/types/user-create-payload";
+import type { TMainApiErrorResponse } from "@/api/main/types/response";
+import type { TUserCreatePayload } from "@/api/main/users/types/user-create-payload";
 import type { TUserCreateFormProps } from "@/app/users/create/_types/user-create-form-props";
-import RequestorAPIValidationError from "@/api/requestor/errors/validation-error";
+import MainAPIValidationError from "@/api/main/errors/validation-error";
 import { applyValidationErrors } from "@/utils/validation-helper";
 
 export default function UserCreateForm({
@@ -55,10 +55,10 @@ export default function UserCreateForm({
   });
 
   useEffect(() => {
-    if (mutationError instanceof RequestorAPIValidationError) {
+    if (mutationError instanceof MainAPIValidationError) {
       applyValidationErrors(
         setError,
-        mutationError.errors as TRequestorApiErrorResponse<TUserCreatePayload>[],
+        mutationError.errors as TMainApiErrorResponse<TUserCreatePayload>[],
       );
     }
   }, [mutationError, setError]);

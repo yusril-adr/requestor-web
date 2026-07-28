@@ -6,7 +6,7 @@ import AppBreadcrumb from "@/app/_components/app-breadcrumb";
 import RequestEditForm from "@/app/requests/[id]/edit/form";
 import { useGetRequestById } from "@/app/requests/_hooks/use-get-request-by-id";
 import { useUpdateRequestById } from "@/app/requests/_hooks/use-update-request-by-id";
-import RequestorAPINotFoundError from "@/api/requestor/errors/not-found-error";
+import MainAPINotFoundError from "@/api/main/errors/not-found-error";
 
 export function meta() {
   return [
@@ -30,7 +30,7 @@ export default function RequestEditPage() {
       navigate("/requests");
     },
     onError: (error) => {
-      if (error instanceof RequestorAPINotFoundError) {
+      if (error instanceof MainAPINotFoundError) {
         navigate("/requests");
       }
     },
@@ -40,7 +40,7 @@ export default function RequestEditPage() {
     if (
       getDataQuery.isError &&
       getDataQuery.error &&
-      getDataQuery.error instanceof RequestorAPINotFoundError
+      getDataQuery.error instanceof MainAPINotFoundError
     ) {
       navigate("/requests");
     }

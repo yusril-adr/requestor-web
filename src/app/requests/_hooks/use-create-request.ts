@@ -5,8 +5,8 @@ import {
 } from "@tanstack/react-query";
 import type { AxiosResponse } from "axios";
 import { toast } from "sonner";
-import { createRequest } from "@/api/requestor/requests";
-import type { TRequestCreatePayload } from "@/api/requestor/requests/types/request-create-payload";
+import { createRequest } from "@/api/main/requests";
+import type { TRequestCreatePayload } from "@/api/main/requests/types/request-create-payload";
 import CONFIG from "@/common/constants/config";
 
 export function useCreateRequest(
@@ -28,7 +28,7 @@ export function useCreateRequest(
       toast.dismiss();
       toast.success("Request created");
       queryClient.invalidateQueries({
-        queryKey: [CONFIG.QUERY_KEY.REQUESTOR_API.REQUEST.ALL()],
+        queryKey: [CONFIG.QUERY_KEY.MAIN_API.REQUEST.ALL()],
       });
       options?.onSuccess?.(...args);
     },

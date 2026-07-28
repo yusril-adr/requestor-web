@@ -1,4 +1,4 @@
-import type { TUserUpdatePayload } from "@/api/requestor/users/[id]/types/user-update-payload";
+import type { TUserUpdatePayload } from "@/api/main/users/[id]/types/user-update-payload";
 
 export type TUserEditFormProps = {
   name: string | undefined;

@@ -13,14 +13,14 @@ import { useDeleteRequestById } from "@/app/requests/_hooks/use-delete-request-b
 import { createSortByParser } from "@/libs/nuqs/parse-sort-by";
 import { useCamelCaseQueryStates } from "@/libs/nuqs/use-camel-case-query-states";
 import type { TRequestTableFilterValues } from "@/app/requests/_types/request-table-props";
-import type { TRequestPaginationPayload } from "@/api/requestor/requests/types/request-pagination-payload";
-import type { TRequestSortBy } from "@/api/requestor/requests/consts/request-sort-by";
-import { RequestStatusEnum } from "@/api/requestor/requests/enums/request-status";
-import { RequestPriorityEnum } from "@/api/requestor/requests/enums/request-priority";
-import type { TRequestorApiErrorResponse } from "@/api/requestor/types/response";
+import type { TRequestPaginationPayload } from "@/api/main/requests/types/request-pagination-payload";
+import type { TRequestSortBy } from "@/api/main/requests/consts/request-sort-by";
+import { RequestStatusEnum } from "@/api/main/requests/enums/request-status";
+import { RequestPriorityEnum } from "@/api/main/requests/enums/request-priority";
+import type { TMainApiErrorResponse } from "@/api/main/types/response";
 import { OrderKeyEnum } from "@/common/enums/order-key";
-import RequestorAPINotFoundError from "@/api/requestor/errors/not-found-error";
-import RequestorAPIValidationError from "@/api/requestor/errors/validation-error";
+import MainAPINotFoundError from "@/api/main/errors/not-found-error";
+import MainAPIValidationError from "@/api/main/errors/validation-error";
 import { applyValidationErrors } from "@/utils/validation-helper";
 
 let debounceSearchTimeoutId: number | null = null;
@@ -99,21 +99,21 @@ export default function RequstPage() {
   } = useGetRequestPagination(queryStatesIntoPayload);
   const { mutate: deleteRequestMutate } = useDeleteRequestById({
     onError: (error) => {
-      if (error instanceof RequestorAPIValidationError) {
+      if (error instanceof MainAPIValidationError) {
         return applyValidationErrors(
           setError,
-          error.errors as TRequestorApiErrorResponse<null>[],
+          error.errors as TMainApiErrorResponse<null>[],
         );
       }
 
-      if (error instanceof RequestorAPINotFoundError) {
+      if (error instanceof MainAPINotFoundError) {
         navigate("/requests");
       }
     },
   });
 
   useEffect(() => {
-    if (isError && error && error instanceof RequestorAPINotFoundError) {
+    if (isError && error && error instanceof MainAPINotFoundError) {
       navigate("/requests");
     }
   }, [isError, error, navigate]);
