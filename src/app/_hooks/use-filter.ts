@@ -6,7 +6,6 @@ type TFilterFieldName<TFormValues> = Extract<keyof TFormValues, string>;
 
 type TFilterFieldConfigObject<TFormValues> = {
   formName: TFilterFieldName<TFormValues>;
-  urlParam?: string;
   columnId?: string;
   apiField?: string;
 };
@@ -17,34 +16,32 @@ type TFilterFieldConfigInput<TFormValues> =
 
 type TNormalizedFilterFieldConfig<TFormValues> = {
   formName: TFilterFieldName<TFormValues>;
-  urlParam: string;
   columnId: string;
   apiField: string;
 };
 
 /**
- * Connects a filter form to URL params, TanStack Table column filters, and API
- * payload filter params.
+ * Connects a filter form to URL query params, TanStack Table column filters,
+ * and API payload filter params.
  *
  * A string config must be a key of `TFormValues`. It uses the string as
- * `formName`, then derives `urlParam`, `columnId`, and `apiField` from it
- * using snake_case.
+ * `formName`, then derives `columnId` and `apiField` via camelCase → snake_case
+ * conversion.
  *
  * @example
- * useFilter(["status", "priority"], queryUrl, setParams, reset);
+ * useFilter(["status", "priority"], queryStates, setQueryStates, reset);
  *
  * @example
- * useFilter(["action", "targetType"], queryUrl, setParams, reset);
+ * useFilter(["action", "targetType"], queryStates, setQueryStates, reset);
  * // "targetType" derives:
- * // urlParam: "target_type"
  * // columnId: "target_type"
  * // apiField: "target_type"
  *
  * @example
  * useFilter(
  *   [{ formName: "displayName", apiField: "name" }],
- *   queryUrl,
- *   setParams,
+ *   queryStates,
+ *   setQueryStates,
  *   reset,
  * );
  *
@@ -57,7 +54,7 @@ type TNormalizedFilterFieldConfig<TFormValues> = {
  */
 export function useFilter<TFormValues extends Record<string, string | null>>(
   config: TFilterFieldConfigInput<TFormValues>[],
-  queryTable: Record<string, string | number | undefined>,
+  queryTable: Record<string, string | number | null | undefined>,
   setParams: (updates: {
     page?: number;
     [key: string]: string | number | null | undefined;
@@ -75,8 +72,8 @@ export function useFilter<TFormValues extends Record<string, string | null>>(
         page?: number;
         [key: string]: string | number | null | undefined;
       } = { page: 1 };
-      normalizedConfig.forEach(({ formName, urlParam }) => {
-        updates[urlParam] = data[formName] ?? null;
+      normalizedConfig.forEach(({ formName }) => {
+        updates[formName] = data[formName] ?? null;
       });
       setParams(updates);
     },
@@ -117,8 +114,8 @@ export function useFilter<TFormValues extends Record<string, string | null>>(
       page?: number;
       [key: string]: string | number | null | undefined;
     } = { page: 1 };
-    normalizedConfig.forEach(({ urlParam }) => {
-      updates[urlParam] = null;
+    normalizedConfig.forEach(({ formName }) => {
+      updates[formName] = null;
     });
     setParams(updates);
   }, [normalizedConfig, reset, setParams]);
@@ -142,7 +139,6 @@ function normalizeFilterConfig<TFormValues>(
   if (typeof config === "string") {
     return {
       formName,
-      urlParam: defaultKey,
       columnId: defaultKey,
       apiField: defaultKey,
     };
@@ -150,7 +146,6 @@ function normalizeFilterConfig<TFormValues>(
 
   return {
     formName,
-    urlParam: config.urlParam ?? defaultKey,
     columnId: config.columnId ?? defaultKey,
     apiField: config.apiField ?? defaultKey,
   };

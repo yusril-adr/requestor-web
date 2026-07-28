@@ -21,7 +21,7 @@ export function createSortByParser<const T extends readonly string[]>(
       }
       console.error(
         `[${label}] Invalid sort_by value from URL: "${queryValue}". ` +
-        `Expected one of: ${validKeys.join(", ")}`,
+          `Expected one of: ${validKeys.join(", ")}`,
       );
       return null;
     },

@@ -178,7 +178,7 @@ export function DataTable<TData>({
 
             <Select
               items={PAGE_SIZE_OPTIONS}
-              value={pageSize}
+              value={Number(pageSize)}
               onValueChange={(val) => onPageSizeChange?.(val || pageSize)}
             >
               <SelectTrigger>

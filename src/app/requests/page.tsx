@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo } from "react";
 import { Plus } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import { useForm } from "react-hook-form";
-import { useQueryStates, parseAsInteger, parseAsString, parseAsStringEnum } from "nuqs";
+import { parseAsInteger, parseAsString, parseAsStringEnum } from "nuqs";
 
 import AppBreadcrumb from "@/app/_components/app-breadcrumb";
 import { Button } from "@/app/_components/ui/button";
@@ -11,6 +11,7 @@ import RequestTable from "@/app/requests/_components/request-table";
 import { useGetRequestPagination } from "@/app/requests/_hooks/use-get-request-pagination";
 import { useDeleteRequestById } from "@/app/requests/_hooks/use-delete-request-by-id";
 import { createSortByParser } from "@/libs/nuqs/parse-sort-by";
+import { useCamelCaseQueryStates } from "@/libs/nuqs/use-camel-case-query-states";
 import type { TRequestTableFilterValues } from "@/app/requests/_types/request-table-props";
 import type { TRequestPaginationPayload } from "@/api/requestor/requests/types/request-pagination-payload";
 import type { TRequestSortBy } from "@/api/requestor/requests/consts/request-sort-by";
@@ -33,11 +34,11 @@ export function meta() {
 }
 
 export default function RequstPage() {
-  const [queryStates, setQueryStates] = useQueryStates({
+  const [queryStates, setQueryStates] = useCamelCaseQueryStates({
     page: parseAsInteger.withDefault(1),
-    page_size: parseAsInteger.withDefault(10),
+    pageSize: parseAsInteger.withDefault(10),
     search: parseAsString.withDefault(""),
-    sort_by: createSortByParser(
+    sortBy: createSortByParser(
       [
         "id",
         "title",
@@ -60,12 +61,29 @@ export default function RequstPage() {
   });
   const navigate = useNavigate();
 
-  const queryUrl = useMemo(
+  const { control, handleSubmit, reset, setError } =
+    useForm<TRequestTableFilterValues>({
+      defaultValues: {
+        status: (queryStates.status as RequestStatusEnum) || null,
+        priority: (queryStates.priority as RequestPriorityEnum) || null,
+      },
+    });
+
+  const { onFilterReset, onFilterSubmit, columnFilters } =
+    useFilter<TRequestTableFilterValues>(
+      ["status", "priority"],
+      queryStates,
+      setQueryStates,
+      reset,
+    );
+
+  const queryStatesIntoPayload: TRequestPaginationPayload = useMemo(
     () => ({
       page: queryStates.page,
-      pageSize: queryStates.page_size,
-      search: queryStates.search || undefined,
-      sortBy: queryStates.sort_by ?? undefined,
+      per_page: queryStates.pageSize,
+      search: queryStates.search,
+      // nuqs parsers return null when unset, but API expects undefined — coalesce
+      sort_by: queryStates.sortBy ?? undefined,
       order: queryStates.order ?? undefined,
       status: queryStates.status ?? undefined,
       priority: queryStates.priority ?? undefined,
@@ -73,41 +91,12 @@ export default function RequstPage() {
     [queryStates],
   );
 
-  const { control, handleSubmit, reset, setError } =
-    useForm<TRequestTableFilterValues>({
-      defaultValues: {
-        status: (queryUrl.status as RequestStatusEnum) || null,
-        priority: (queryUrl.priority as RequestPriorityEnum) || null,
-      },
-    });
-
-  const { onFilterReset, onFilterSubmit, columnFilters } =
-    useFilter<TRequestTableFilterValues>(
-      ["status", "priority"],
-      queryUrl,
-      setQueryStates,
-      reset,
-    );
-
-  const queryUrlIntoPayload: TRequestPaginationPayload = useMemo(
-    () => ({
-      page: queryUrl.page,
-      per_page: queryUrl.pageSize,
-      search: queryUrl.search,
-      sort_by: queryUrl.sortBy,
-      order: queryUrl.order,
-      status: queryUrl.status,
-      priority: queryUrl.priority,
-    }),
-    [queryUrl],
-  );
-
   const {
     data: responseData,
     isLoading,
     isError,
     error,
-  } = useGetRequestPagination(queryUrlIntoPayload);
+  } = useGetRequestPagination(queryStatesIntoPayload);
   const { mutate: deleteRequestMutate } = useDeleteRequestById({
     onError: (error) => {
       if (error instanceof RequestorAPIValidationError) {
@@ -148,11 +137,11 @@ export default function RequstPage() {
 
   const applySorting = useCallback(
     (key: string) => {
-      if (queryUrl.sortBy === key) {
+      if (queryStates.sortBy === key) {
         let desiredOrder: OrderKeyEnum | null = null;
         let desiredKey: TRequestSortBy | null = key as TRequestSortBy;
 
-        switch (queryUrl.order) {
+        switch (queryStates.order) {
           case OrderKeyEnum.ASC:
             desiredOrder = OrderKeyEnum.DESC;
             break;
@@ -166,18 +155,18 @@ export default function RequstPage() {
 
         setQueryStates({
           order: desiredOrder,
-          sort_by: desiredKey,
+          sortBy: desiredKey,
           page: 1,
         });
       } else {
         setQueryStates({
-          sort_by: key as TRequestSortBy,
+          sortBy: key as TRequestSortBy,
           order: OrderKeyEnum.ASC,
           page: 1,
         });
       }
     },
-    [queryUrl.order, queryUrl.sortBy, setQueryStates],
+    [queryStates.order, queryStates.sortBy, setQueryStates],
   );
 
   const handlePageChange = useCallback(
@@ -189,7 +178,7 @@ export default function RequstPage() {
 
   const handlePageSizeChange = useCallback(
     (pageSize: number) => {
-      setQueryStates({ page_size: pageSize, page: 1 });
+      setQueryStates({ pageSize: pageSize, page: 1 });
     },
     [setQueryStates],
   );
@@ -222,7 +211,7 @@ export default function RequstPage() {
           isLoading={isLoading}
           pageCount={responseData?.data?.data?.meta?.total_page || 1}
           rowCount={responseData?.data?.data?.meta?.total_all_data || 0}
-          queryTable={queryUrl}
+          queryTable={queryStates}
           columnFilters={columnFilters}
           onActionHandler={{
             onPageChange: handlePageChange,

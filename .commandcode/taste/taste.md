@@ -31,6 +31,7 @@ See [typescript/taste.md](typescript/taste.md)
 
 - Suffix destructured `mutate` aliases from `useMutation` with `Mutate` (e.g., `const { mutate: deleteUser } = useMutation(...)` → `const { mutate: deleteUserMutate } = useMutation(...)`). Do NOT rename the underlying API functions in `src/api/` that are passed as `mutationFn`. Confidence: 0.80
 - For `useMutation` result properties like `isPending`, `isError`, `isSuccess`, destructure them with meaningful names suffixed by the property name rather than accessing off a mutation object. Example: destructure `isPending` as `updateUserIsPending` instead of `updateUserMutation.isPending`. Confidence: 0.70
+- When an intermediate variable or transformation step is removed from a data pipeline, rename downstream variables to reflect their new, direct data source rather than keeping stale names that reference the removed intermediate (e.g., `queryUrlIntoPayload` → `queryStatesIntoPayload` after `queryUrl` was deleted). Confidence: 0.65
 
 # data-table
 
@@ -56,7 +57,12 @@ See [typescript/taste.md](typescript/taste.md)
 
 - Use ArrowUp01 from lucide-react for ascending sort direction icons in data table headers. Confidence: 0.70
 
+# comments
+
+- When making code changes that involve framework/library quirks or non-obvious transformations (e.g., nuqs returning `null` but the API expecting `undefined`), add inline comments explaining **why** the coercion/transformation is needed so other developers can understand the reasoning without tracing through library internals. Confidence: 0.70
+- Place such explanatory comments directly above the first line that uses the pattern (e.g., above `sort_by`), not above the enclosing variable declaration or block header, so the comment is as close as possible to the code it describes. Confidence: 0.55
+
 # architecture
 
 - Place all data-fetching queries (useQuery) at the page level instead of inside child components. Mutations (useMutation) stay in their respective components. Confidence: 0.75
-- Avoid intermediate mapping/translation variables that merely remap keys between data shapes (e.g., snake_case → camelCase). Instead, change the consumers (types, hooks, components) to accept the original shape directly so data flows without indirection. Confidence: 0.65
+- Avoid intermediate mapping/translation variables that merely remap keys between data shapes (e.g., snake_case → camelCase for API payloads). Instead, change the consumers (types, hooks, components) to accept the original shape directly so data flows without indirection. Exception: for URL query params, auto-mapping in a reusable custom hook wrapping nuqs is acceptable (see routing/taste.md). Confidence: 0.75

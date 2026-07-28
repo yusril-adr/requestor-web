@@ -1,7 +1,6 @@
 import { useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import {
-  useQueryStates,
   parseAsInteger,
   parseAsString,
   parseAsStringEnum,
@@ -12,6 +11,7 @@ import AuditLogTable from "@/app/audit-logs/_components/audit-log-table";
 import { useFilter } from "@/app/_hooks/use-filter";
 import { useGetAuditLogPagination } from "@/app/audit-logs/_hooks/use-get-audit-log-pagination";
 import { createSortByParser } from "@/libs/nuqs/parse-sort-by";
+import { useCamelCaseQueryStates } from "@/libs/nuqs/use-camel-case-query-states";
 import type { TAuditLogTableFilterValues } from "@/app/audit-logs/_types/audit-log-table-props";
 import type { TAuditLogPaginationPayload } from "@/api/requestor/audit-logs/types/audit-log-pagination-payload";
 import type { TAuditLogSortBy } from "@/api/requestor/audit-logs/consts/audit-log-sort-by";
@@ -30,11 +30,11 @@ export function meta() {
 }
 
 export default function AuditLogPage() {
-  const [queryStates, setQueryStates] = useQueryStates({
+  const [queryStates, setQueryStates] = useCamelCaseQueryStates({
     page: parseAsInteger.withDefault(1),
-    page_size: parseAsInteger.withDefault(10),
+    pageSize: parseAsInteger.withDefault(10),
     search: parseAsString.withDefault(""),
-    sort_by: createSortByParser(
+    sortBy: createSortByParser(
       [
         "id",
         "actor_name",
@@ -50,54 +50,42 @@ export default function AuditLogPage() {
     action: parseAsStringEnum<AuditLogActionEnum>(
       Object.values(AuditLogActionEnum),
     ),
-    target_type: parseAsStringEnum<AuditLogEntityEnum>(
+    targetType: parseAsStringEnum<AuditLogEntityEnum>(
       Object.values(AuditLogEntityEnum),
     ),
   });
 
-  const queryUrl = useMemo(
-    () => ({
-      page: queryStates.page,
-      pageSize: queryStates.page_size,
-      search: queryStates.search,
-      sortBy: queryStates.sort_by ?? undefined,
-      order: queryStates.order ?? undefined,
-      action: queryStates.action ?? undefined,
-      targetType: queryStates.target_type ?? undefined,
-    }),
-    [queryStates],
-  );
-
   const { control, handleSubmit, reset } = useForm<TAuditLogTableFilterValues>({
     defaultValues: {
-      action: (queryUrl.action as AuditLogActionEnum) || null,
-      targetType: (queryUrl.targetType as AuditLogEntityEnum) || null,
+      action: (queryStates.action as AuditLogActionEnum) || null,
+      targetType: (queryStates.targetType as AuditLogEntityEnum) || null,
     },
   });
 
   const { onFilterReset, onFilterSubmit, columnFilters } =
     useFilter<TAuditLogTableFilterValues>(
       ["action", "targetType"],
-      queryUrl,
+      queryStates,
       setQueryStates,
       reset,
     );
 
-  const queryUrlIntoPayload: TAuditLogPaginationPayload = useMemo(
+  const queryStatesIntoPayload: TAuditLogPaginationPayload = useMemo(
     () => ({
-      page: queryUrl.page,
-      per_page: queryUrl.pageSize,
-      search: queryUrl.search,
-      sort_by: queryUrl.sortBy,
-      order: queryUrl.order,
-      action: queryUrl.action,
-      target_type: queryUrl.targetType,
+      page: queryStates.page,
+      per_page: queryStates.pageSize,
+      search: queryStates.search,
+      // nuqs parsers return null when unset, but API expects undefined — coalesce
+      sort_by: queryStates.sortBy ?? undefined,
+      order: queryStates.order ?? undefined,
+      action: queryStates.action ?? undefined,
+      target_type: queryStates.targetType ?? undefined,
     }),
-    [queryUrl],
+    [queryStates],
   );
 
   const { data: responseData, isLoading } =
-    useGetAuditLogPagination(queryUrlIntoPayload);
+    useGetAuditLogPagination(queryStatesIntoPayload);
 
   const onSearchChange = useCallback(
     (value: string) => {
@@ -118,11 +106,11 @@ export default function AuditLogPage() {
 
   const applySorting = useCallback(
     (key: string) => {
-      if (queryUrl.sortBy === key) {
+      if (queryStates.sortBy === key) {
         let desiredOrder: OrderKeyEnum | null = null;
         let desiredKey: TAuditLogSortBy | null = key as TAuditLogSortBy;
 
-        switch (queryUrl.order) {
+        switch (queryStates.order) {
           case OrderKeyEnum.ASC:
             desiredOrder = OrderKeyEnum.DESC;
             break;
@@ -136,18 +124,18 @@ export default function AuditLogPage() {
 
         setQueryStates({
           order: desiredOrder,
-          sort_by: desiredKey,
+          sortBy: desiredKey,
           page: 1,
         });
       } else {
         setQueryStates({
-          sort_by: key as TAuditLogSortBy,
+          sortBy: key as TAuditLogSortBy,
           order: OrderKeyEnum.ASC,
           page: 1,
         });
       }
     },
-    [queryUrl.order, queryUrl.sortBy, setQueryStates],
+    [queryStates.order, queryStates.sortBy, setQueryStates],
   );
 
   const handlePageChange = useCallback(
@@ -159,7 +147,7 @@ export default function AuditLogPage() {
 
   const handlePageSizeChange = useCallback(
     (pageSize: number) => {
-      setQueryStates({ page_size: pageSize, page: 1 });
+      setQueryStates({ pageSize: pageSize, page: 1 });
     },
     [setQueryStates],
   );
@@ -186,7 +174,7 @@ export default function AuditLogPage() {
           isLoading={isLoading}
           pageCount={responseData?.data?.data?.meta?.total_page || 1}
           rowCount={responseData?.data?.data?.meta?.total_all_data || 0}
-          queryTable={queryUrl}
+          queryTable={queryStates}
           columnFilters={columnFilters}
           onActionHandler={{
             onPageChange: handlePageChange,
