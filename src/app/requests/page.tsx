@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo } from "react";
 import { Plus } from "lucide-react";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useForm } from "react-hook-form";
+import { useQueryStates, parseAsInteger, parseAsString, parseAsStringEnum } from "nuqs";
 
 import AppBreadcrumb from "@/app/_components/app-breadcrumb";
 import { Button } from "@/app/_components/ui/button";
@@ -9,11 +10,12 @@ import { useFilter } from "@/app/_hooks/use-filter";
 import RequestTable from "@/app/requests/_components/request-table";
 import { useGetRequestPagination } from "@/app/requests/_hooks/use-get-request-pagination";
 import { useDeleteRequestById } from "@/app/requests/_hooks/use-delete-request-by-id";
+import { createSortByParser } from "@/libs/nuqs/parse-sort-by";
 import type { TRequestTableFilterValues } from "@/app/requests/_types/request-table-props";
 import type { TRequestPaginationPayload } from "@/api/requestor/requests/types/request-pagination-payload";
 import type { TRequestSortBy } from "@/api/requestor/requests/consts/request-sort-by";
-import type { RequestStatusEnum } from "@/api/requestor/requests/enums/request-status";
-import type { RequestPriorityEnum } from "@/api/requestor/requests/enums/request-priority";
+import { RequestStatusEnum } from "@/api/requestor/requests/enums/request-status";
+import { RequestPriorityEnum } from "@/api/requestor/requests/enums/request-priority";
 import type { TRequestorApiErrorResponse } from "@/api/requestor/types/response";
 import { OrderKeyEnum } from "@/common/enums/order-key";
 import RequestorAPINotFoundError from "@/api/requestor/errors/not-found-error";
@@ -31,22 +33,44 @@ export function meta() {
 }
 
 export default function RequstPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [queryStates, setQueryStates] = useQueryStates({
+    page: parseAsInteger.withDefault(1),
+    page_size: parseAsInteger.withDefault(10),
+    search: parseAsString.withDefault(""),
+    sort_by: createSortByParser(
+      [
+        "id",
+        "title",
+        "requestor_name",
+        "status",
+        "priority",
+        "assignee_name",
+        "created_at",
+        "updated_at",
+      ] as const,
+      "Requests",
+    ),
+    order: parseAsStringEnum<OrderKeyEnum>(Object.values(OrderKeyEnum)),
+    status: parseAsStringEnum<RequestStatusEnum>(
+      Object.values(RequestStatusEnum),
+    ),
+    priority: parseAsStringEnum<RequestPriorityEnum>(
+      Object.values(RequestPriorityEnum),
+    ),
+  });
   const navigate = useNavigate();
 
   const queryUrl = useMemo(
     () => ({
-      page: Number(searchParams.get("page") || 1),
-      pageSize: Number(searchParams.get("page_size") || 10),
-      search: searchParams.get("search") || undefined,
-      sortBy: searchParams.get("sort_by") || undefined,
-      order: (searchParams.get("order") || undefined) as
-        | OrderKeyEnum
-        | undefined,
-      status: searchParams.get("status") || undefined,
-      priority: searchParams.get("priority") || undefined,
+      page: queryStates.page,
+      pageSize: queryStates.page_size,
+      search: queryStates.search || undefined,
+      sortBy: queryStates.sort_by ?? undefined,
+      order: queryStates.order ?? undefined,
+      status: queryStates.status ?? undefined,
+      priority: queryStates.priority ?? undefined,
     }),
-    [searchParams],
+    [queryStates],
   );
 
   const { control, handleSubmit, reset, setError } =
@@ -61,7 +85,7 @@ export default function RequstPage() {
     useFilter<TRequestTableFilterValues>(
       ["status", "priority"],
       queryUrl,
-      setSearchParams,
+      setQueryStates,
       reset,
     );
 
@@ -70,10 +94,10 @@ export default function RequstPage() {
       page: queryUrl.page,
       per_page: queryUrl.pageSize,
       search: queryUrl.search,
-      sort_by: queryUrl.sortBy as TRequestSortBy,
+      sort_by: queryUrl.sortBy,
       order: queryUrl.order,
-      status: queryUrl.status as RequestStatusEnum,
-      priority: queryUrl.priority as RequestPriorityEnum,
+      status: queryUrl.status,
+      priority: queryUrl.priority,
     }),
     [queryUrl],
   );
@@ -116,71 +140,58 @@ export default function RequstPage() {
       }
 
       debounceSearchTimeoutId = setTimeout(() => {
-        setSearchParams((searchParams) => {
-          searchParams.set("search", value);
-          searchParams.set("page", "1");
-          return searchParams;
-        });
+        setQueryStates({ search: value, page: 1 });
       }, 300);
     },
-    [setSearchParams],
+    [setQueryStates],
   );
 
   const applySorting = useCallback(
     (key: string) => {
       if (queryUrl.sortBy === key) {
-        let desiredOrder = "";
-        let desiredKey = key;
+        let desiredOrder: OrderKeyEnum | null = null;
+        let desiredKey: TRequestSortBy | null = key as TRequestSortBy;
+
         switch (queryUrl.order) {
           case OrderKeyEnum.ASC:
             desiredOrder = OrderKeyEnum.DESC;
             break;
           case OrderKeyEnum.DESC:
-            desiredOrder = "";
-            desiredKey = "";
+            desiredKey = null;
             break;
           default:
             desiredOrder = OrderKeyEnum.ASC;
             break;
         }
 
-        setSearchParams((searchParams) => {
-          searchParams.set("order", desiredOrder);
-          searchParams.set("sort_by", desiredKey);
-          searchParams.set("page", "1");
-          return searchParams;
+        setQueryStates({
+          order: desiredOrder,
+          sort_by: desiredKey,
+          page: 1,
         });
       } else {
-        setSearchParams((searchParams) => {
-          searchParams.set("sort_by", key);
-          searchParams.set("order", OrderKeyEnum.ASC);
-          searchParams.set("page", "1");
-          return searchParams;
+        setQueryStates({
+          sort_by: key as TRequestSortBy,
+          order: OrderKeyEnum.ASC,
+          page: 1,
         });
       }
     },
-    [queryUrl.order, queryUrl.sortBy, setSearchParams],
+    [queryUrl.order, queryUrl.sortBy, setQueryStates],
   );
 
   const handlePageChange = useCallback(
     (page: number) => {
-      setSearchParams((searchParams) => {
-        searchParams.set("page", page.toString());
-        return searchParams;
-      });
+      setQueryStates({ page });
     },
-    [setSearchParams],
+    [setQueryStates],
   );
 
   const handlePageSizeChange = useCallback(
     (pageSize: number) => {
-      setSearchParams((searchParams) => {
-        searchParams.set("page_size", pageSize.toString());
-        searchParams.set("page", "1");
-        return searchParams;
-      });
+      setQueryStates({ page_size: pageSize, page: 1 });
     },
-    [setSearchParams],
+    [setQueryStates],
   );
 
   const breadcrumbItems = [

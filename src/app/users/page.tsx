@@ -1,7 +1,8 @@
 import { useCallback, useMemo } from "react";
 import { Plus } from "lucide-react";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useForm } from "react-hook-form";
+import { useQueryStates, parseAsInteger, parseAsString, parseAsStringEnum } from "nuqs";
 
 import AppBreadcrumb from "@/app/_components/app-breadcrumb";
 import UserTable from "@/app/users/_components/user-table";
@@ -10,6 +11,7 @@ import { useFilter } from "@/app/_hooks/use-filter";
 import { useGetUserPagination } from "@/app/users/_hooks/use-get-user-pagination";
 import { useDeleteUserById } from "@/app/users/_hooks/use-delete-user-by-id";
 import { useUpdateUserById } from "@/app/users/_hooks/use-update-user-by-id";
+import { createSortByParser } from "@/libs/nuqs/parse-sort-by";
 import type { TUserTableFilterValues } from "@/app/users/_types/user-table-props";
 import type { TUserPaginationPayload } from "@/api/requestor/users/types/user-pagination-payload";
 import type { TUserSortBy } from "@/api/requestor/users/consts/user-sort-by";
@@ -29,22 +31,31 @@ export function meta() {
 }
 
 export default function UserPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [queryStates, setQueryStates] = useQueryStates({
+    page: parseAsInteger.withDefault(1),
+    page_size: parseAsInteger.withDefault(10),
+    search: parseAsString.withDefault(""),
+    sort_by: createSortByParser(
+      ["id", "name", "email", "role", "status", "created_at", "updated_at"] as const,
+      "Users",
+    ),
+    order: parseAsStringEnum<OrderKeyEnum>(Object.values(OrderKeyEnum)),
+    status: parseAsStringEnum<UserStatusEnum>(Object.values(UserStatusEnum)),
+    role: parseAsStringEnum<RoleKeyEnum>(Object.values(RoleKeyEnum)),
+  });
   const navigate = useNavigate();
 
   const queryUrl = useMemo(
     () => ({
-      page: Number(searchParams.get("page") || 1),
-      pageSize: Number(searchParams.get("page_size") || 10),
-      search: searchParams.get("search") || undefined,
-      sortBy: searchParams.get("sort_by") || undefined,
-      order: (searchParams.get("order") || undefined) as
-        | OrderKeyEnum
-        | undefined,
-      status: searchParams.get("status") || undefined,
-      role: searchParams.get("role") || undefined,
+      page: queryStates.page,
+      pageSize: queryStates.page_size,
+      search: queryStates.search || undefined,
+      sortBy: queryStates.sort_by ?? undefined,
+      order: queryStates.order ?? undefined,
+      status: queryStates.status ?? undefined,
+      role: queryStates.role ?? undefined,
     }),
-    [searchParams],
+    [queryStates],
   );
 
   const { control, handleSubmit, reset } = useForm<TUserTableFilterValues>({
@@ -58,7 +69,7 @@ export default function UserPage() {
     useFilter<TUserTableFilterValues>(
       ["status", "role"],
       queryUrl,
-      setSearchParams,
+      setQueryStates,
       reset,
     );
 
@@ -67,10 +78,10 @@ export default function UserPage() {
       page: queryUrl.page,
       per_page: queryUrl.pageSize,
       search: queryUrl.search,
-      sort_by: queryUrl.sortBy as TUserSortBy,
+      sort_by: queryUrl.sortBy,
       order: queryUrl.order,
-      status: queryUrl.status as UserStatusEnum,
-      role: queryUrl.role as RoleKeyEnum,
+      status: queryUrl.status,
+      role: queryUrl.role,
     }),
     [queryUrl],
   );
@@ -103,71 +114,58 @@ export default function UserPage() {
       }
 
       debounceSearchTimeoutId = setTimeout(() => {
-        setSearchParams((searchParams) => {
-          searchParams.set("search", value);
-          searchParams.set("page", "1");
-          return searchParams;
-        });
+        setQueryStates({ search: value, page: 1 });
       }, 300);
     },
-    [setSearchParams],
+    [setQueryStates],
   );
 
   const applySorting = useCallback(
     (key: string) => {
       if (queryUrl.sortBy === key) {
-        let desiredOrder = "";
-        let desiredKey = key;
+        let desiredOrder: OrderKeyEnum | null = null;
+        let desiredKey: TUserSortBy | null = key as TUserSortBy;
+
         switch (queryUrl.order) {
           case OrderKeyEnum.ASC:
             desiredOrder = OrderKeyEnum.DESC;
             break;
           case OrderKeyEnum.DESC:
-            desiredOrder = "";
-            desiredKey = "";
+            desiredKey = null;
             break;
           default:
             desiredOrder = OrderKeyEnum.ASC;
             break;
         }
 
-        setSearchParams((searchParams) => {
-          searchParams.set("order", desiredOrder);
-          searchParams.set("sort_by", desiredKey);
-          searchParams.set("page", "1");
-          return searchParams;
+        setQueryStates({
+          order: desiredOrder,
+          sort_by: desiredKey,
+          page: 1,
         });
       } else {
-        setSearchParams((searchParams) => {
-          searchParams.set("sort_by", key);
-          searchParams.set("order", OrderKeyEnum.ASC);
-          searchParams.set("page", "1");
-          return searchParams;
+        setQueryStates({
+          sort_by: key as TUserSortBy,
+          order: OrderKeyEnum.ASC,
+          page: 1,
         });
       }
     },
-    [queryUrl.order, queryUrl.sortBy, setSearchParams],
+    [queryUrl.order, queryUrl.sortBy, setQueryStates],
   );
 
   const handlePageChange = useCallback(
     (page: number) => {
-      setSearchParams((searchParams) => {
-        searchParams.set("page", page.toString());
-        return searchParams;
-      });
+      setQueryStates({ page });
     },
-    [setSearchParams],
+    [setQueryStates],
   );
 
   const handlePageSizeChange = useCallback(
     (pageSize: number) => {
-      setSearchParams((searchParams) => {
-        searchParams.set("page_size", pageSize.toString());
-        searchParams.set("page", "1");
-        return searchParams;
-      });
+      setQueryStates({ page_size: pageSize, page: 1 });
     },
-    [setSearchParams],
+    [setQueryStates],
   );
 
   const breadcrumbItems = [

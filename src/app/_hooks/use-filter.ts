@@ -31,10 +31,10 @@ type TNormalizedFilterFieldConfig<TFormValues> = {
  * using snake_case.
  *
  * @example
- * useFilter(["status", "priority"], queryUrl, setSearchParams, reset);
+ * useFilter(["status", "priority"], queryUrl, setParams, reset);
  *
  * @example
- * useFilter(["action", "targetType"], queryUrl, setSearchParams, reset);
+ * useFilter(["action", "targetType"], queryUrl, setParams, reset);
  * // "targetType" derives:
  * // urlParam: "target_type"
  * // columnId: "target_type"
@@ -44,7 +44,7 @@ type TNormalizedFilterFieldConfig<TFormValues> = {
  * useFilter(
  *   [{ formName: "displayName", apiField: "name" }],
  *   queryUrl,
- *   setSearchParams,
+ *   setParams,
  *   reset,
  * );
  *
@@ -58,9 +58,10 @@ type TNormalizedFilterFieldConfig<TFormValues> = {
 export function useFilter<TFormValues extends Record<string, string | null>>(
   config: TFilterFieldConfigInput<TFormValues>[],
   queryTable: Record<string, string | number | undefined>,
-  setSearchParams: (
-    updater: (prev: URLSearchParams) => URLSearchParams,
-  ) => void,
+  setParams: (updates: {
+    page?: number;
+    [key: string]: string | number | null | undefined;
+  }) => void,
   reset: (values: Record<string, null>) => void,
 ) {
   const normalizedConfig = useMemo(
@@ -70,15 +71,16 @@ export function useFilter<TFormValues extends Record<string, string | null>>(
 
   const onFilterSubmit: SubmitHandler<TFormValues> = useCallback(
     (data) => {
-      setSearchParams((prev) => {
-        normalizedConfig.forEach(({ formName, urlParam }) => {
-          prev.set(urlParam, data[formName] ?? "");
-        });
-        prev.set("page", "1");
-        return prev;
+      const updates: {
+        page?: number;
+        [key: string]: string | number | null | undefined;
+      } = { page: 1 };
+      normalizedConfig.forEach(({ formName, urlParam }) => {
+        updates[urlParam] = data[formName] ?? null;
       });
+      setParams(updates);
     },
-    [normalizedConfig, setSearchParams],
+    [normalizedConfig, setParams],
   );
 
   const columnFilters: ColumnFiltersState = useMemo(
@@ -111,14 +113,15 @@ export function useFilter<TFormValues extends Record<string, string | null>>(
     );
     reset(resetValues);
 
-    setSearchParams((prev) => {
-      normalizedConfig.forEach(({ urlParam }) => {
-        prev.delete(urlParam);
-      });
-      prev.set("page", "1");
-      return prev;
+    const updates: {
+      page?: number;
+      [key: string]: string | number | null | undefined;
+    } = { page: 1 };
+    normalizedConfig.forEach(({ urlParam }) => {
+      updates[urlParam] = null;
     });
-  }, [normalizedConfig, reset, setSearchParams]);
+    setParams(updates);
+  }, [normalizedConfig, reset, setParams]);
 
   return { onFilterSubmit, onFilterReset, columnFilters, filterParams };
 }

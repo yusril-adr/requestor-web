@@ -1,6 +1,7 @@
 import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
 import type { LinksFunction } from "react-router";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { NuqsAdapter } from "nuqs/adapters/react";
 import appCss from "./index.css?url";
 import { Toaster } from "@/app/_components/ui/sonner";
 import { ThemeProvider } from "@/app/_components/theme-provider";
@@ -37,13 +38,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
 export default function Root() {
   return (
     <QueryClientProvider client={globalQueryClient}>
-      <AuthProvider>
-        <ThemeProvider>
-          <SidebarProvider>
-            <Outlet />
-          </SidebarProvider>
-        </ThemeProvider>
-      </AuthProvider>
+      <NuqsAdapter>
+        <AuthProvider>
+          <ThemeProvider>
+            <SidebarProvider>
+              <Outlet />
+            </SidebarProvider>
+          </ThemeProvider>
+        </AuthProvider>
+      </NuqsAdapter>
     </QueryClientProvider>
   );
 }

@@ -1,11 +1,17 @@
 import { useCallback, useMemo } from "react";
-import { useSearchParams } from "react-router";
 import { useForm } from "react-hook-form";
+import {
+  useQueryStates,
+  parseAsInteger,
+  parseAsString,
+  parseAsStringEnum,
+} from "nuqs";
 
 import AppBreadcrumb from "@/app/_components/app-breadcrumb";
 import AuditLogTable from "@/app/audit-logs/_components/audit-log-table";
 import { useFilter } from "@/app/_hooks/use-filter";
 import { useGetAuditLogPagination } from "@/app/audit-logs/_hooks/use-get-audit-log-pagination";
+import { createSortByParser } from "@/libs/nuqs/parse-sort-by";
 import type { TAuditLogTableFilterValues } from "@/app/audit-logs/_types/audit-log-table-props";
 import type { TAuditLogPaginationPayload } from "@/api/requestor/audit-logs/types/audit-log-pagination-payload";
 import type { TAuditLogSortBy } from "@/api/requestor/audit-logs/consts/audit-log-sort-by";
@@ -24,21 +30,42 @@ export function meta() {
 }
 
 export default function AuditLogPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [queryStates, setQueryStates] = useQueryStates({
+    page: parseAsInteger.withDefault(1),
+    page_size: parseAsInteger.withDefault(10),
+    search: parseAsString.withDefault(""),
+    sort_by: createSortByParser(
+      [
+        "id",
+        "actor_name",
+        "action",
+        "target_type",
+        "target_id",
+        "created_at",
+        "updated_at",
+      ] as const,
+      "Audit Logs",
+    ),
+    order: parseAsStringEnum<OrderKeyEnum>(Object.values(OrderKeyEnum)),
+    action: parseAsStringEnum<AuditLogActionEnum>(
+      Object.values(AuditLogActionEnum),
+    ),
+    target_type: parseAsStringEnum<AuditLogEntityEnum>(
+      Object.values(AuditLogEntityEnum),
+    ),
+  });
 
   const queryUrl = useMemo(
     () => ({
-      page: Number(searchParams.get("page") || 1),
-      pageSize: Number(searchParams.get("page_size") || 10),
-      search: searchParams.get("search") || undefined,
-      sortBy: searchParams.get("sort_by") || undefined,
-      order: (searchParams.get("order") || undefined) as
-        | OrderKeyEnum
-        | undefined,
-      action: searchParams.get("action") || undefined,
-      targetType: searchParams.get("target_type") || undefined,
+      page: queryStates.page,
+      pageSize: queryStates.page_size,
+      search: queryStates.search,
+      sortBy: queryStates.sort_by ?? undefined,
+      order: queryStates.order ?? undefined,
+      action: queryStates.action ?? undefined,
+      targetType: queryStates.target_type ?? undefined,
     }),
-    [searchParams],
+    [queryStates],
   );
 
   const { control, handleSubmit, reset } = useForm<TAuditLogTableFilterValues>({
@@ -52,7 +79,7 @@ export default function AuditLogPage() {
     useFilter<TAuditLogTableFilterValues>(
       ["action", "targetType"],
       queryUrl,
-      setSearchParams,
+      setQueryStates,
       reset,
     );
 
@@ -61,10 +88,10 @@ export default function AuditLogPage() {
       page: queryUrl.page,
       per_page: queryUrl.pageSize,
       search: queryUrl.search,
-      sort_by: queryUrl.sortBy as TAuditLogSortBy,
+      sort_by: queryUrl.sortBy,
       order: queryUrl.order,
-      action: queryUrl.action as AuditLogActionEnum,
-      target_type: queryUrl.targetType as AuditLogEntityEnum,
+      action: queryUrl.action,
+      target_type: queryUrl.targetType,
     }),
     [queryUrl],
   );
@@ -83,71 +110,58 @@ export default function AuditLogPage() {
       }
 
       debounceSearchTimeoutId = setTimeout(() => {
-        setSearchParams((searchParams) => {
-          searchParams.set("search", value);
-          searchParams.set("page", "1");
-          return searchParams;
-        });
+        setQueryStates({ search: value, page: 1 });
       }, 300);
     },
-    [setSearchParams],
+    [setQueryStates],
   );
 
   const applySorting = useCallback(
     (key: string) => {
       if (queryUrl.sortBy === key) {
-        let desiredOrder = "";
-        let desiredKey = key;
+        let desiredOrder: OrderKeyEnum | null = null;
+        let desiredKey: TAuditLogSortBy | null = key as TAuditLogSortBy;
+
         switch (queryUrl.order) {
           case OrderKeyEnum.ASC:
             desiredOrder = OrderKeyEnum.DESC;
             break;
           case OrderKeyEnum.DESC:
-            desiredOrder = "";
-            desiredKey = "";
+            desiredKey = null;
             break;
           default:
             desiredOrder = OrderKeyEnum.ASC;
             break;
         }
 
-        setSearchParams((searchParams) => {
-          searchParams.set("order", desiredOrder);
-          searchParams.set("sort_by", desiredKey);
-          searchParams.set("page", "1");
-          return searchParams;
+        setQueryStates({
+          order: desiredOrder,
+          sort_by: desiredKey,
+          page: 1,
         });
       } else {
-        setSearchParams((searchParams) => {
-          searchParams.set("sort_by", key);
-          searchParams.set("order", OrderKeyEnum.ASC);
-          searchParams.set("page", "1");
-          return searchParams;
+        setQueryStates({
+          sort_by: key as TAuditLogSortBy,
+          order: OrderKeyEnum.ASC,
+          page: 1,
         });
       }
     },
-    [queryUrl.order, queryUrl.sortBy, setSearchParams],
+    [queryUrl.order, queryUrl.sortBy, setQueryStates],
   );
 
   const handlePageChange = useCallback(
     (page: number) => {
-      setSearchParams((searchParams) => {
-        searchParams.set("page", page.toString());
-        return searchParams;
-      });
+      setQueryStates({ page });
     },
-    [setSearchParams],
+    [setQueryStates],
   );
 
   const handlePageSizeChange = useCallback(
     (pageSize: number) => {
-      setSearchParams((searchParams) => {
-        searchParams.set("page_size", pageSize.toString());
-        searchParams.set("page", "1");
-        return searchParams;
-      });
+      setQueryStates({ page_size: pageSize, page: 1 });
     },
-    [setSearchParams],
+    [setQueryStates],
   );
 
   const breadcrumbItems = [
