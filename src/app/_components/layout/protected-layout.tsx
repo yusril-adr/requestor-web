@@ -7,7 +7,7 @@ export default function ProtectedLayout() {
   const { auth, authQuery } = useAuthContext();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = encodeURIComponent(location.pathname);
+  const from = encodeURIComponent(location.pathname + location.search);
 
   useEffect(() => {
     if (!authQuery?.isLoading && !auth) {

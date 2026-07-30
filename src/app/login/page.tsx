@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { ThemeToggler } from "@/app/_components/theme-toggler";
 import { LoginForm } from "@/app/login/_components/form";
 import { useLogin } from "@/app/login/_hooks/use-login";
+import { parseAsString, useQueryState } from "nuqs";
 
 export function meta() {
   return [
@@ -14,6 +15,11 @@ export function meta() {
 
 export default function Login() {
   const navigate = useNavigate();
+  const [fromQuery] = useQueryState(
+    "from",
+    parseAsString.withDefault("/dashboard"),
+  );
+
   const {
     mutate: loginMutate,
     error: loginError,
@@ -21,7 +27,7 @@ export default function Login() {
     isPaused: loginIsPaused,
   } = useLogin({
     onSuccess: () => {
-      navigate("/dashboard");
+      navigate(fromQuery);
     },
   });
 
