@@ -10,6 +10,7 @@
 # api-design
 
 - When designing utility functions, make non-essential parameters optional with sensible defaults so callers aren't forced to specify them when the default is acceptable. Confidence: 0.70
+- Handle cross-cutting HTTP error concerns (e.g., 401/403) centrally in axios interceptors rather than duplicating handling in individual components or React Query hooks, to avoid duplicate side effects like double toast notifications. Confidence: 0.75
 
 # data-table
 

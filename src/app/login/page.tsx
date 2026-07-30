@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router";
 
 import { ThemeToggler } from "@/app/_components/theme-toggler";
-import { LoginForm } from "@/app/login/form";
+import { LoginForm } from "@/app/login/_components/form";
 import { useLogin } from "@/app/login/_hooks/use-login";
 
 export function meta() {
